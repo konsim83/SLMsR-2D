@@ -1,11 +1,11 @@
 module Mesh
 
-using PyPlot
+using PyPlot, writeVTK
 
 # ---------------------------------------------------------------------------------------------
 
 # Type for reading C output
-type Triangle_mesh
+type Triangle_mesh_C
     pointlist :: Ptr{Cdouble}
     pointattributelist :: Ptr{Cdouble}
     pointmarkerlist :: Ptr{Cint}
@@ -39,7 +39,7 @@ end # end type
 # ---------------------------------------------------------------------------------------------
 
 # Actual Julia mesh type
-type Mesh_2D
+type TriMesh
     point :: Array{Float64, 2}
     point_marker :: Array{Int64, 1}
     n_point :: Int64
@@ -58,7 +58,7 @@ type Mesh_2D
     get_point :: Function
     get_cell :: Function
     
-    function Mesh_2D(mesh :: Triangle_mesh)
+    function TriMesh(mesh :: Triangle_mesh_C)
         this = new()
 
         # Points
@@ -124,9 +124,9 @@ function mesh_unit_square(n_segs_per_edge :: Int64, angle = 0.0 :: Float64)
     end
     println(switches)
     
-    mesh_buffer = ccall((:tesselate_unit_square, "libtesselate"), Triangle_mesh, (Int64, Cstring), n_segs_per_edge, switches);
+    mesh_buffer = ccall((:tesselate_unit_square, "libtesselate"), Triangle_mesh_C, (Int64, Cstring), n_segs_per_edge, switches);
 
-    mesh = Mesh_2D(mesh_buffer)
+    mesh = TriMesh(mesh_buffer)
     mesh_buffer = [];
 
     return mesh
@@ -144,9 +144,9 @@ function mesh_unit_simplex(h = 0.1 :: Float64, angle = 0.0 :: Float64)
     end
     println(switches)
     
-    mesh_buffer = ccall((:tesselate_unit_simplex, "libtesselate"), Triangle_mesh, (Float64, Cstring), h, switches);
+    mesh_buffer = ccall((:tesselate_unit_simplex, "libtesselate"), Triangle_mesh_C, (Float64, Cstring), h, switches);
 
-    mesh = Mesh_2D(mesh_buffer)
+    mesh = TriMesh(mesh_buffer)
     mesh_buffer = [];
 
     return mesh
@@ -154,7 +154,28 @@ end
 
 # ---------------------------------------------------------------------------------------------
 
-function plot_mesh(m :: Mesh_2D)
+
+function write_mesh(m :: TriMesh, filename)
+
+    cell_type = VTKCellTypes.VTK_TRIANGLE
+    points = transpose(m.point)
+
+
+    for i=1:mesh.n_cell
+        cell
+    end
+
+    vtkfile = vtk_grid(filename, points, cells)
+
+    outfiles = vtk_save(vtkfile)
+
+end
+
+
+# ---------------------------------------------------------------------------------------------
+
+
+function plot_mesh(m :: TriMesh)
 
     fig = matplotlib[:pyplot][:figure]("2D Mesh Plot", figsize = (10,10))
 
@@ -175,7 +196,7 @@ end
 
 # ---------------------------------------------------------------------------------------------
 
-function get_cell( m :: Mesh_2D, ind_c = 1:m.n_cell  )
+function get_cell( m :: TriMesh, ind_c = 1:m.n_cell  )
     ind_c = vec(collect(ind_c))
     
     return m.cell[ind_c,:]
@@ -183,14 +204,14 @@ end # end get_cell
 
 # ---------------------------------------------------------------------------------------------
 
-function get_point( m :: Mesh_2D, ind_p = 1:m.n_point )
+function get_point( m :: TriMesh, ind_p = 1:m.n_point )
     
     return m.point[ind_p,:]
 end # end get_point
 
 # ---------------------------------------------------------------------------------------------
 
-function map_ref_point(m :: Mesh_2D, x :: Array{Float64,2}, ind_c = 1:m.n_cell)
+function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c = 1:m.n_cell)
     ind_c = vec(collect(ind_c))
 
     y = transpose( [x  ones(size(x,1))] )
