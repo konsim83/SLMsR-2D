@@ -1,6 +1,6 @@
 module Mesh
 
-using PyPlot, writeVTK
+using PyPlot, WriteVTK
 
 # ---------------------------------------------------------------------------------------------
 
@@ -132,7 +132,9 @@ function mesh_unit_square(n_segs_per_edge :: Int64, angle = 0.0 :: Float64)
     return mesh
 end
 
+
 # ---------------------------------------------------------------------------------------------
+
 
 function mesh_unit_simplex(h = 0.1 :: Float64, angle = 0.0 :: Float64)
 
@@ -152,17 +154,19 @@ function mesh_unit_simplex(h = 0.1 :: Float64, angle = 0.0 :: Float64)
     return mesh
 end
 
+
 # ---------------------------------------------------------------------------------------------
 
 
-function write_mesh(m :: TriMesh, filename)
+function write_mesh(mesh :: TriMesh, filename)
 
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(m.point)
+    points = transpose(mesh.point)
 
-
+    cells = MeshCell[]
     for i=1:mesh.n_cell
-        cell
+        temp = MeshCell(cell_type, mesh.cell[i,:])
+        cells = push!(cells, temp)
     end
 
     vtkfile = vtk_grid(filename, points, cells)
@@ -194,7 +198,9 @@ function plot_mesh(m :: TriMesh)
     return nothing
 end
 
+
 # ---------------------------------------------------------------------------------------------
+
 
 function get_cell( m :: TriMesh, ind_c = 1:m.n_cell  )
     ind_c = vec(collect(ind_c))
@@ -202,14 +208,18 @@ function get_cell( m :: TriMesh, ind_c = 1:m.n_cell  )
     return m.cell[ind_c,:]
 end # end get_cell
 
+
 # ---------------------------------------------------------------------------------------------
+
 
 function get_point( m :: TriMesh, ind_p = 1:m.n_point )
     
     return m.point[ind_p,:]
 end # end get_point
 
+
 # ---------------------------------------------------------------------------------------------
+
 
 function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c = 1:m.n_cell)
     ind_c = vec(collect(ind_c))
@@ -242,6 +252,7 @@ function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c = 1:m.n_cell)
     
     return P
 end
+
 
 # ---------------------------------------------------------------------------------------------
 end # end module Mesh
