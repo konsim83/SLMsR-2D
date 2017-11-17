@@ -8,31 +8,59 @@ type RefEl_Pk
 
     coeff :: Array{Float64, 2}
 
-    eval_basis :: Function
-    eval_basis_der :: Function
+    eval :: Function
+    eval_grad :: Function
     
-    function RefEl_Pk()
+    function RefEl_Pk(order :: Int64)
         this = new()
 
-        this.info = "linear 3-node triangular Lagrange element"
+        this.info = "Triangular Lagrange element of type P$order."
 
-        this.node = [0 0 ; 1 0 ; 0 1]
-        this.n_node = 3
+        if order==1
+            # -------   P1   -------
+            this.node = [0 0 ; 1 0 ; 0 1]
+            this.n_node = 3
 
-        # columns are coefficients of basis functions
-        this.coeff = [this.node ones(this.n_node)]\eye(3)
-
-        this.eval_basis = function(p :: Array{Float64, 2})
-            value  = [p ones(size(p,1))] * this.coeff
+            # columns are coefficients of basis functions
+            # phi(x) = ax + by + c
+            this.coeff = [this.node ones(this.n_node)]\eye(3)
             
-            return value
-        end
+            this.eval = function(p :: Array{Float64, 2})
+                value  = [p ones(size(p,1))] * this.coeff
+                
+                return value
+            end
+                
+            this.eval_grad = function(p :: Array{Float64, 2})
+                value  = cat( 3, repmat(this.coeff[1,:], 1, size(p,1))', repmat(this.coeff[2,:], 1, size(p,1))' )
+                
+                return value
+            end
+                
+        elseif order==2
+                # -------   P2   -------
+                this.node = [0 0 ; 1 0 ; 0 1 ; 0.5 0 ; 0.5 0.5 ; 0 0.5]
+                this.n_node = 6
 
-        this.eval_basis_der = function(p :: Array{Float64, 2})
-            value  = cat( 3, repmat(this.coeff[1,:], 1, size(p,1))', repmat(this.coeff[2,:], 1, size(p,1))' )
+                # columns are coefficients of basis functions
+                # phi(x) = ax^2 + by^2 + cxy + dx + ey + f
+                this.coeff = [this.node[:,1].^2   this.node[:,2].^2   this.node[:,1].*this.node[:,2]   this.node   ones(this.n_node)] \ eye(6)
             
-            return value
-        end
+                this.eval = function(p :: Array{Float64, 2})
+                    value  = [p[:,1].^2   p[:,2].^2   p[:,1].*p[:,2]   p   ones(size(p,1))] * this.coeff
+                
+                    return value
+                end
+                
+                this.eval_grad = function(p :: Array{Float64, 2})
+                    dx = [2*p[:,1]   zeros(size(p,1))   p[:,2]   ones(size(p,1))   zeros(size(p,1))   zeros(size(p,1))] * this.coeff
+                    dy = [zeros(size(p,1))   2*p[:,2]   p[:,1]   zeros(size(p,1))   ones(size(p,1))   zeros(size(p,1))] * this.coeff
+                
+                    return cat(3, dx, dy)
+                end
+                
+        end # end if
+                    
         
         return this
     end # end function    

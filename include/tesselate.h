@@ -35,5 +35,8 @@ typedef struct{
 } my_triangulation;
 
 my_triangulation tesselate_unit_square(int, char*);
+my_triangulation tesselate_unit_simplex(REAL, char*);
+my_triangulation tesselate_unit_simplex_uniform_edges(int, char*);
+my_triangulation tesselate_triangle_uniform_edges(REAL, REAL, REAL, REAL, REAL, REAL, int, char*);
 
 #endif // TESSELATE_H
