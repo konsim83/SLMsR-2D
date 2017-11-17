@@ -27,7 +27,8 @@ type TriMesh_collection
 
         point = mesh.get_point(mesh.get_cell(1:mesh.n_cell))
         for i=1:mesh.n_cell
-            this.mesh_f[i] = mesh_triangle_uniform_edges(point[i,:,:], n_segs_per_edge_f, "Triangle - number of points per boundary edge is fixed")
+            display(point[i,:,:])
+            this.mesh_f[i] = mesh_triangle_uniform_edges(point[i,:,:], n_segs_per_edge_f)
         end
 
         return this
