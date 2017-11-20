@@ -1,9 +1,11 @@
-type Dof_Pk_periodic
+type Dof_Pk_periodic_square
+
+    mesh :: Mesh.TriMesh
     
     # ----------------------------------------
     # General infos
     FEM_order :: Int64
-    FEM_info :: Int64
+    FEM_info :: String
     # ----------------------------------------
 
 
@@ -50,37 +52,47 @@ type Dof_Pk_periodic
     # ----------------------------------------
     
     # ----------------------------------------
-    # If the topology is periodic
+    # Topology info and related functions
+    is_periodic :: Bool
     n_true_dof :: Int64
+
+    map_vec_ind_mesh2dof :: Array{Int64,1}
+    #map_vec_ind_dof2mesh :: Array{Int64,1}
+
+    #map_ind_mesh2dof :: Function
+    map_ind_dof2mesh :: Function
     # ----------------------------------------
 
 
     get_dofs :: Function
 
-    function Dof_Pk_periodic(mesh :: TriMesh,
+    function Dof_Pk_periodic_square(mesh :: Mesh.TriMesh,
                              ref_el :: RefEl_Pk)
         
         this = new()
             
         # ----------------------------------------
         this.FEM_order = ref_el.order
-        this.FEM_order = "DoF object for ---   periodic   --- Pk-Lagrange FEM of order $ref_el.order."
+        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $ref_el.order."
         # ----------------------------------------
 
         if ref_el.order==1
             # ----------------------------------------------------------------------------------------------------------------------------------------
+
+            this.mesh = mesh
+            
             # ----------------------------------------
             # Node infos
-            this.n_node = 
-                this.n_node_boundary :: Int64
-            this.n_node_interior :: Int64
+            this.n_node = mesh.n_point
+            this.n_node_boundary = 0
+            this.n_node_interior = mesh.n_point
             #this.n_node_dirichlet = []
             #this.n_node_neumann = []
-            this.n_node_per_edge :: Int64
-            this.n_node_per_elem :: Int64
+            this.n_node_per_edge = 2
+            this.n_node_per_elem = 3
             
-            this.ind_node_boundary :: Array{Int64,1}
-            this.ind_node_interior :: Array{Int64,1}
+            this.ind_node_boundary = []
+            this.ind_node_interior = collect(1:mesh.n_point)
             #this.ind_node_dirichlet  = []
             #this.ind_node_neumann = []
             # ----------------------------------------
@@ -88,15 +100,15 @@ type Dof_Pk_periodic
             
             # ----------------------------------------
             # Edge infos
-            this.n_edge :: Int64
-            this.n_edge_boundary :: Int64
-            this.n_edge_interior :: Int64
+            this.n_edge = mesh.n_edge
+            this.n_edge_boundary = 0
+            this.n_edge_interior = mesh.n_edge
             #this.n_edge_dirichlet = []
             #this.n_edge_neumann = []
-            this.n_edge_per_elem :: Int64
+            this.n_edge_per_elem = 3
             
-            this.ind_edge_boundary :: Int64
-            this.ind_edge_interior :: Int64
+            this.ind_edge_boundary  = []
+            this.ind_edge_interior = collect(1:mesh.n_edge)
             #this.ind_edge_dirichlet = []
             #this.ind_edge_neumann = []
             # ----------------------------------------
@@ -104,28 +116,83 @@ type Dof_Pk_periodic
             
             # ----------------------------------------
             # Element infos
-            this.n_elem :: Int64
-            this.n_elem_boundary :: Int64
-            this.n_elem_interior :: Int64
+            this.n_elem = mesh.n_cell
+            this.n_elem_boundary = 0
+            this.n_elem_interior = mesh.n_cell
             
-            this.ind_elem_boundary :: Array{Int64,1}
-            this.ind_elem_interior :: Array{Int64,1}
+            this.ind_elem_boundary = []
+            this.ind_elem_interior = collect(1:mesh.n_cell)
+            # ----------------------------------------
+            
+            
+            # ----------------------------------------
+            # Topology info
+            this.is_periodic = true
+
+            n_node_boundary = sum(mesh.point_marker.==1)
+            this.n_true_dof = mesh.n_point - 3 - 0.5*(n_node_boundary - 4)
+            # ----------------------------------------
+
+            
+            # ----------------------------------------
+            # Create the maps that translate dofs to mesh based
+            # variables. This is one of the core modules for the
+            # handling DoFs of periodic meshes (without actually
+            # touching the mesh).
+
+            # Tells where any mesh based variable can be found
+            # topologically
+            this.map_vec_ind_mesh2dof = zeros(mesh.n_point)
+
+            n_edge_per_seg = Int64(size(mesh.segment,1)/4)
+            
+            # Corners of the square
+            this.map_vec_ind_mesh2dof[1] = 1
+            this.map_vec_ind_mesh2dof[1+n_edge_per_seg] = 1
+            this.map_vec_ind_mesh2dof[1+2*n_edge_per_seg] = 1
+            this.map_vec_ind_mesh2dof[1+3*n_edge_per_seg] = 1
+
+            # Segment 1 (0,0)->(1,0)
+            for i=1:(n_edge_per_seg-1)
+                this.map_vec_ind_mesh2dof[1+i] = 1 + i
+            end
+
+            # Segment 2 (1,0)->(1,1)
+            for i=1:(n_edge_per_seg-1)
+                this.map_vec_ind_mesh2dof[1+n_edge_per_seg+i] = 1 + n_edge_per_seg + i - 1
+            end
+
+            # Segment 3 (1,1)->(0,1)
+            for i=1:(n_edge_per_seg-1)
+                this.map_vec_ind_mesh2dof[1+2*n_edge_per_seg+i] = this.map_vec_ind_mesh2dof[1+n_edge_per_seg - i]
+            end
+
+            # Segment 4 (0,1)->(0,0)
+            for i=1:(n_edge_per_seg-1)
+                this.map_vec_ind_mesh2dof[1+3*n_edge_per_seg+i] = this.map_vec_ind_mesh2dof[1+2*n_edge_per_seg - i]
+            end
+
+            this.map_vec_ind_mesh2dof[n_node_boundary+1:end] = collect(   ((n_node_boundary + 1):(mesh.n_point)) - 3 - 0.5*(n_node_boundary - 4)  )
+            
+            this.map_ind_dof2mesh = function(vec_dof :: Array{Float64})
+                # Map a vector in terms of degrees of freedom to a
+                # vector on the actual mesh. Tis is only interesting
+                # for back mapping. The map mesh->dof can be found in
+                # the function get_dof()
+                vec_mesh = vec_dof[this.map_vec_ind_mesh2dof[sortperm(this.map_vec_ind_mesh2dof)]][sortperm(sortperm(this.map_vec_ind_mesh2dof))]
+            end
             # ----------------------------------------
             
             
             # ----------------------------------------
             this.get_dofs = function(ind_c)
-                
                 ind_c = vec(collect(ind_c))
-                
-                ind_c = (this.order) * repmat(ind_c - 1, 1, this.order+1) + 1
-                ind_loc = transpose(   repmat(collect(1:this.order+1) , 1, size(ind_c,1))   ) - 1
-                d = ind_c + ind_loc
-                if this.is_periodic
-                    d[collect(1:length(d))[collect(d.==this.n_nodes_all)]] = 1
-                end
+
+                # Put a filter before mesh indices to translate to dof
+                # indices
+                dofs = this.map_vec_ind_mesh2dof[this.mesh.cell[ind_c,:]]
             
-                return d
+                return dofs
             end # end function
             # ----------------------------------------
             # ----------------------------------------------------------------------------------------------------------------------------------------

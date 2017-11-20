@@ -12,10 +12,15 @@ type TriMesh
     edge_marker :: Array{Int64, 1}
     n_edge :: Int64
 
+    segment :: Array{Int64, 2}
+    segment_marker :: Array{Int64, 1}
+    n_segment :: Int64
+
     T_ref2cell :: Array{Float64,3}
     T_cell2ref :: Array{Float64,3}
 
     get_point :: Function
+    get_edge :: Function
     get_cell :: Function
 
     mesh_info :: String
@@ -69,12 +74,29 @@ type TriMesh
         end
         this.edge = this.edge + 1;
 
+        # Segments
+        this.n_segment = mesh.numberofsegments
+        this.segment = zeros(mesh.numberofsegments, 2)
+        this.segment_marker = zeros(mesh.numberofedges)
+        for i=1:this.n_segment
+            this.segment[i,1] = unsafe_load(mesh.segmentlist, 2*i-1);
+            this.segment[i,2] = unsafe_load(mesh.segmentlist, 2*i);
+            this.segment_marker[i] = unsafe_load(mesh.segmentmarkerlist, i);
+        end
+        this.segment = this.segment + 1;
+        
+
         this.get_cell = function( ind_c )
             ind_c = vec(collect(ind_c))
             
             return this.cell[ind_c,:]
         end # end get_cell
 
+        this.get_edge = function( ind_e )
+            
+            return this.edge[ind_e,:]
+        end # end get_edge
+            
         this.get_point = function( ind_p )
             
             return this.point[ind_p,:]
@@ -115,14 +137,23 @@ type TriMesh
         this.edge = mesh.edge
         this.edge_marker = mesh.edge_marker
 
+        # Segments
+        this.n_segment = mesh.n_segment
+        this.segment = mesh.segment
+        this.segment_marker = mesh.segment_marker
+
         this.get_cell = function( ind_c )
             ind_c = vec(collect(ind_c))
             
             return this.cell[ind_c,:]
         end # end get_cell
 
+        this.get_edge = function( ind_e )
+            
+            return this.edge[ind_e,:]
+        end # end get_edge
+            
         this.get_point = function( ind_p )
-            ind_p = vec(collect(ind_p))
             
             return this.point[ind_p,:]
         end # end get_point

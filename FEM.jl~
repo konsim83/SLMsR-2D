@@ -1,7 +1,0 @@
-module FEM
-
-
-include("FEM_DoF.jl")
-
-
-end # end module

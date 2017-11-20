@@ -1,8 +1,8 @@
-module RefEl
-
 type RefEl_Pk
     info :: String
 
+    order :: Int64
+    
     node :: Array{Float64, 2}
     n_node :: Int64
 
@@ -18,6 +18,8 @@ type RefEl_Pk
 
         if order==1
             # -------   P1   -------
+            this.order = 1
+            
             this.node = [0 0 ; 1 0 ; 0 1]
             this.n_node = 3
 
@@ -39,6 +41,8 @@ type RefEl_Pk
                 
         elseif order==2
                 # -------   P2   -------
+                this.order = 2
+                
                 this.node = [0 0 ; 1 0 ; 0 1 ; 0.5 0 ; 0.5 0.5 ; 0 0.5]
                 this.n_node = 6
 
@@ -65,5 +69,3 @@ type RefEl_Pk
         return this
     end # end function    
 end # end type
-
-end # end module

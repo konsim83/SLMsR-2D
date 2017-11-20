@@ -50,7 +50,7 @@ type Dof_Pk
     # ----------------------------------------
     
     # ----------------------------------------
-    # If the topology is periodic
+    # Topology info
     is_periodic :: Bool
     n_true_dof :: Int64
     # ----------------------------------------
@@ -58,9 +58,8 @@ type Dof_Pk
 
     get_dofs :: Function
 
-    function Dof_Pk(mesh :: TriMesh,
-                    ref_el :: RefEl_Pk,
-                    is_periodic)
+    function Dof_Pk(mesh :: Mesh.TriMesh,
+                    ref_el :: RefEl_Pk)
         
         this = new()
             
@@ -78,7 +77,7 @@ type Dof_Pk
             this.n_node_interior = sum(mesh.point_marker.==0)
             #this.n_node_dirichlet = []
             #this.n_node_neumann = []
-            this.n_node_per_edge = 0
+            this.n_node_per_edge = 2
             this.n_node_per_elem = 3
             
             this.ind_node_boundary = find(mesh.point_marker.==1)
@@ -90,7 +89,7 @@ type Dof_Pk
             
             # ----------------------------------------
             # Edge infos
-            this.n_edge = mesh.n_edges
+            this.n_edge = mesh.n_edge
             this.n_edge_boundary = sum(mesh.edge_marker.==1)
             this.n_edge_interior = sum(mesh.edge_marker.==0)
             #this.n_edge_dirichlet = []
@@ -112,15 +111,27 @@ type Dof_Pk
             
             this.ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,2).!=0)
             this.ind_elem_interior = find(sum(mesh.cell_neighbor.==0,2).==0)
-            # ----------------------------------------            
+            # ----------------------------------------
+
+            
+            # ----------------------------------------
+            # Topology info
+            this.is_periodic = false
+            this.n_true_dof = mesh.n_point
+            # ----------------------------------------
             
             
             # ----------------------------------------
-            this.get_dofs = function(ind_c)
+            # P1 version
+            this.get_dof_elem = function(ind_c)
+                dofs = mesh.get_cell(ind_c)
                 
-                ind_c = vec(collect(ind_c))
+                return dofs
+            end # end function
 
-                error("Not implemented yet.")
+
+            this.get_dof_edge = function(ind_e)
+                dofs = mesh.get_edge(ind_e)
                 
                 return dofs
             end # end function
