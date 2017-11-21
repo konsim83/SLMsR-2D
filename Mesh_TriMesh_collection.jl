@@ -2,13 +2,13 @@
 # multiscale and multigrid)
 type TriMesh_collection
 
-    mesh_c :: TriMesh
+    mesh :: TriMesh
     mesh_f :: Array{TriMesh, 1}
     
     function TriMesh_collection(mesh :: TriMesh, mesh_simplex :: TriMesh)
         this = new()
 
-        this.mesh_c = mesh
+        this.mesh = mesh
         this.mesh_f = Array(TriMesh, mesh.n_cell)
 
         point_mapped = map_ref_point(mesh, mesh_simplex.point, 1:mesh.n_cell)
@@ -22,12 +22,11 @@ type TriMesh_collection
     function TriMesh_collection(mesh :: TriMesh, n_segs_per_edge_f :: Int64)
         this = new()
 
-        this.mesh_c = mesh
+        this.mesh = mesh
         this.mesh_f = Array(TriMesh, mesh.n_cell)
 
         point = mesh.get_point(mesh.get_cell(1:mesh.n_cell))
         for i=1:mesh.n_cell
-            display(point[i,:,:])
             this.mesh_f[i] = mesh_triangle_uniform_edges(point[i,:,:], n_segs_per_edge_f)
         end
 

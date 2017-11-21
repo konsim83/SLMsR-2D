@@ -1,9 +1,9 @@
-type Dof_Pk
+type Dof_Pk <: Dof
     
     # ----------------------------------------
     # General infos
     FEM_order :: Int64
-    FEM_info :: Int64
+    FEM_info :: String
     # ----------------------------------------
 
 
@@ -56,7 +56,8 @@ type Dof_Pk
     # ----------------------------------------
 
 
-    get_dofs :: Function
+    get_dof_elem :: Function
+    get_dof_edge :: Function
 
     function Dof_Pk(mesh :: Mesh.TriMesh,
                     ref_el :: RefEl_Pk)
@@ -65,7 +66,7 @@ type Dof_Pk
             
         # ----------------------------------------
         this.FEM_order = ref_el.order
-        this.FEM_order = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $ref_el.order."
+        this.FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(ref_el.order)."
         # ----------------------------------------
 
         if ref_el.order==1

@@ -19,7 +19,7 @@ end
 
 
 
-function plot_mesh_collection(M :: TriMesh_collection, ind_c = 1:M.mesh_c.n_cell)
+function plot_mesh_collection(M :: TriMesh_collection, ind_c = 1:M.mesh.n_cell)
 
     fig = matplotlib[:pyplot][:figure]("2D Mesh collection Plot", figsize = (10,10))
     
@@ -27,7 +27,7 @@ function plot_mesh_collection(M :: TriMesh_collection, ind_c = 1:M.mesh_c.n_cell
     ax[:set_aspect]("equal")
     
     # Connectivity list -1 for Python
-    tri = ax[:triplot](M.mesh_c.point[:,1], M.mesh_c.point[:,2], M.mesh_c.cell - 1 )
+    tri = ax[:triplot](M.mesh.point[:,1], M.mesh.point[:,2], M.mesh.cell - 1 )
     setp(tri, linestyle = "-",
          marker = "None",
          linewidth = 3,

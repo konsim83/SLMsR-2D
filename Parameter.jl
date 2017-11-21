@@ -1,0 +1,87 @@
+module Parameter
+
+export Parameter_FEM, Parameter_MsFEM
+
+type Parameter_FEM
+    """
+    Parameter type for standard FEM.
+    """
+    
+    n_steps :: Int64
+    n_elem :: Int64
+    n_order_FEM :: Int64
+    n_order_quad :: Int64
+
+    T :: Float64
+    dt :: Float64
+
+    time_step_method :: Int64
+
+    function Parameter_FEM(T :: Float64,
+                           dt :: Float64,
+                	   n_elem :: Int64,
+                           n_order_FEM :: Int64,
+                           n_order_quad :: Int64,
+                	   time_step_method :: Int64)
+        
+	this = new()
+
+	this.n_order_FEM = n_order_FEM
+	this.n_elem = n_elem
+	this.n_order_quad = n_order_quad
+        this.n_steps = round(floor( T/dt ))
+        
+	this.dt = dt
+
+	this.T = this.n_steps * dt
+
+	this.time_step_method = time_step_method
+
+	return this
+    end # end constructor
+end # end type
+
+
+# -----------------------------------------------------------------------------
+
+
+type Parameter_MsFEM
+    """
+    Parameter type for MsFEM.
+    """
+    
+    n_steps :: Int64
+    n_elem :: Int64
+    n_order_FEM :: Int64
+    n_order_quad :: Int64
+
+    T :: Float64
+    dt :: Float64
+
+    time_step_method :: Int64
+
+    function Parameter_MsFEM(T :: Float64,
+                             dt :: Float64,
+                	     n_elem :: Int64,
+                             n_order_FEM :: Int64,
+                             n_order_quad :: Int64,
+                	     time_step_method :: Int64)
+        
+	this = new()
+
+	this.n_order_FEM = n_order_FEM
+	this.n_elem = n_elem
+	this.n_order_quad = n_order_quad
+        this.n_steps = round(floor( T/dt ))
+        
+	this.dt = dt
+
+	this.T = n_steps * dt
+
+	this.time_step_method = time_step_method
+
+	return this
+    end # end constructor
+end # end type
+
+end # end module

@@ -93,6 +93,7 @@ type TriMesh
         end # end get_cell
 
         this.get_edge = function( ind_e )
+            ind_e = vec(collect(ind_e))
             
             return this.edge[ind_e,:]
         end # end get_edge
@@ -149,6 +150,7 @@ type TriMesh
         end # end get_cell
 
         this.get_edge = function( ind_e )
+            ind_e = vec(collect(ind_e))
             
             return this.edge[ind_e,:]
         end # end get_edge

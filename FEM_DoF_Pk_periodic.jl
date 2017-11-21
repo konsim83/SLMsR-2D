@@ -1,4 +1,4 @@
-type Dof_Pk_periodic_square
+type Dof_Pk_periodic_square <: Dof
 
     mesh :: Mesh.TriMesh
     
@@ -63,8 +63,8 @@ type Dof_Pk_periodic_square
     map_ind_dof2mesh :: Function
     # ----------------------------------------
 
-
-    get_dofs :: Function
+    get_dof_elem :: Function
+    get_dof_edge :: Function
 
     function Dof_Pk_periodic_square(mesh :: Mesh.TriMesh,
                              ref_el :: RefEl_Pk)
@@ -73,7 +73,7 @@ type Dof_Pk_periodic_square
             
         # ----------------------------------------
         this.FEM_order = ref_el.order
-        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $ref_el.order."
+        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $(ref_el.order)."
         # ----------------------------------------
 
         if ref_el.order==1
@@ -185,12 +185,24 @@ type Dof_Pk_periodic_square
             
             
             # ----------------------------------------
-            this.get_dofs = function(ind_c)
+            this.get_dof_elem = function(ind_c)
                 ind_c = vec(collect(ind_c))
 
                 # Put a filter before mesh indices to translate to dof
                 # indices
-                dofs = this.map_vec_ind_mesh2dof[this.mesh.cell[ind_c,:]]
+                dofs = this.map_vec_ind_mesh2dof[this.mesh.get_cell(ind_c)]
+            
+                return dofs
+            end # end function
+
+
+            # ----------------------------------------
+            this.get_dof_edge = function(ind_e)
+                ind_c = vec(collect(ind_e))
+
+                # Put a filter before mesh indices to translate to dof
+                # indices
+                dofs = this.map_vec_ind_mesh2dof[this.mesh.get_edge(ind_c)]
             
                 return dofs
             end # end function
