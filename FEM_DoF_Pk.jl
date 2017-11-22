@@ -12,15 +12,15 @@ type Dof_Pk <: Dof
     n_node :: Int64
     n_node_boundary :: Int64
     n_node_interior :: Int64
-    #n_node_dirichlet :: Int64
-    #n_node_neumann :: Int64
+    n_node_dirichlet :: Int64
+    n_node_neumann :: Int64
     n_node_per_edge :: Int64
     n_node_per_elem :: Int64
 
     ind_node_boundary :: Array{Int64,1}
     ind_node_interior :: Array{Int64,1}
-    #ind_node_dirichlet :: Array{Int64,1}
-    #ind_node_neumann :: Array{Int64,1}
+    ind_node_dirichlet :: Array{Int64,1}
+    ind_node_neumann :: Array{Int64,1}
     # ----------------------------------------
 
 
@@ -65,26 +65,26 @@ type Dof_Pk <: Dof
         this = new()
             
         # ----------------------------------------
-        this.FEM_order = ref_el.order
-        this.FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(ref_el.order)."
+        this.FEM_order = ref_el.n_order
+        this.FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(ref_el.n_order)."
         # ----------------------------------------
 
-        if ref_el.order==1
+        if ref_el.n_order==1
             # ----------------------------------------------------------------------------------------------------------------------------------------
             # ----------------------------------------
             # Node infos
             this.n_node = mesh.n_point
             this.n_node_boundary = sum(mesh.point_marker.==1)
             this.n_node_interior = sum(mesh.point_marker.==0)
-            #this.n_node_dirichlet = []
-            #this.n_node_neumann = []
+            this.n_node_dirichlet = this.n_node_boundary
+            this.n_node_neumann = 0
             this.n_node_per_edge = 2
             this.n_node_per_elem = 3
             
             this.ind_node_boundary = find(mesh.point_marker.==1)
             this.ind_node_interior = find(mesh.point_marker.==0)
-            #this.ind_node_dirichlet  = []
-            #this.ind_node_neumann  = []
+            this.ind_node_dirichlet  = find(mesh.point_marker.==1)
+            this.ind_node_neumann  = []
             # ----------------------------------------
             
             
@@ -139,7 +139,7 @@ type Dof_Pk <: Dof
             # ----------------------------------------
             # ----------------------------------------------------------------------------------------------------------------------------------------
 
-        elseif ref_el.order==2
+        elseif ref_el.n_order==2
             error("Order 2 DoF not implemented yet.")
         end # end if order
         

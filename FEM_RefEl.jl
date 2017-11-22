@@ -1,7 +1,7 @@
-type RefEl_Pk
+type RefEl_Pk <: RefEl
     info :: String
 
-    order :: Int64
+    n_order :: Int64
     
     node :: Array{Float64, 2}
     n_node :: Int64
@@ -11,14 +11,14 @@ type RefEl_Pk
     eval :: Function
     eval_grad :: Function
     
-    function RefEl_Pk(order :: Int64)
+    function RefEl_Pk(n_order :: Int64)
         this = new()
 
-        this.info = "Triangular Lagrange element of type P$order."
+        this.info = "Triangular Lagrange element of type P$n_order."
 
-        if order==1
+        if n_order==1
             # -------   P1   -------
-            this.order = 1
+            this.n_order = 1
             
             this.node = [0 0 ; 1 0 ; 0 1]
             this.n_node = 3
@@ -39,9 +39,9 @@ type RefEl_Pk
                 return value
             end
                 
-        elseif order==2
+        elseif n_order==2
                 # -------   P2   -------
-                this.order = 2
+                this.n_order = 2
                 
                 this.node = [0 0 ; 1 0 ; 0 1 ; 0.5 0 ; 0.5 0.5 ; 0 0.5]
                 this.n_node = 6

@@ -1,0 +1,22 @@
+module Time_integrator
+
+abstract Time_stepper
+
+type Implicit_Euler <: Time_stepper
+
+    info :: String
+    
+    dt :: Float64
+    
+    
+    function Implicit_Euler(par :: Parameter)
+        this = new()
+
+        
+        
+        return this
+    end
+    
+end
+
+end

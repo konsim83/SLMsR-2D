@@ -1,4 +1,4 @@
-type Solution_FEM
+type Solution_FEM <: Solution
     """
     Solution type for standard FEM.
     """
@@ -22,7 +22,7 @@ end # end type
 # ----------------------------------------------------------------------------------------
 
 
-type Solution_MsFEM
+type Solution_MsFEM <: Solution
     """
     Solution type for multiscale FEM.
     """
@@ -35,8 +35,8 @@ type Solution_MsFEM
     phi_2 :: Array{Array{Float64,2},1}
     phi_3 :: Array{Array{Float64,2},1}
 
-    function Solution_FEM(dof :: Dof,
-                          par :: Parameter_FEM)
+    function Solution_MsFEM(dof :: Dof_square,
+                          par :: Parameter_MsFEM)
         
         this = new()
 

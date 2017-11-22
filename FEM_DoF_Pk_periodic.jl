@@ -1,4 +1,4 @@
-type Dof_Pk_periodic_square <: Dof
+type Dof_Pk_periodic_square <: Dof_square
 
     mesh :: Mesh.TriMesh
     
@@ -14,15 +14,15 @@ type Dof_Pk_periodic_square <: Dof
     n_node :: Int64
     n_node_boundary :: Int64
     n_node_interior :: Int64
-    #n_node_dirichlet :: Int64
-    #n_node_neumann :: Int64
+    n_node_dirichlet :: Int64
+    n_node_neumann :: Int64
     n_node_per_edge :: Int64
     n_node_per_elem :: Int64
 
     ind_node_boundary :: Array{Int64,1}
     ind_node_interior :: Array{Int64,1}
-    #ind_node_dirichlet :: Array{Int64,1}
-    #ind_node_neumann :: Array{Int64,1}
+    ind_node_dirichlet :: Array{Int64,1}
+    ind_node_neumann :: Array{Int64,1}
     # ----------------------------------------
 
 
@@ -72,11 +72,11 @@ type Dof_Pk_periodic_square <: Dof
         this = new()
             
         # ----------------------------------------
-        this.FEM_order = ref_el.order
-        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $(ref_el.order)."
+        this.FEM_order = ref_el.n_order
+        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $(ref_el.n_order)."
         # ----------------------------------------
 
-        if ref_el.order==1
+        if ref_el.n_order==1
             # ----------------------------------------------------------------------------------------------------------------------------------------
 
             this.mesh = mesh
@@ -86,15 +86,15 @@ type Dof_Pk_periodic_square <: Dof
             this.n_node = mesh.n_point
             this.n_node_boundary = 0
             this.n_node_interior = mesh.n_point
-            #this.n_node_dirichlet = []
-            #this.n_node_neumann = []
+            this.n_node_dirichlet = 0
+            this.n_node_neumann = 0
             this.n_node_per_edge = 2
             this.n_node_per_elem = 3
             
             this.ind_node_boundary = []
             this.ind_node_interior = collect(1:mesh.n_point)
-            #this.ind_node_dirichlet  = []
-            #this.ind_node_neumann = []
+            this.ind_node_dirichlet  = []
+            this.ind_node_neumann = []
             # ----------------------------------------
             
             
@@ -209,7 +209,7 @@ type Dof_Pk_periodic_square <: Dof
             # ----------------------------------------
             # ----------------------------------------------------------------------------------------------------------------------------------------
                 
-        elseif ref_el.order==2
+        elseif ref_el.n_order==2
             error("Order 2 DoF not implemented yet (periodic setting).")
         end # end if order
         

@@ -6,3 +6,5 @@ v0.6.
 
 """
 abstract Dof
+
+abstract Dof_square <: Dof
