@@ -15,4 +15,9 @@ include("FEM_DoF_Pk_periodic.jl")
 include("FEM_Solution_abstract.jl")
 include("FEM_Solution.jl")
 
+
+# -------   Setup system for time steps   -------
+include("FEM_Setup_system_abstract.jl")
+include("FEM_Setup_system.jl")
+
 end # end module

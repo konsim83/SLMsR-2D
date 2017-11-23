@@ -22,6 +22,7 @@ type Dof_Pk_periodic_square <: Dof_square
     ind_node_boundary :: Array{Int64,1}
     ind_node_interior :: Array{Int64,1}
     ind_node_dirichlet :: Array{Int64,1}
+    ind_node_non_dirichlet :: Array{Int64,1}
     ind_node_neumann :: Array{Int64,1}
     # ----------------------------------------
 
@@ -59,7 +60,6 @@ type Dof_Pk_periodic_square <: Dof_square
     map_vec_ind_mesh2dof :: Array{Int64,1}
     #map_vec_ind_dof2mesh :: Array{Int64,1}
 
-    #map_ind_mesh2dof :: Function
     map_ind_dof2mesh :: Function
     # ----------------------------------------
 
@@ -94,6 +94,7 @@ type Dof_Pk_periodic_square <: Dof_square
             this.ind_node_boundary = []
             this.ind_node_interior = collect(1:mesh.n_point)
             this.ind_node_dirichlet  = []
+            this.ind_node_non_dirichlet = setdiff(1:this.n_node, this.ind_node_dirichlet)
             this.ind_node_neumann = []
             # ----------------------------------------
             
@@ -176,9 +177,10 @@ type Dof_Pk_periodic_square <: Dof_square
             
             this.map_ind_dof2mesh = function(vec_dof :: Array{Float64})
                 # Map a vector in terms of degrees of freedom to a
-                # vector on the actual mesh. Tis is only interesting
+                # vector on the actual mesh. This is only interesting
                 # for back mapping. The map mesh->dof can be found in
                 # the function get_dof()
+                error("Check the mappings!!!")
                 vec_mesh = vec_dof[this.map_vec_ind_mesh2dof[sortperm(this.map_vec_ind_mesh2dof)]][sortperm(sortperm(this.map_vec_ind_mesh2dof))]
             end
             # ----------------------------------------

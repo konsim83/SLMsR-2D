@@ -22,7 +22,8 @@ function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem)
                    dof,
                    par,
                    problem,
-                   solution.u)
+                   solution,
+                   time_stepper)
     
     return solution, mesh
 end

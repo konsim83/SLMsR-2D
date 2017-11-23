@@ -20,6 +20,7 @@ type Dof_Pk <: Dof
     ind_node_boundary :: Array{Int64,1}
     ind_node_interior :: Array{Int64,1}
     ind_node_dirichlet :: Array{Int64,1}
+    ind_node_non_dirichlet :: Array{Int64,1}
     ind_node_neumann :: Array{Int64,1}
     # ----------------------------------------
 
@@ -53,8 +54,12 @@ type Dof_Pk <: Dof
     # Topology info
     is_periodic :: Bool
     n_true_dof :: Int64
-    # ----------------------------------------
 
+    map_vec_ind_mesh2dof :: Array{Int64,1}
+    #map_vec_ind_dof2mesh :: Array{Int64,1}
+
+    map_ind_dof2mesh :: Function
+    # ----------------------------------------
 
     get_dof_elem :: Function
     get_dof_edge :: Function
@@ -84,6 +89,7 @@ type Dof_Pk <: Dof
             this.ind_node_boundary = find(mesh.point_marker.==1)
             this.ind_node_interior = find(mesh.point_marker.==0)
             this.ind_node_dirichlet  = find(mesh.point_marker.==1)
+            this.ind_node_non_dirichlet = setdiff(1:this.n_node, this.ind_node_dirichlet)
             this.ind_node_neumann  = []
             # ----------------------------------------
             
@@ -119,6 +125,17 @@ type Dof_Pk <: Dof
             # Topology info
             this.is_periodic = false
             this.n_true_dof = mesh.n_point
+
+            this.map_vec_ind_mesh2dof = collect(1:this.n_node)
+            #this.map_vec_ind_dof2mesh :: Array{Int64,1}
+
+            this.map_ind_dof2mesh = function(vec_dof :: Array{Float64})
+                # Map a vector in terms of degrees of freedom to a
+                # vector on the actual mesh. This is only interesting
+                # for back mapping. Here the mapping is trivial
+                
+                return vec_dof
+            end
             # ----------------------------------------
             
             
