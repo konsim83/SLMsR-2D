@@ -20,19 +20,20 @@ function solve_problem!(mesh :: Mesh.TriMesh,
     """
 
     # Setup initial data
-    solution.u[:,1] = problem.u_init(mesh.point)
+    solution.u[:,1] = Problem.u_init(problem, mesh.point)
 
     if typeof(time_stepper)==Implicit_Euler
         # Make step from k_time to k_time+1
         for k_time=1:par.n_steps
-            system_data = setup_system_ADE_implEuler(solution,
+            system_data = Setup_system_ADE_implEuler(solution,
                                                      mesh,
                                                      dof,
                                                      ref_el,
                                                      par,
                                                      problem,
                                                      k_time)
-            time_stepper.make_step!dof, system_data, solution)
+            
+            time_stepper.make_step!(dof, system_data, solution)
         end # end for
     end # end for
     

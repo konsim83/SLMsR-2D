@@ -1,6 +1,4 @@
-type Dof_Pk_periodic_square <: Dof_square
-
-    mesh :: Mesh.TriMesh
+type Dof_Pk_periodic_square{FEM_order} <: Dof_square
     
     # ----------------------------------------
     # General infos
@@ -59,24 +57,18 @@ type Dof_Pk_periodic_square <: Dof_square
 
     map_vec_ind_mesh2dof :: Array{Int64,1}
     #map_vec_ind_dof2mesh :: Array{Int64,1}
-
-    map_ind_dof2mesh :: Function
     # ----------------------------------------
 
-    get_dof_elem :: Function
-    get_dof_edge :: Function
-
-    function Dof_Pk_periodic_square(mesh :: Mesh.TriMesh,
-                             ref_el :: RefEl_Pk)
+    function Dof_Pk_periodic_square(mesh :: Mesh.TriMesh)
         
         this = new()
             
         # ----------------------------------------
-        this.FEM_order = ref_el.n_order
-        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $(ref_el.n_order)."
+        this.FEM_order = FEM_order
+        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $(FEM_order)."
         # ----------------------------------------
 
-        if ref_el.n_order==1
+        if FEM_order==1
             # ----------------------------------------------------------------------------------------------------------------------------------------
 
             this.mesh = mesh
@@ -174,47 +166,83 @@ type Dof_Pk_periodic_square <: Dof_square
             end
 
             this.map_vec_ind_mesh2dof[n_node_boundary+1:end] = collect(   ((n_node_boundary + 1):(mesh.n_point)) - 3 - 0.5*(n_node_boundary - 4)  )
-            
-            this.map_ind_dof2mesh = function(vec_dof :: Array{Float64})
-                # Map a vector in terms of degrees of freedom to a
-                # vector on the actual mesh. This is only interesting
-                # for back mapping. The map mesh->dof can be found in
-                # the function get_dof()
-                error("Check the mappings!!!")
-                vec_mesh = vec_dof[this.map_vec_ind_mesh2dof[sortperm(this.map_vec_ind_mesh2dof)]][sortperm(sortperm(this.map_vec_ind_mesh2dof))]
-            end
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            this.get_dof_elem = function(ind_c)
-                ind_c = vec(collect(ind_c))
-
-                # Put a filter before mesh indices to translate to dof
-                # indices
-                dofs = this.map_vec_ind_mesh2dof[this.mesh.get_cell(ind_c)]
-            
-                return dofs
-            end # end function
-
-
-            # ----------------------------------------
-            this.get_dof_edge = function(ind_e)
-                ind_c = vec(collect(ind_e))
-
-                # Put a filter before mesh indices to translate to dof
-                # indices
-                dofs = this.map_vec_ind_mesh2dof[this.mesh.get_edge(ind_c)]
-            
-                return dofs
-            end # end function
             # ----------------------------------------
             # ----------------------------------------------------------------------------------------------------------------------------------------
                 
-        elseif ref_el.n_order==2
+        elseif FEM_order==2
             error("Order 2 DoF not implemented yet (periodic setting).")
         end # end if order
         
         return this    
     end # end constructor
 end # end type
+
+
+
+# -------------------------------------------------------------------------------------------------------
+# -----------------------------   Functions on Dof_Pk_periodic   -----------------------------
+# -------------------------------------------------------------------------------------------------------
+
+# ----------------------------------------
+function map_ind_dof2mesh(dof :: Dof_Pk_periodic_square{1}, vec_dof :: Array{Float64})
+
+    """
+
+    Map a vector in terms of degrees of freedom to a vector on the
+    actual mesh. This is only interesting for back mapping. The map
+    mesh->dof can be found in the function get_dof()
+
+    """
+
+    error("Check the mappings!!!")
+
+    vec_mesh = vec_dof[dof.map_vec_ind_mesh2dof[sortperm(dof.map_vec_ind_mesh2dof)]][sortperm(sortperm(dof.map_vec_ind_mesh2dof))]
+
+    return vec_mesh
+end
+# ----------------------------------------
+
+
+# ----------------------------------------
+function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_c :: Array{Int64,1})
+    # Put a filter before mesh indices to translate to dof
+    # indices
+    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, ind_c)]
+    
+    return dofs
+end # end function
+
+function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_c :: UnitRange{Int64})
+    ind_c = vec(collect(ind_c))
+    
+    # Put a filter before mesh indices to translate to dof
+    # indices
+    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, ind_c)]
+    
+    return dofs
+end # end function
+# ----------------------------------------
+
+
+# ----------------------------------------
+function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_e :: Array{Int64,1})    
+    # Put a filter before mesh indices to translate to dof
+    # indices
+    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_edge(mesh, ind_c)]
+    
+    return dofs
+end # end function
+
+function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_e :: UnitRange{Int64})
+    ind_c = vec(collect(ind_e))
+    
+    # Put a filter before mesh indices to translate to dof
+    # indices
+    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_edge(mesh, ind_c)]
+    
+    return dofs
+end # end function
+# ----------------------------------------
+
+# -------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------

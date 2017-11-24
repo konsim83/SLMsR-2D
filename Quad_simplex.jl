@@ -1,9 +1,9 @@
-immutable Quad_simplex
+type Quad_simplex
 
     order :: Int64
 
     weight :: Array{Float64, 1}
-    point:: Array{Float64, 1}
+    point:: Array{Float64, 2}
 
     function Quad_simplex(number :: Int64)
         this = new()

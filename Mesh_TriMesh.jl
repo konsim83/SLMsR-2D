@@ -19,10 +19,6 @@ type TriMesh
     T_ref2cell :: Array{Float64,3}
     T_cell2ref :: Array{Float64,3}
 
-    get_point :: Function
-    get_edge :: Function
-    get_cell :: Function
-
     mesh_info :: String
     
     # ---------------------------------------------------------------------------------------------
@@ -56,9 +52,9 @@ type TriMesh
             this.cell_neighbor[i,2] = unsafe_load(mesh.neighborlist, 3*i-1);
             this.cell_neighbor[i,3] = unsafe_load(mesh.neighborlist, 3*i);
             
-            # Extended transformation matrices for mapping from an to the reference cell K = [(0,0), (1,0), (0,1)]
+            # Extended transformation matrices for mapping from and to the reference cell K = [(0,0), (1,0), (0,1)]
             this.T_ref2cell[:,:,i] = [   this.point[this.cell[i,2]+1,:]-this.point[this.cell[i,1]+1,:]   this.point[this.cell[i,3]+1,:]-this.point[this.cell[i,1]+1,:]   this.point[this.cell[i,1]+1,:]   ]
-            this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  this.point[this.cell[i,1]+1,:]   ]
+            this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  -this.point[this.cell[i,1]+1,:]   ]
         end
         this.cell_neighbor = this.cell_neighbor + 1;
         this.cell = this.cell + 1;
@@ -84,24 +80,6 @@ type TriMesh
             this.segment_marker[i] = unsafe_load(mesh.segmentmarkerlist, i);
         end
         this.segment = this.segment + 1;
-        
-
-        this.get_cell = function( ind_c )
-            ind_c = vec(collect(ind_c))
-            
-            return this.cell[ind_c,:]
-        end # end get_cell
-
-        this.get_edge = function( ind_e )
-            ind_e = vec(collect(ind_e))
-            
-            return this.edge[ind_e,:]
-        end # end get_edge
-            
-        this.get_point = function( ind_p )
-            
-            return this.point[ind_p,:]
-        end # end get_point
         
         return this
     end # end constructor
@@ -143,24 +121,81 @@ type TriMesh
         this.segment = mesh.segment
         this.segment_marker = mesh.segment_marker
 
-        this.get_cell = function( ind_c )
-            ind_c = vec(collect(ind_c))
-            
-            return this.cell[ind_c,:]
-        end # end get_cell
-
-        this.get_edge = function( ind_e )
-            ind_e = vec(collect(ind_e))
-            
-            return this.edge[ind_e,:]
-        end # end get_edge
-            
-        this.get_point = function( ind_p )
-            
-            return this.point[ind_p,:]
-        end # end get_point
-        
         return this
     end # end constructor
     # ---------------------------------------------------------------------------------------------
 end # end type
+
+
+
+# --------------------------------------------------------------------------------------------
+# -----------------------------   Functions on TriMesh   -----------------------------
+# --------------------------------------------------------------------------------------------
+
+# -------   Three versions of get_cell   -------
+function get_cell( m :: TriMesh, ind_c :: UnitRange{Int64} )
+    ind_c = vec(collect(ind_c))
+    
+    return m.cell[ind_c,:]
+end # end get_cell
+
+
+function get_cell( m :: TriMesh, ind_c :: Array{Float64,1} )
+    ind_c = vec(collect(ind_c))
+    
+    return m.cell[ind_c,:]
+end # end get_cell
+# -------   Three versions of get_cell   -------
+
+
+
+# -------   Three versions of get_edge   -------
+function get_edge( m :: TriMesh, ind_e :: UnitRange{Int64} )
+    ind_e = vec(collect(ind_e))
+    
+    return m.edge[ind_e,:]
+end # end get_edge
+
+
+function get_edge( m :: TriMesh, ind_e :: Array{Float64,1} )
+    ind_e = vec(collect(ind_e))
+    
+    return m.edge[ind_e,:]
+end # end get_edge
+# -------   Three versions of get_edge   -------
+
+
+
+# -------   Three versions of get_point   -------
+function get_point( m :: TriMesh, ind_p :: UnitRange{Int64} )
+    """ Version for type UnitRange """
+
+    ind_p = vec(collect(ind_p))
+    
+    return m.point[ind_p,:]
+end # end get_point
+
+
+function get_point( m :: TriMesh, ind_p :: Array{Int64,1})
+    """ Version for type Vector """
+            
+    return m.point[ind_p,:]
+end # end get_point
+
+
+function get_point( m :: TriMesh, ind_p :: Array{Int64,2})
+    """
+
+    Version for connectivity list input. The dimensions are
+    (n_point_per_cell, 2, n_cell)
+    
+    """
+    
+    P = [reshape(m.point[ind_p,1], size(ind_p,2), 1, size(ind_p,1))   reshape(m.point[ind_p,2], size(ind_p,2), 1, size(ind_p,1))]
+    
+    return P
+end # end get_point
+# -------   Three versions of get_point   -------
+
+# --------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------

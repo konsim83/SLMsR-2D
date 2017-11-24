@@ -1,6 +1,6 @@
 module FEM
 
-using Mesh, Parameter
+using Mesh, Parameter, Problem
 
 # -------   Reference elements   -------
 include("FEM_RefEl_abstract.jl")

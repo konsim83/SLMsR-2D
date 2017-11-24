@@ -1,4 +1,4 @@
-type Dof_Pk <: Dof
+type Dof_Pk{FEM_order} <: Dof
     
     # ----------------------------------------
     # General infos
@@ -57,24 +57,19 @@ type Dof_Pk <: Dof
 
     map_vec_ind_mesh2dof :: Array{Int64,1}
     #map_vec_ind_dof2mesh :: Array{Int64,1}
-
-    map_ind_dof2mesh :: Function
     # ----------------------------------------
+    
 
-    get_dof_elem :: Function
-    get_dof_edge :: Function
-
-    function Dof_Pk(mesh :: Mesh.TriMesh,
-                    ref_el :: RefEl_Pk)
+    function Dof_Pk(mesh :: Mesh.TriMesh)
         
         this = new()
             
         # ----------------------------------------
-        this.FEM_order = ref_el.n_order
-        this.FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(ref_el.n_order)."
+        this.FEM_order = FEM_order 
+        this.FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(FEM_order)."
         # ----------------------------------------
 
-        if ref_el.n_order==1
+        if FEM_order==1
             # ----------------------------------------------------------------------------------------------------------------------------------------
             # ----------------------------------------
             # Node infos
@@ -128,38 +123,62 @@ type Dof_Pk <: Dof
 
             this.map_vec_ind_mesh2dof = collect(1:this.n_node)
             #this.map_vec_ind_dof2mesh :: Array{Int64,1}
-
-            this.map_ind_dof2mesh = function(vec_dof :: Array{Float64})
-                # Map a vector in terms of degrees of freedom to a
-                # vector on the actual mesh. This is only interesting
-                # for back mapping. Here the mapping is trivial
-                
-                return vec_dof
-            end
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            # P1 version
-            this.get_dof_elem = function(ind_c)
-                dofs = mesh.get_cell(ind_c)
-                
-                return dofs
-            end # end function
-
-
-            this.get_dof_edge = function(ind_e)
-                dofs = mesh.get_edge(ind_e)
-                
-                return dofs
-            end # end function
             # ----------------------------------------
             # ----------------------------------------------------------------------------------------------------------------------------------------
 
-        elseif ref_el.n_order==2
+        elseif FEM_order==2
             error("Order 2 DoF not implemented yet.")
         end # end if order
         
         return this
     end # end constructor
 end # end type
+
+
+
+# -------------------------------------------------------------------------------------------
+# -----------------------------   Functions on Dof_Pk   -----------------------------
+# -------------------------------------------------------------------------------------------
+
+# ----------------------------------------
+function map_ind_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+    """
+
+    Map a vector in terms of degrees of freedom to a vector on the
+    actual mesh. This is only interesting for back mapping. Here
+    the mapping is trivial
+
+    """
+
+    return vec_dof
+end
+# ----------------------------------------
+
+
+# ----------------------------------------
+function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_c :: Array{Int64,1})
+    
+    return Mesh.get_cell(mesh, ind_c)
+end # end function
+
+function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_c :: UnitRange{Int64})
+    
+    return Mesh.get_cell(mesh, ind_c)
+end # end function
+# ----------------------------------------
+
+
+# ----------------------------------------
+function get_dof_edge(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_e :: Array{Int64,1})
+    
+    return Mesh.get_edge(mesh, ind_e)
+end # end function
+
+function get_dof_edge(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_e :: UnitRange{Int64})
+    
+    return Mesh.get_edge(mesh, ind_e)
+end # end function
+# ----------------------------------------
+
+# -------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------
