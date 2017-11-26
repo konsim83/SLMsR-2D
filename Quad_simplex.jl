@@ -11,7 +11,7 @@ type Quad_simplex
         if number==1
 
             this.weight = [0.5]
-	    this.point = [1/3 ; 1/3]
+	    this.point = [1/3  1/3]
 	    this.order = 1
             
         elseif number==2

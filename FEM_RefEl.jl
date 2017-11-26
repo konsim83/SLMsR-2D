@@ -50,10 +50,22 @@ end # end type
 
 
 # ---------------------------------------------
+function eval(ref_el :: RefEl_Pk{1}, p :: Array{Float64, 1})
+    
+            
+    return eval(ref_el, p')
+end
+
 function eval(ref_el :: RefEl_Pk{1}, p :: Array{Float64, 2})
     value  = [p ones(size(p,1))] * ref_el.coeff
             
     return value
+end
+
+function eval_grad(ref_el :: RefEl_Pk{1}, p :: Array{Float64, 1})
+    
+    
+    return eval_grad(ref_el, p')
 end
 
 function eval_grad(ref_el :: RefEl_Pk{1}, p :: Array{Float64, 2})
@@ -65,10 +77,20 @@ end
 
 
 # ---------------------------------------------
+function eval(ref_el :: RefEl_Pk{2}, p :: Array{Float64, 1})
+    
+    return eval(ref_el, p')
+end
+
 function eval(ref_el :: RefEl_Pk{2}, p :: Array{Float64, 2})
     value  = [p[:,1].^2   p[:,2].^2   p[:,1].*p[:,2]   p   ones(size(p,1))] * ref_el.coeff
     
     return value
+end
+
+function eval_grad(ref_el :: RefEl_Pk{2}, p :: Array{Float64, 1})
+                
+    return eval_grad(ref_el, p')
 end
 
 function eval_grad(ref_el :: RefEl_Pk{2}, p :: Array{Float64, 2})

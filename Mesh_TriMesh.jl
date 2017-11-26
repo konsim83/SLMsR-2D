@@ -140,7 +140,7 @@ function get_cell( m :: TriMesh, ind_c :: UnitRange{Int64} )
 end # end get_cell
 
 
-function get_cell( m :: TriMesh, ind_c :: Array{Float64,1} )
+function get_cell( m :: TriMesh, ind_c :: Array{Int64,1} )
     ind_c = vec(collect(ind_c))
     
     return m.cell[ind_c,:]
@@ -157,7 +157,7 @@ function get_edge( m :: TriMesh, ind_e :: UnitRange{Int64} )
 end # end get_edge
 
 
-function get_edge( m :: TriMesh, ind_e :: Array{Float64,1} )
+function get_edge( m :: TriMesh, ind_e :: Array{Int64,1} )
     ind_e = vec(collect(ind_e))
     
     return m.edge[ind_e,:]

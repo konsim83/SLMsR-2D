@@ -45,15 +45,38 @@ function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
     
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
         
-    a_11 = 0.1 * ones(1, 1, size(x,1))
-    a_12 = zeros(1, 1, size(x,1))
-    a_21 = zeros(1, 1, size(x,1))
-    a_22 = 0.1 * ones(1, 1, size(x,1))
-            
-    out = [a_11 a_12 ; a_21 a_22]
+    out = Array{Float64}(size(x,1), 2, 2)
+    
+    out[:,1,1] = 0.1
+    out[:,2,1] = 0.0
+    out[:,1,2] = 0.0
+    out[:,2,2] = 0.2 
     
     return out
 end
+
+
+function diffusion(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+    """
+
+    Diffusion is represented by a positive 2-by-2 tensor.
+
+    """
+
+    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
+        
+    out = Array{Float64}(size(x,1), 2, 2, size(x,3))
+
+    for i=1:size(x,3)
+        out[:,:,:,i] = diffusion(problem, t, x[:,:,i])
+    end
+    
+    return out
+    
+end
+
+
+# --------------------------------------------------------------------
 
 
 function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
@@ -74,6 +97,31 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
     return out
 end
 
+
+function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+    """
+
+    Velocity is represented by a 2-vector. The solenoidal part can be
+    represented by a stream function.
+
+    """
+
+    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
+        
+    out = Array{Float64, 3}(size(x,1), 2, size(x,3))
+
+    for i=1:size(x,3)
+        out[:,:,i] = velocity(problem, t, x[:,:,i])
+    end
+    
+    return out
+    
+end
+
+
+# --------------------------------------------------------------------
+
+
 function u_init(problem :: Gaussian, x :: Array{Float64,2})
                 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
@@ -90,7 +138,7 @@ function u_init(problem :: Gaussian, x :: Array{Float64,3})
     out = Array{Float64, 3}(size(x,1), 1, size(x,3))
 
     for i=1:size(x,3)
-        out[:,1,i] = 1/sqrt(2*pi*problem.covariance_mat_det) * exp( -1/2 * vec(sum(problem.covariance_mat_sqrt_inv * x[:,:,i]', 1)) )
+        out[:,1,i] = u_init(problem, x[:,:,i])
     end
     
     return out
