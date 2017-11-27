@@ -1,13 +1,13 @@
-function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem)
+function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem.Problem_top)
 
     # Build mesh of unit square (0,1)x(0,1)
     mesh = Mesh.mesh_unit_square(par.n_edge_per_seg)
 
     # Set up reference element
-    ref_el = RefEl_Pk(par.n_order_FEM)
+    ref_el = RefEl_Pk{par.n_order_FEM}()
 
     # Set up degrees of freedom handler
-    dof = Dof_Pk_periodic_square(mesh, ref_el);
+    dof = Dof_Pk_periodic_square{ref_el.n_order}(mesh);
 
     # Set up solution structure
     solution = Solution(dof, par)

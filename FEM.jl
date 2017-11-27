@@ -1,6 +1,6 @@
 module FEM
 
-using Mesh, Parameter, Problem
+using Mesh, Parameter, Problem, Quad
 
 # -------   Reference elements   -------
 include("FEM_RefEl_abstract.jl")
@@ -19,5 +19,13 @@ include("FEM_Solution.jl")
 # -------   Setup system for time steps   -------
 include("FEM_Setup_system_abstract.jl")
 include("FEM_Setup_system.jl")
+
+
+# -------   Assembly routines   -------
+include("FEM_assemble.jl")
+
+
+# -------   Core routines for workflow   -------
+include("FEM_core.jl")
 
 end # end module

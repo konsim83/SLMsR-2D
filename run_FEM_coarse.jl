@@ -20,7 +20,7 @@ dt = 1/500
 par_FEM_coarse = Parameter.Parameter_FEM(problem.T,
                                          dt,
                                          n_edge_per_seg,
-                                         n_n_order_FEM,
+                                         n_order_FEM,
                                          n_order_quad,
                                          time_step_method)
 
