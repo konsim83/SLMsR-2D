@@ -1,10 +1,10 @@
 function solve_problem!(mesh :: Mesh.TriMesh,
                         ref_el :: FEM.RefEl,
                         dof :: FEM.Dof,
+                        quad :: Quad.Quad_top,
                         par :: Parameter.Parameter_top,
                         problem :: Problem.Problem_top,
-                        solution :: FEM.Solution,
-                        time_stepper :: Time_stepper)
+                        solution :: FEM.Solution)
 
     """
 
@@ -22,19 +22,17 @@ function solve_problem!(mesh :: Mesh.TriMesh,
     # Setup initial data
     solution.u[:,1] = Problem.u_init(problem, mesh.point)
 
-    if typeof(time_stepper)==Implicit_Euler
-        # Make step from k_time to k_time+1
-        for k_time=1:par.n_steps
-            system_data = Setup_system_ADE_implEuler(solution,
-                                                     mesh,
-                                                     dof,
-                                                     ref_el,
-                                                     par,
-                                                     problem,
-                                                     k_time)
-            
-            time_stepper.make_step!(dof, system_data, solution)
-        end # end for
-    end # end for
-    
+    # Make step from k_time to k_time+1
+    for k_time=1:par.n_steps
+        system_data = Setup_system_ADE_implEuler(solution,
+                                                 mesh,
+                                                 dof,
+                                                 ref_el,
+                                                 quad,
+                                                 par,
+                                                 problem,
+                                                 k_time)
+        
+        Time_integrator.make_step!(dof, system_data, solution)
+    end # end for    
 end

@@ -1,4 +1,4 @@
-immutable Quad_line
+immutable Quad_line <: Quad_top
     # Gauss-Jacobi quadrature. For standard Gauss quadrature set
     # alpha=beta=0
     

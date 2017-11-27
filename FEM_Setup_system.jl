@@ -17,6 +17,7 @@ type Setup_system_ADE_implEuler <: System
                                         mesh :: Mesh.TriMesh,
                                         dof :: FEM.Dof,
                                         ref_el :: FEM.RefEl,
+                                        quad :: Quad.Quad_top,
                                         par :: Parameter.Parameter_top,
                                         problem :: Problem.Problem_top,
                                         k_time :: Int64)
@@ -33,17 +34,19 @@ type Setup_system_ADE_implEuler <: System
         this.k_time = k_time
         
         M = FEM.assemble_mass(solution,
-                                  mesh,
-                                  dof,
-                                  ref_el,
-                                  par,
-                                  problem,
-                                  k_time+1)
+                              mesh,
+                              dof,
+                              ref_el,
+                              quad,
+                              par,
+                              problem,
+                              k_time+1)
             
         A = FEM.assemble_advection(solution,
                                    mesh,
                                    dof,
                                    ref_el,
+                                   quad,
                                    par,
                                    problem,
                                    k_time+1)
@@ -52,6 +55,7 @@ type Setup_system_ADE_implEuler <: System
                                    mesh,
                                    dof,
                                    ref_el,
+                                   quad,
                                    par,
                                    problem,
                                    k_time+1)
@@ -60,14 +64,14 @@ type Setup_system_ADE_implEuler <: System
             error("Neumann boundary integral not implemented yet.")
         end
 
-        this.system_matrix = (M-par.dt*(D-A))[dof.ind_nodes_non_dirichlet,dof.ind_nodes_non_dirichlet]      
+        this.system_matrix = (M-par.dt*(D-A))[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
 
         if dof.is_periodic
-            this.rhs = M[dof.ind_nodes_non_dirichlet,dof.ind_nodes_non_dirichlet] * dof.map_ind_mesh2_dof(solution.u[:,k_time])
+            this.rhs = M[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * dof.map_ind_mesh2_dof(solution.u[:,k_time])
         else
             
-            this.rhs = (M[dof.ind_nodes_non_dirichlet,dof.ind_nodes_non_dirichlet] * solution.u[dof.ind_nodes_non_dirichlet,k_time] -
-                        M[dof.ind_nodes_non_dirichlet,dof.ind_nodes_dirichlet] * solution.u[dof.ind_nodes_dirichlet,k_time])
+            this.rhs = (M[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * solution.u[dof.ind_node_non_dirichlet,k_time] -
+                        M[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet] * solution.u[dof.ind_node_dirichlet,k_time])
         end
         
         return this
