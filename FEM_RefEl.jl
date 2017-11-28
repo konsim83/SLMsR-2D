@@ -1,4 +1,4 @@
-type RefEl_Pk{n_order} <: RefEl
+type RefEl_Pk{n_order} <: AbstractRefEl
     info :: String
 
     n_order :: Int64

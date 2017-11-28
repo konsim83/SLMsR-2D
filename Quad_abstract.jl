@@ -1,2 +1,0 @@
-abstract Quad_top
-

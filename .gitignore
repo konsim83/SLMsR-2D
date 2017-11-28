@@ -1,0 +1,11 @@
+# Ignore the following files
+
+*~
+
+*.out
+*.aux
+*.bbl
+*.blg
+*.log
+
+main.pdf

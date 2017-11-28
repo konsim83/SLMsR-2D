@@ -1,4 +1,4 @@
-type Quad_simplex <: Quad_top
+type Quad_simplex <: AbstractQuad
 
     order :: Int64
 

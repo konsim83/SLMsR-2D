@@ -1,4 +1,4 @@
-function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem.Problem_top)
+function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem.AbstractProblem)
 
     # Build mesh of unit square (0,1)x(0,1)
     mesh = Mesh.mesh_unit_square(par.n_edge_per_seg)
@@ -16,7 +16,7 @@ function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem.Problem_to
     solution = Solution_FEM(dof, par)
 
     # Set up time integrator
-    #time_stepper = Time_integrator.Implicit_Euler(par)
+    time_stepper = Time_integrator.ImplEuler(dof, problem.type_info)
     # +++++++++++++++++++
 
     # Call actual solver. Pass solution data by reference.
@@ -24,6 +24,7 @@ function solve_FEM(par :: Parameter.Parameter_FEM, problem :: Problem.Problem_to
                    ref_el,
                    dof,
                    quad,
+                   time_stepper,
                    par,
                    problem,
                    solution)

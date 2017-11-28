@@ -1,7 +1,8 @@
-type Gaussian <: Problem_top
+type Gaussian <: AbstractProblem
     
     info :: String
-
+    type_info :: String
+    
     T :: Float64
     
     covariance_mat :: Array{Float64,2}
@@ -15,6 +16,7 @@ type Gaussian <: Problem_top
         this = new()
         
         this.info = "Evolution of symmetric Gaussian."
+        this.type_info = "ADE"
 
         this.T = T
 

@@ -1,4 +1,4 @@
-type Dof_Pk{FEM_order} <: Dof
+type Dof_Pk{FEM_order} <: AbstractDof
     
     # ----------------------------------------
     # General infos

@@ -2,12 +2,12 @@ module Parameter
 
 export Parameter_FEM, Parameter_MsFEM
 
-
-include("Parameter_abstract.jl")
+# -------   Type hierarchies   -------
+abstract AbstractParameter
 
 
 # --------------------------------------------------------------------------------
-type Parameter_FEM <: Parameter_top
+type Parameter_FEM <: AbstractParameter
     """
     Parameter type for standard FEM.
     """
@@ -50,7 +50,7 @@ end # end type
 
 
 # --------------------------------------------------------------------------------
-type Parameter_MsFEM <: Parameter_top
+type Parameter_MsFEM <: AbstractParameter
     """
     Parameter type for MsFEM.
     """

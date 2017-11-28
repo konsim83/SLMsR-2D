@@ -1,4 +1,4 @@
-type Dof_Pk_periodic_square{FEM_order} <: Dof_square
+type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     
     # ----------------------------------------
     # General infos

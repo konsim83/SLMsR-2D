@@ -9,11 +9,11 @@
 
 function assemble_mass(solution :: Solution_FEM,
                        mesh :: Mesh.TriMesh,
-                       dof :: FEM.Dof,
+                       dof :: FEM.AbstractDof,
                        ref_el :: FEM.RefEl_Pk,
-                       quad :: Quad.Quad_top,
+                       quad :: Quad.AbstractQuad,
                        par :: Parameter.Parameter_FEM,
-                       problem :: Problem.Problem_top,
+                       problem :: Problem.AbstractProblem,
                        k_time :: Int64)
     
     """
@@ -40,9 +40,9 @@ end
 
 function assemble_elem_m(mesh :: Mesh.TriMesh,
                          ref_el :: RefEl_Pk,
-                         dof :: FEM.Dof,
-                         quad :: Quad.Quad_top,
-                         problem :: Problem.Problem_top,
+                         dof :: FEM.AbstractDof,
+                         quad :: Quad.AbstractQuad,
+                         problem :: Problem.AbstractProblem,
                          time :: Float64)
     
     n = ref_el.n_node
@@ -74,11 +74,11 @@ end # end function
 
 function assemble_advection(solution :: Solution_FEM,
                             mesh :: Mesh.TriMesh,
-                            dof :: FEM.Dof,
+                            dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
-                            quad :: Quad.Quad_top,
+                            quad :: Quad.AbstractQuad,
                             par :: Parameter.Parameter_FEM,
-                            problem :: Problem.Problem_top,
+                            problem :: Problem.AbstractProblem,
                             k_time :: Int64)
     
     """
@@ -105,9 +105,9 @@ end
 
 function assemble_elem_a(mesh :: Mesh.TriMesh,
                          ref_el :: RefEl_Pk,
-                         dof :: FEM.Dof,
-                         quad :: Quad.Quad_top,
-                         problem :: Problem.Problem_top,
+                         dof :: FEM.AbstractDof,
+                         quad :: Quad.AbstractQuad,
+                         problem :: Problem.AbstractProblem,
                          time :: Float64)
     
     n = ref_el.n_node
@@ -152,11 +152,11 @@ end
 
 function assemble_diffusion(solution :: Solution_FEM,
                             mesh :: Mesh.TriMesh,
-                            dof :: FEM.Dof,
+                            dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
-                            quad :: Quad.Quad_top,
+                            quad :: Quad.AbstractQuad,
                             par :: Parameter.Parameter_FEM,
-                            problem :: Problem.Problem_top,
+                            problem :: Problem.AbstractProblem,
                             k_time :: Int64)
 
     """
@@ -183,9 +183,9 @@ end
 
 function assemble_elem_d(mesh :: Mesh.TriMesh,
                          ref_el :: RefEl_Pk,
-                         dof :: FEM.Dof,
-                         quad :: Quad.Quad_top,
-                         problem :: Problem.Problem_top,
+                         dof :: FEM.AbstractDof,
+                         quad :: Quad.AbstractQuad,
+                         problem :: Problem.AbstractProblem,
                          time :: Float64)
     
     n = ref_el.n_node
