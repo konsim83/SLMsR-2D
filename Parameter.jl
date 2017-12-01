@@ -3,7 +3,7 @@ module Parameter
 export Parameter_FEM, Parameter_MsFEM
 
 # -------   Type hierarchies   -------
-abstract AbstractParameter
+abstract type AbstractParameter end
 
 
 # --------------------------------------------------------------------------------

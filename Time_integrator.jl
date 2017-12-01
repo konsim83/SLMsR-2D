@@ -4,10 +4,10 @@ using FEM, Quad, Parameter, Mesh, Problem
 
 
 
-abstract AbstractTime_integrator
+abstract type AbstractTime_integrator end
 
-abstract AbstractSystem_data
-abstract AbstractSystem_data_implEuler <: AbstractSystem_data
+abstract type AbstractSystem_data end
+abstract type AbstractSystem_data_implEuler <: AbstractSystem_data end
 
 
 
@@ -52,7 +52,7 @@ type ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTime_integrator
 
     system_data :: T
     
-    function ImplEuler(dof :: FEM.AbstractDof, type_info :: String)
+    function ImplEuler{T}(dof :: FEM.AbstractDof, type_info :: String) where {T <: AbstractSystem_data_implEuler}
         
 	# Reserve Memory for System data only
         if type_info=="ADE"

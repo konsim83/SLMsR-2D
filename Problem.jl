@@ -1,7 +1,7 @@
 module Problem
 
 # -------   Type hierarchies   -------
-abstract AbstractProblem
+abstract type AbstractProblem end
 
 # ------------------------------------------------------------------------    
 include("Problem_gaussian.jl")

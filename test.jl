@@ -1,4 +1,13 @@
-include("reload.jl");
+include("Parameter.jl")
+include("Problem.jl")
+include("Quad.jl")
+include("Mesh.jl")
+include("FEM.jl")
+include("Time_integrator.jl")
+include("Solver.jl")
+
+
+
 
 m = Mesh.mesh_unit_square(2);
 r = FEM.RefEl_Pk{1}();
@@ -9,6 +18,22 @@ q = Quad.Quad_simplex(3);
 
 # ===============================================
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#=
+# ===============================================
 function modify_ansatzfunction_v(v :: Array{Float64,2}, DF :: Array{Float64,3}, Phi :: Array{Float64,3})
 
     Phi_mod = Array{Float64,2}(size(Phi,1), size(Phi,2))
@@ -64,4 +89,4 @@ end
 
 
 Mat_global = sparse(ind_test, ind, vec(mat_local), d.n_true_dof, d.n_true_dof)
-
+=#

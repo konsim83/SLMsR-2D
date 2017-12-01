@@ -10,10 +10,10 @@ function solve_FEM(par :: Parameter.Parameter_FEM, problem :: T) where {T<:Probl
     quad = Quad.Quad_simplex(3)
 
     # Set up degrees of freedom handler
-    dof = Dof_Pk_periodic_square{ref_el.n_order}(mesh);
+    dof = FEM.Dof_Pk_periodic_square{ref_el.n_order}(mesh);
 
     # Set up solution structure
-    solution = Solution_FEM(dof, par)
+    solution = FEM.Solution_FEM(dof, par)
 
     # Set up time integrator
     time_stepper = Time_integrator.ImplEuler(dof, problem.type_info)

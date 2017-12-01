@@ -60,7 +60,7 @@ type Dof_Pk{FEM_order} <: AbstractDof
     # ----------------------------------------
     
 
-    function Dof_Pk(mesh :: Mesh.TriMesh)
+    function Dof_Pk{FEM_order}(mesh :: Mesh.TriMesh) where {FEM_order}
         
         this = new()
             

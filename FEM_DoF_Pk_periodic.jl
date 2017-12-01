@@ -59,7 +59,7 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     #map_vec_ind_dof2mesh :: Array{Int64,1}
     # ----------------------------------------
 
-    function Dof_Pk_periodic_square(mesh :: Mesh.TriMesh)
+    function Dof_Pk_periodic_square{FEM_order}(mesh :: Mesh.TriMesh) where {FEM_order}
         
         this = new()
             

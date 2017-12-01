@@ -3,9 +3,9 @@ module FEM
 using Mesh, Parameter, Problem, Quad
 
 
-abstract AbstractRefEl
-abstract AbstractDof
-abstract AbstractSolution
+abstract type AbstractRefEl end
+abstract type AbstractDof end
+abstract type AbstractSolution end
 
 
 # -------   Reference elements   -------

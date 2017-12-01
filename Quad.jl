@@ -1,7 +1,7 @@
 module Quad
 
 # -------   Type hierarchies   -------
-abstract AbstractQuad
+abstract type AbstractQuad end 
 
 include("Quad_line.jl")
 include("Quad_simplex.jl")

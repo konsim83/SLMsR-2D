@@ -8,7 +8,7 @@ type RefEl_Pk{n_order} <: AbstractRefEl
 
     coeff :: Array{Float64, 2}
     
-    function RefEl_Pk()
+    function RefEl_Pk{n_order}() where {n_order}
         this = new()
 
         this.info = "Triangular Lagrange element of type P$n_order."
@@ -39,6 +39,7 @@ type RefEl_Pk{n_order} <: AbstractRefEl
                     
         
         return this
+        
     end # end function    
 end # end type
 

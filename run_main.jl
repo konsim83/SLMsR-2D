@@ -4,6 +4,7 @@ include("Quad.jl")
 include("Mesh.jl")
 include("FEM.jl")
 include("Time_integrator.jl")
+include("Solver.jl")
 #include("Vis.jl")
 # ---------------------------------------------------------------------------
 
@@ -51,5 +52,5 @@ par_FEM_coarse = Parameter.Parameter_FEM(problem.T,
 
 
 # -------   Call the solver   -------
-@time solution, mesh = FEM.solve_FEM(par_FEM_coarse, problem)
+@time solution, mesh = Solver.solve_FEM(par_FEM_coarse, problem)
 # ---------------------------------------------------------------------------

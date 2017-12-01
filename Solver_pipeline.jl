@@ -1,11 +1,11 @@
 function solve_problem!(mesh :: Mesh.TriMesh,
-                        ref_el :: AbstractRefEl,
-                        dof :: AbstractDof,
+                        ref_el :: FEM.AbstractRefEl,
+                        dof :: FEM.AbstractDof,
                         quad :: Quad.AbstractQuad,
                         time_stepper :: Time_integrator.AbstractTime_integrator,
                         par :: Parameter.AbstractParameter,
                         problem :: Problem.AbstractProblem,
-                        solution :: AbstractSolution)
+                        solution :: FEM.AbstractSolution)
 
     """
 
