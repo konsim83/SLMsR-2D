@@ -16,10 +16,10 @@ function solve_FEM(par :: Parameter.Parameter_FEM, problem :: T) where {T<:Probl
     solution = FEM.Solution_FEM(dof, par)
 
     # Set up time integrator
-    time_stepper = Time_integrator.ImplEuler(dof, problem.type_info)
+    time_stepper = Time_integrator.ImplEuler(dof, mesh, problem)
     # +++++++++++++++++++
 
-    # Call actual solver. Pass solution data by reference.
+    # Call actual solver. Pass solution data by reference.       
     solve_problem!(mesh,
                    ref_el,
                    dof,

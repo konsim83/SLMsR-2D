@@ -91,8 +91,8 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
         
-    v_1 = zeros(size(x, 1))
-    v_2 = zeros(size(x, 1))
+    v_1 = zeros(size(x, 1))+0.5
+    v_2 = zeros(size(x, 1)) + 0.5
             
     out = [v_1 v_2]
     
@@ -128,7 +128,7 @@ function u_init(problem :: Gaussian, x :: Array{Float64,2})
                 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
                 
-    out = 1/sqrt(2*pi*problem.covariance_mat_det) * exp( -1/2 * vec(sum(problem.covariance_mat_sqrt_inv * x', 1)) )
+    out = 1/sqrt(2*pi*problem.covariance_mat_det) * exp.( -1/2 * vec(sum(problem.covariance_mat_sqrt_inv * x', 1)) )
     
     return out
 end

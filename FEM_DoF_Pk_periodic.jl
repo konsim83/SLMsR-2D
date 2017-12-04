@@ -84,7 +84,11 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             this.ind_node_boundary = []
             this.ind_node_interior = collect(1:mesh.n_point)
             this.ind_node_dirichlet  = []
-            this.ind_node_non_dirichlet = setdiff(1:this.n_node, this.ind_node_dirichlet)
+
+            n_node_boundary = sum(mesh.point_marker.==1)
+            n_true_dof = Int(mesh.n_point - 3 - 0.5*(n_node_boundary - 4))
+            this.ind_node_non_dirichlet = setdiff(1:n_true_dof, this.ind_node_dirichlet)
+            
             this.ind_node_neumann = []
             # ----------------------------------------
             
@@ -120,12 +124,11 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             # Topology info
             this.is_periodic = true
 
-            n_node_boundary = sum(mesh.point_marker.==1)
-            this.n_true_dof = mesh.n_point - 3 - 0.5*(n_node_boundary - 4)
+            this.n_true_dof = n_true_dof
             # ----------------------------------------
 
-            
-            # ----------------------------------------
+
+            # +++++++++++++++++++++++++
             # Create the maps that translate dofs to mesh based
             # variables. This is one of the core modules for the
             # handling DoFs of periodic meshes (without actually
@@ -164,7 +167,7 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             end
 
             this.map_vec_ind_mesh2dof[n_node_boundary+1:end] = collect(   ((n_node_boundary + 1):(mesh.n_point)) - 3 - 0.5*(n_node_boundary - 4)  )
-            # ----------------------------------------
+            # +++++++++++++++++++++++++
             # ----------------------------------------------------------------------------------------------------------------------------------------
                 
         elseif FEM_order==2
@@ -192,11 +195,28 @@ function map_ind_dof2mesh(dof :: Dof_Pk_periodic_square{1}, vec_dof :: Array{Flo
 
     """
 
-    error("Check the mappings!!!")
-
-    vec_mesh = vec_dof[dof.map_vec_ind_mesh2dof[sortperm(dof.map_vec_ind_mesh2dof)]][sortperm(sortperm(dof.map_vec_ind_mesh2dof))]
+    # expand a dof-vector into a mesh-vector (only periodic boundaries)
+    vec_mesh = vec_dof[dof.map_vec_ind_mesh2dof]
 
     return vec_mesh
+end
+# ----------------------------------------
+
+
+# ----------------------------------------
+function map_ind_mesh2dof(dof :: Dof_Pk_periodic_square{1}, vec_mesh :: Array{Float64})
+
+    """
+
+    Map a vector in terms of Float values in terms of node indices to
+    degrees of freedom indices.
+
+    """
+
+    # reduce a mesh-vector to a dof-vector (only periodic boundaries)
+    vec_dof = vec_mesh[indexin(unique(dof.map_vec_ind_mesh2dof), dof.map_vec_ind_mesh2dof)]
+
+    return vec_dof
 end
 # ----------------------------------------
 

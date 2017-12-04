@@ -35,5 +35,7 @@ function solve_problem!(mesh :: Mesh.TriMesh,
                                    par,
                                    problem,
                                    k_time)
+        display("--------------------------------------")
+        display(solution.u[:,k_time+1])
     end # end for    
 end

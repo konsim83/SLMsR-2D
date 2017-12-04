@@ -12,7 +12,7 @@ type Solution_FEM <: AbstractSolution
         this = new()
 
         # Reserve memory for the solution
-        this.u = Array{Float64,2}(dof.n_node, par.n_steps)
+        this.u = Array{Float64,2}(dof.n_node, par.n_steps+1)
         
         return this
     end
@@ -41,7 +41,7 @@ type Solution_MsFEM <: AbstractSolution
         this = new()
 
         # Reserve memory for the solution
-        this.u = Array(Float64, dof.n_node, par.n_steps)
+        this.u = Array(Float64, dof.n_node, par.n_steps+1)
 
         # Set up an array of arrays for the basis
         this.phi_1 = Array{Array{Float64,2}}(par.n_elem)
@@ -50,9 +50,9 @@ type Solution_MsFEM <: AbstractSolution
 
         # Reserve memory for each element of the uninitialized array
         for i=1:par.n_elem
-            this.phi_1[i] = Array{Float64,2}(dof.n_nodes, par.n_steps)
-            this.phi_2[i] = Array{Float64,2}(dof.n_nodes, par.n_steps)
-            this.phi_3[i] = Array{Float64,2}(dof.n_nodes, par.n_steps)
+            this.phi_1[i] = Array{Float64,2}(dof.n_nodes, par.n_steps+1)
+            this.phi_2[i] = Array{Float64,2}(dof.n_nodes, par.n_steps+1)
+            this.phi_3[i] = Array{Float64,2}(dof.n_nodes, par.n_steps+1)
         end
         
         return this

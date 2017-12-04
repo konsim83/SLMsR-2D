@@ -7,6 +7,38 @@
 # -------   Mass   -------
 # ------------------------
 
+function assemble_mass!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
+                        solution :: Solution_FEM,
+                        mesh :: Mesh.TriMesh,
+                        dof :: FEM.AbstractDof,
+                        ref_el :: FEM.RefEl_Pk,
+                        quad :: Quad.AbstractQuad,
+                        par :: Parameter.Parameter_FEM,
+                        problem :: Problem.AbstractProblem,
+                        k_time :: Int64)
+    
+    """
+
+    
+
+    """
+
+    # Assembly pattern is []
+    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
+    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+
+    time = k_time * par.dt
+    
+    # Assemble element matrices in a list of size (n, n, n_elem)
+    mat_local = assemble_elem_m(mesh, ref_el, dof, quad, problem, time)
+
+    Mat_global[sub2ind(size(Mat_global), ind_test, ind)] = vec(mat_local)
+
+    return nothing
+end
+
+
 function assemble_mass(solution :: Solution_FEM,
                        mesh :: Mesh.TriMesh,
                        dof :: FEM.AbstractDof,
@@ -71,6 +103,38 @@ end # end function
 # -----------------------------
 # -------   Advection   -------
 # -----------------------------
+
+function assemble_advection!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
+                             solution :: Solution_FEM,
+                             mesh :: Mesh.TriMesh,
+                             dof :: FEM.AbstractDof,
+                             ref_el :: FEM.RefEl_Pk,
+                             quad :: Quad.AbstractQuad,
+                             par :: Parameter.Parameter_FEM,
+                             problem :: Problem.AbstractProblem,
+                             k_time :: Int64)
+    
+    """
+
+    
+
+    """
+
+    # Assembly pattern is []
+    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
+    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+
+    time = k_time * par.dt
+    
+    # Assemble element matrices in a list of size (n, n, n_elem)
+    mat_local = assemble_elem_a(mesh, ref_el, dof, quad, problem, time)
+
+    Mat_global[sub2ind(size(Mat_global), ind_test, ind)] = vec(mat_local)
+
+    return nothing
+end
+
 
 function assemble_advection(solution :: Solution_FEM,
                             mesh :: Mesh.TriMesh,
@@ -149,6 +213,38 @@ end
 # -----------------------------
 # -------   Diffusion   -------
 # -----------------------------
+
+function assemble_diffusion!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
+                             solution :: Solution_FEM,
+                             mesh :: Mesh.TriMesh,
+                             dof :: FEM.AbstractDof,
+                             ref_el :: FEM.RefEl_Pk,
+                             quad :: Quad.AbstractQuad,
+                             par :: Parameter.Parameter_FEM,
+                             problem :: Problem.AbstractProblem,
+                             k_time :: Int64)
+    
+    """
+
+    
+
+    """
+
+    # Assembly pattern is []
+    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
+    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+
+    time = k_time * par.dt
+    
+    # Assemble element matrices in a list of size (n, n, n_elem)
+    mat_local = assemble_elem_d(mesh, ref_el, dof, quad, problem, time)
+
+    Mat_global[sub2ind(size(Mat_global), ind_test, ind)] = vec(mat_local)
+
+    return nothing
+end
+
 
 function assemble_diffusion(solution :: Solution_FEM,
                             mesh :: Mesh.TriMesh,

@@ -156,6 +156,21 @@ end
 
 
 # ----------------------------------------
+function map_ind_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+    """
+
+    Map a vector in terms of degrees of freedom to a vector on the
+    actual mesh. This is only interesting for back mapping. Here
+    the mapping is trivial
+
+    """
+
+    return vec_mesh
+end
+# ----------------------------------------
+
+
+# ----------------------------------------
 function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_c :: Array{Int64,1})
     
     return Mesh.get_cell(mesh, ind_c)
