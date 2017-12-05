@@ -7,17 +7,17 @@ include("Time_integrator.jl")
 include("Solver.jl")
 
 
-n_edge_per_seg = 2
+n_edge_per_seg = 500
 n_order_quad = 3
 n_order_FEM = 1
 
 
 
-m = Mesh.mesh_unit_square(n_edge_per_seg);
-r = FEM.RefEl_Pk{n_order_FEM}();
-d = FEM.Dof_Pk_periodic_square{n_order_FEM}(m);
-p = Problem.Gaussian(1.0);
-q = Quad.Quad_simplex(3);
+@time m = Mesh.mesh_unit_square(n_edge_per_seg);
+@time r = FEM.RefEl_Pk{n_order_FEM}();
+@time d = FEM.Dof_Pk_periodic_square{n_order_FEM}(m);
+@time p = Problem.Gaussian(1.0);
+@time q = Quad.Quad_simplex(3);
 
 par = Parameter.Parameter_FEM(1.0,
                               1.0/1000,
@@ -26,9 +26,9 @@ par = Parameter.Parameter_FEM(1.0,
                               n_order_quad,
                               1)
 
-sol = FEM.Solution_FEM(d, par)
+#sol = FEM.Solution_FEM(d, par)
 
-tstep = Time_integrator.ImplEuler(d, m, p.type_info)
+@time tstep = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(d, m, p)
 
 # ===============================================
 
@@ -36,22 +36,25 @@ tstep = Time_integrator.ImplEuler(d, m, p.type_info)
 
 
 
-M, m_loc = FEM.assemble_mass(sol, m, d, r, q, par, p, 1)
-A, a_loc = FEM.assemble_advection(sol, m, d, r, q, par, p, 1)
-D, d_loc = FEM.assemble_diffusion(sol, m, d, r, q, par, p, 1)
+@time M = FEM.assemble_mass(m, d, r, q, par, p, 1)
+#A = FEM.assemble_advection(sol, m, d, r, q, par, p, 1)
+#D = FEM.assemble_diffusion(sol, m, d, r, q, par, p, 1)
 
-
-M1 = copy(M)
-A1 = copy(A)
-D1 = copy(D)
-FEM.assemble_mass!(M1, sol, m, d, r, q, par, p, 1)
-FEM.assemble_advection!(A1, sol, m, d, r, q, par, p, 1)
-FEM.assemble_diffusion!(D1, sol, m, d, r, q, par, p, 1)
 
 
 i = FEM.get_dof_elem(d, m, 1:d.n_elem)
 ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
 ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+#ind_sub = sub2ind(size(M), ind_test, ind)
+
+M1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
+#A1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
+#D1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
+
+@time FEM.assemble_mass!(M1, m, d, r, q, par, p, 1)
+#FEM.assemble_advection!(A1, sol, m, d, r, q, par, p, 1)
+#FEM.assemble_diffusion!(D1, sol, m, d, r, q, par, p, 1)
+
 
 
 

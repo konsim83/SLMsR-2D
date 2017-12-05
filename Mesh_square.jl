@@ -10,7 +10,7 @@ function mesh_unit_square(n_segs_per_edge :: Int64, angle = 0.0 :: Float64)
     
     mesh_buffer = ccall((:tesselate_unit_square, "libtesselate"), Triangle_mesh_C, (Int64, Cstring), n_segs_per_edge, switches);
 
-    mesh = TriMesh(mesh_buffer, "Unit square")
+    mesh = TriMesh(mesh_buffer, "unit square")
     mesh_buffer = [];
 
     return mesh

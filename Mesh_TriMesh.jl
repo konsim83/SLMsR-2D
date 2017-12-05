@@ -25,7 +25,7 @@ type TriMesh
     function TriMesh(mesh :: Triangle_mesh_C, info :: String)
         this = new()
 
-        this.mesh_info = info
+        this.mesh_info = string("Triangular mesh of " , info)
         
         # Points
         this.n_point = mesh.numberofpoints

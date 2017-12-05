@@ -13,7 +13,7 @@ abstract type AbstractSystem_data_implEuler <: AbstractSystem_data end
 
 # ------------------------------------------------------------------------------
 # -------   ImplEuler for ADE   -------
-type System_data_implEuler_ADE
+type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
 
     mass :: SparseMatrixCSC{Float64,Int64}
     advection :: SparseMatrixCSC{Float64,Int64}
@@ -27,17 +27,18 @@ type System_data_implEuler_ADE
     # nodes can occur with periodic boundaries.
     u_temp :: Array{Float64, 1}
     
-    function System_data_implEuler_ADE(dof, mesh, problem :: Problem.AbstractProblem)
+    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractProblem)
         
         # Create a pattern
         i = FEM.get_dof_elem(dof, mesh, 1:dof.n_elem)
         ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
         ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-        
-        mass = sparse(ind_test, ind, ones(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
-        advection = sparse(ind_test, ind, ones(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
-        diffusion = sparse(ind_test, ind, ones(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
-        rhs = ones(dof.n_true_dof)
+
+        # Allocate memory for sparse matrix
+        mass = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        advection = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        diffusion = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        rhs = zeros(dof.n_true_dof)
 
         system_matrix = mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
         system_rhs = rhs[dof.ind_node_non_dirichlet]
@@ -54,11 +55,11 @@ end
 
 # ------------------------------------------------------------------------------
 # -------   Implicit Euler   -------
-type ImplEuler <: AbstractTime_integrator
+type ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTime_integrator
 
-    system_data 
+    system_data :: T
     
-    function ImplEuler(dof, mesh, problem :: Problem.AbstractProblem)
+    function ImplEuler{T}(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractProblem) where {T <: AbstractSystem_data_implEuler}
         
 	# Reserve Memory for System data only
         if problem.type_info=="ADE"
@@ -71,6 +72,9 @@ type ImplEuler <: AbstractTime_integrator
     end
 end
 # ------------------------------------------------------------------------------
+
+
+
 
 
 
@@ -108,20 +112,13 @@ function make_step!(solution :: FEM.AbstractSolution,
                    k_time+1)
     # ---------------------------------------
 
-    display("--------------------------------------")
-    display(solution.u[:,k_time])
-
+    
     # Solve the system and map to mesh variables
     time_int.system_data.u_temp[dof.ind_node_non_dirichlet] = time_int.system_data.system_matrix \ time_int.system_data.system_rhs
     solution.u[:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp)
     
     #solution.u[dof.ind_node_non_dirichlet,k_time+1] = FEM.map_ind_dof2mesh( dof,  )
-    #solution.u[dof.ind_node_dirichlet,k_time+1] = solution.u[dof.ind_node_dirichlet, k_time]
-
-    display("--------------------------------------")
-    display(solution.u[:,k_time+1])
-
-    
+    #solution.u[dof.ind_node_dirichlet,k_time+1] = solution.u[dof.ind_node_dirichlet, k_time]    
     return nothing
 end
 # ----------------------------------
@@ -265,10 +262,10 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
         ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
         ind_test = vec(transpose(repmat(i, 1, size(i,2))))
         
-        mass = sparse(ind_test, ind, ones(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
-        advection = sparse(ind_test, ind, ones(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
-        diffusion = sparse(ind_test, ind, ones(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
-        rhs = ones(dof.n_true_dof)
+        mass = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        advection = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        diffusion = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        rhs = zeros(dof.n_true_dof)
 
         system_matrix = mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
         system_rhs = rhs[dof.ind_node_non_dirichlet]

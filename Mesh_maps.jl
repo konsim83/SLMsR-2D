@@ -22,9 +22,11 @@ function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Array{Int64
 
     P0 = full(A*D)
     P0 = reshape(P0, 2, n_points, n_cells)
-    P1 = reshape(P0[1,:], n_points, 1, n_cells)
-    P2 = reshape(P0[2,:], n_points, 1, n_cells)
-    P = hcat(P1, P2)
+
+    #P1 = reshape(P0[1,:], n_points, 1, n_cells)
+    #P2 = reshape(P0[2,:], n_points, 1, n_cells)
+    #P = hcat(P1, P2)
+    P = permutedims(reshape(reshape(P0, Val{2}), 2, n_points, n_cells), [2,1,3])
     
     return P
 end
@@ -56,9 +58,11 @@ function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c :: UnitRange{I
 
     P0 = full(A*D)
     P0 = reshape(P0, 2, n_points, n_cells)
-    P1 = reshape(P0[1,:], n_points, 1, n_cells)
-    P2 = reshape(P0[2,:], n_points, 1, n_cells)
-    P = hcat(P1, P2)
+    
+    #P1 = reshape(P0[1,:], n_points, 1, n_cells)
+    #P2 = reshape(P0[2,:], n_points, 1, n_cells)
+    #P = hcat(P1, P2)
+    P = permutedims(reshape(reshape(P0, Val{2}), 2, n_points, n_cells), [2,1,3])
     
     return P
 end

@@ -21,11 +21,28 @@ function solve_problem!(mesh :: Mesh.TriMesh,
 
     """
 
+    println("\n\n--------------------------------------------------------------")
+    println("Computing standard FEM solution:\n")
+    println("\t Mesh type:   $(mesh.mesh_info)")
+    if dof.is_periodic
+        println("\t Problem type:   periodic --- $(problem.type_info)")
+    else
+        println("\t Problem type:   non-periodic --- $(problem.type_info)")
+    end
+    println("\t Time intergrator:   $(typeof(time_stepper))")
+    println("\t number of time steps:   $(par.n_steps)")
+    println("\t Number of active dofs:   $(dof.n_true_dof - dof.n_node_dirichlet)")
+    println("\t Number of constraint dofs:   $(dof.n_node_dirichlet)")
+    
+    
+    N = par.n_steps
+    p = Progress(N, 0.01, "Progress of time stepping...", 10)
+    
     # Setup initial data
     solution.u[:,1] = Problem.u_init(problem, mesh.point)
 
     # Make step from k_time to k_time+1
-    for k_time=1:par.n_steps        
+    for k_time=1:par.n_steps
         Time_integrator.make_step!(solution,
                                    time_stepper,
                                    mesh,
@@ -35,7 +52,10 @@ function solve_problem!(mesh :: Mesh.TriMesh,
                                    par,
                                    problem,
                                    k_time)
-        display("--------------------------------------")
-        display(solution.u[:,k_time+1])
-    end # end for    
+        next!(p)
+    end # end for
+    println("..... done.")
+    println("\n--------------------------------------------------------------\n\n")
+
+    return nothing
 end

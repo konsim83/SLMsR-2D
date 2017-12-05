@@ -6,13 +6,78 @@
 # ------------------------
 # -------   Mass   -------
 # ------------------------
-function assemble_mass(mesh :: Mesh.TriMesh,
-                       dof :: FEM.AbstractDof,
-                       ref_el :: FEM.RefEl_Pk,
-                       quad :: Quad.AbstractQuad,
-                       par :: Parameter.Parameter_FEM,
-                       problem :: Problem.AbstractProblem,
-                       k_time :: Int64)
+
+function assemble_mass!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
+                        mesh :: Mesh.TriMesh,
+                        dof :: FEM.AbstractDof,
+                        ref_el :: FEM.RefEl_Pk,
+                        quad :: Quad.AbstractQuad,
+                        par :: Parameter.Parameter_FEM,
+                        problem :: Problem.AbstractProblem,
+                        k_time :: Int64)
+    
+    """
+
+    
+
+    """
+
+    # Assembly pattern is []
+    ind = get_dof_elem(dof, mesh, 1:dof.n_elem)
+
+    time = k_time * par.dt
+
+    # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
+
+    Phi = FEM.eval(ref_el, quad.point)
+    Phi_test = FEM.eval(ref_el, quad.point)
+    
+    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    
+    for k = 1:mesh.n_cell    
+        assemble_elem_m!(view(Mat_global,ind[k,:],ind[k,:]),
+                         weight_elem[:,k],
+                         quad.weight,
+                         Phi,
+                         Phi_test,
+                         ref_el,
+                         time)
+    end
+    
+    return nothing
+end
+
+function assemble_elem_m!(mat_local ::SubArray{Float64,2,SparseMatrixCSC{Float64,Int64},Tuple{Array{Int64,1},Array{Int64,1}},false},
+                          weight_elem :: Array{Float64,1},
+                          q_weight :: Array{Float64,1},
+                          Phi :: Array{Float64,2},
+                          Phi_test :: Array{Float64,2},
+                          ref_el :: RefEl_Pk,
+                          time :: Float64)
+    
+    mat_local[:,:] += Phi_test' * diagm(q_weight) * diagm(weight_elem) * Phi
+
+    return nothing
+end # end function
+
+
+# ------------------------
+# ------------------------
+
+
+
+# -----------------------------
+# -------   Advection   -------
+# -----------------------------
+
+function assemble_advection!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
+                             mesh :: Mesh.TriMesh,
+                             dof :: FEM.AbstractDof,
+                             ref_el :: FEM.RefEl_Pk,
+                             quad :: Quad.AbstractQuad,
+                             par :: Parameter.Parameter_FEM,
+                             problem :: Problem.AbstractProblem,
+                             k_time :: Int64)
     
     """
 
@@ -28,78 +93,14 @@ function assemble_mass(mesh :: Mesh.TriMesh,
     time = k_time * par.dt
     
     # Assemble element matrices in a list of size (n, n, n_elem)
-    mat_local = assemble_elem_m(mesh, ref_el, dof, quad, problem, time)
-
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
-
-    return Mat_global
-end
-
-
-function assemble_elem_m(mesh :: Mesh.TriMesh,
-                         ref_el :: RefEl_Pk,
-                         dof :: FEM.AbstractDof,
-                         quad :: Quad.AbstractQuad,
-                         problem :: Problem.AbstractProblem,
-                         time :: Float64)
-    
-    n = ref_el.n_node
-    m = zeros(n, n, mesh.n_cell)
-    
-    # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
-    
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
-
-    Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point)
-
-    for k = 1:mesh.n_cell    
-        m[:,:,k] = Phi_test' * diagm(quad.weight) * diagm(weight_elem[:,k]) * Phi
-    end
-
-    return m
-end # end function
-
-
-# ------------------------
-# ------------------------
-
-
-
-# -----------------------------
-# -------   Advection   -------
-# -----------------------------
-function assemble_advection(mesh :: Mesh.TriMesh,
-                            dof :: FEM.AbstractDof,
-                            ref_el :: FEM.RefEl_Pk,
-                            quad :: Quad.AbstractQuad,
-                            par :: Parameter.Parameter_FEM,
-                            problem :: Problem.AbstractProblem,
-                            k_time :: Int64)
-    
-    """
-
-    
-
-    """
-
-    # Assembly pattern
-    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
-    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-
-    time = k_time * par.dt
-    
-    # Assemble element matrices in a list of size (n, n, n_elem)
     mat_local = assemble_elem_a(mesh, ref_el, dof, quad, problem, time)
 
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
-    
-    return Mat_global
+    Mat_global[sub2ind(size(Mat_global), ind_test, ind)] = vec(mat_local)
+
+    return nothing
 end
 
-
-function assemble_elem_a(mesh :: Mesh.TriMesh,
+function assemble_elem_a!(mesh :: Mesh.TriMesh,
                          ref_el :: RefEl_Pk,
                          dof :: FEM.AbstractDof,
                          quad :: Quad.AbstractQuad,
@@ -125,7 +126,7 @@ function assemble_elem_a(mesh :: Mesh.TriMesh,
     return a
 end # end function
 
-function modify_ansatzfunction_v(v :: Array{Float64,2}, DF :: Array{Float64,3}, Phi :: Array{Float64,3})
+function modify_ansatzfunction_v!(v :: Array{Float64,2}, DF :: Array{Float64,3}, Phi :: Array{Float64,3})
 
     Phi_mod = Array{Float64,2}(size(Phi,1), size(Phi,2))
 
@@ -145,7 +146,40 @@ end
 # -----------------------------
 # -------   Diffusion   -------
 # -----------------------------
-function assemble_diffusion(mesh :: Mesh.TriMesh,
+
+function assemble_diffusion!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
+                             mesh :: Mesh.TriMesh,
+                             dof :: FEM.AbstractDof,
+                             ref_el :: FEM.RefEl_Pk,
+                             quad :: Quad.AbstractQuad,
+                             par :: Parameter.Parameter_FEM,
+                             problem :: Problem.AbstractProblem,
+                             k_time :: Int64)
+    
+    """
+
+    
+
+    """
+
+    # Assembly pattern is []
+    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
+    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+
+    time = k_time * par.dt
+    
+    # Assemble element matrices in a list of size (n, n, n_elem)
+    mat_local = assemble_elem_d(mesh, ref_el, dof, quad, problem, time)
+
+    Mat_global[sub2ind(size(Mat_global), ind_test, ind)] = vec(mat_local)
+
+    return nothing
+end
+
+
+function assemble_diffusion!(solution :: Solution_FEM,
+                            mesh :: Mesh.TriMesh,
                             dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
                             quad :: Quad.AbstractQuad,
@@ -175,7 +209,7 @@ function assemble_diffusion(mesh :: Mesh.TriMesh,
 end
 
 
-function assemble_elem_d(mesh :: Mesh.TriMesh,
+function assemble_elem_d!(mesh :: Mesh.TriMesh,
                          ref_el :: RefEl_Pk,
                          dof :: FEM.AbstractDof,
                          quad :: Quad.AbstractQuad,
@@ -202,7 +236,7 @@ function assemble_elem_d(mesh :: Mesh.TriMesh,
     return a
 end # end function
 
-function build_elem_matrix_d(diff :: Array{Float64,3}, DF :: Array{Float64,3},
+function build_elem_matrix_d!(diff :: Array{Float64,3}, DF :: Array{Float64,3},
                                  Phi_test :: Array{Float64,3}, Phi :: Array{Float64,3},
                                  q_weight :: Array{Float64,1}, weight_elem :: Array{Float64,1})
 
