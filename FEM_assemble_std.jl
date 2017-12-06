@@ -21,16 +21,18 @@ function assemble_mass(mesh :: Mesh.TriMesh,
     """
 
     # Assembly pattern is []
+    #=
     i = get_dof_elem(dof, mesh, 1:dof.n_elem)
     ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
     ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-
+    =#
+    
     time = k_time * par.dt
     
     # Assemble element matrices in a list of size (n, n, n_elem)
     mat_local = assemble_elem_m(mesh, ref_el, dof, quad, problem, time)
 
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
+    Mat_global = sparse(dof.ind_test, dof.ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
 
     return Mat_global
 end
@@ -44,7 +46,7 @@ function assemble_elem_m(mesh :: Mesh.TriMesh,
                          time :: Float64)
     
     n = ref_el.n_node
-    m = zeros(n, n, mesh.n_cell)
+    m = Array{Float64,3}(n, n, mesh.n_cell)
     
     # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
     
@@ -84,16 +86,18 @@ function assemble_advection(mesh :: Mesh.TriMesh,
     """
 
     # Assembly pattern
+    #=
     i = get_dof_elem(dof, mesh, 1:dof.n_elem)
     ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
     ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+    =#
 
     time = k_time * par.dt
     
     # Assemble element matrices in a list of size (n, n, n_elem)
     mat_local = assemble_elem_a(mesh, ref_el, dof, quad, problem, time)
 
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
+    Mat_global = sparse(dof.ind_test, dof.ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
     
     return Mat_global
 end
@@ -160,16 +164,18 @@ function assemble_diffusion(mesh :: Mesh.TriMesh,
     """
 
     # Assembly pattern
+    #=
     i = get_dof_elem(dof, mesh, 1:dof.n_elem)
     ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
     ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+    =#
 
     time = k_time * par.dt
     
     # Assemble element matrices in a list of size (n, n, n_elem)
     mat_local = assemble_elem_d(mesh, ref_el, dof, quad, problem, time)
 
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
+    Mat_global = sparse(dof.ind_test, dof.ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
     
     return Mat_global
 end

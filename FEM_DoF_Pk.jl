@@ -56,9 +56,11 @@ type Dof_Pk{FEM_order} <: AbstractDof
     n_true_dof :: Int64
 
     map_vec_ind_mesh2dof :: Array{Int64,1}
-    #map_vec_ind_dof2mesh :: Array{Int64,1}
     # ----------------------------------------
-    
+
+    ind :: Array{Int64,1}
+    ind_test :: Array{Int64,1}
+    ind_lin :: Array{Int64,1}
 
     function Dof_Pk{FEM_order}(mesh :: Mesh.TriMesh) where {FEM_order}
         
@@ -124,6 +126,12 @@ type Dof_Pk{FEM_order} <: AbstractDof
             this.map_vec_ind_mesh2dof = collect(1:this.n_node)
             #this.map_vec_ind_dof2mesh :: Array{Int64,1}
             # ----------------------------------------
+
+            ind_cell = Mesh.get_cell(mesh, 1:mesh.n_cell)
+            this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+            this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
+            this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
+            
             # ----------------------------------------------------------------------------------------------------------------------------------------
 
         elseif FEM_order==2

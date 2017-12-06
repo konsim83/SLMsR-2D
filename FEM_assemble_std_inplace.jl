@@ -21,46 +21,26 @@ function assemble_mass!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
     
 
     """
-
-    # Assembly pattern is []
-    ind = get_dof_elem(dof, mesh, 1:dof.n_elem)
-
+    
     time = k_time * par.dt
 
     # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
 
     Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point)
-    
+    Phi_test = diagm(quad.weight) * FEM.eval(ref_el, quad.point)
     weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+
+    mat_loc = Array{Float64,2}(3,3)
     
-    for k = 1:mesh.n_cell    
-        assemble_elem_m!(view(Mat_global,ind[k,:],ind[k,:]),
-                         weight_elem[:,k],
-                         quad.weight,
-                         Phi,
-                         Phi_test,
-                         ref_el,
-                         time)
+    for k = 1:mesh.n_cell
+        mat_loc[:,:] = Phi_test' * diagm(weight_elem[:,k]) * Phi
+        for l in 1:9
+            Mat_global[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += mat_loc[l]
+        end
     end
     
     return nothing
 end
-
-function assemble_elem_m!(mat_local ::SubArray{Float64,2,SparseMatrixCSC{Float64,Int64},Tuple{Array{Int64,1},Array{Int64,1}},false},
-                          weight_elem :: Array{Float64,1},
-                          q_weight :: Array{Float64,1},
-                          Phi :: Array{Float64,2},
-                          Phi_test :: Array{Float64,2},
-                          ref_el :: RefEl_Pk,
-                          time :: Float64)
-    
-    mat_local[:,:] += Phi_test' * diagm(q_weight) * diagm(weight_elem) * Phi
-
-    return nothing
-end # end function
-
-
 # ------------------------
 # ------------------------
 
