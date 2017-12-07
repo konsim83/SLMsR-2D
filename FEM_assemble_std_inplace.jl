@@ -64,19 +64,24 @@ function assemble_advection!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
     
 
     """
-
-    # Assembly pattern is []
-    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
-    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-
     time = k_time * par.dt
+
+    # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
+
+    Phi = FEM.eval(ref_el, quad.point)
+    Phi_test = diagm(quad.weight) * FEM.eval(ref_el, quad.point)
+    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+
+    #mat_loc = assemble_elem_a(mesh, ref_el, dof, quad, problem, time)
+    mat_loc = Array{Float64,2}(3,3)
     
-    # Assemble element matrices in a list of size (n, n, n_elem)
-    mat_local = assemble_elem_a(mesh, ref_el, dof, quad, problem, time)
-
-    Mat_global[sub2ind(size(Mat_global), ind_test, ind)] = vec(mat_local)
-
+    for k = 1:mesh.n_cell
+        mat_loc[:,:] = Phi_test' * diagm(weight_elem[:,k]) * Phi
+        for l in 1:9
+            Mat_global[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += mat_loc[l]
+        end
+    end
+    
     return nothing
 end
 

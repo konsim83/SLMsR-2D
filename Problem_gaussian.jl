@@ -90,13 +90,8 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
     """
 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
-        
-    v_1 = zeros(size(x, 1))+0.5
-    v_2 = zeros(size(x, 1)) + 0.5
-            
-    out = [v_1 v_2]
     
-    return out
+    return 0.1*ones(size(x))
 end
 
 
@@ -109,14 +104,10 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
     """
 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
-        
-    out = Array{Float64, 3}(size(x,1), 2, size(x,3))
 
-    for i=1:size(x,3)
-        out[:,:,i] = velocity(problem, t, x[:,:,i])
-    end
-    
-    return out
+    #out = Array{Float64, 3}(size(x,1), 2, size(x,3))
+
+    return 0.1*ones(size(x))
     
 end
 
