@@ -14,7 +14,7 @@ n_order_FEM = 1
 
 
 println("Start timing problem setup...")
-begin
+@time begin
     println("\tMeshing...")
     m = Mesh.mesh_unit_square(n_edge_per_seg);
 
@@ -69,7 +69,7 @@ A1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_d
 
 println("In place assembly...")
 #@time FEM.assemble_mass!(M1, m, d, r, q, par, p, 1)
-@time FEM.assemble_advection!(A1, m, d, r, q, par, p, 1)
+#@time FEM.assemble_advection!(A1, m, d, r, q, par, p, 1)
 #@time FEM.assemble_diffusion!(D1, m, d, r, q, par, p, 1)
 println("---------------------------\n\n")
 
@@ -135,87 +135,134 @@ end
 
 # ----------------
 println("Starting assembly test....")
-i = FEM.get_dof_elem(d, m, 1:d.n_elem)
-ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-lin = sub2ind((d.n_true_dof,d.n_true_dof), ind_test, ind)
-
-n = r.n_node
-
-
-# fixed quantities for mesh
-weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
-DF = Mesh.map_ref_point_grad_inv(m, q.point, 1:d.n_elem);
-x = Mesh.map_ref_point(m, q.point, 1:d.n_elem)
-
-
 
 # ---   Advection   ---------------------------------------
 #-------------------------------------------------------------
 println("... Advection routines:")
 
-velocity = Problem.velocity(p, 1.0, x)
 
-DPhi = FEM.eval_grad(r, q.point)
-Phi_test = FEM.eval(r, q.point)*diagm(q.weight)
-
-DPhi_mesh = mesh_expand(DPhi, DF)
-
-
-DPhi_mod = 0
-DPhi_mod_new = 0
-
-@time begin
-    a1_loc = Array{Float64,3}(n,n,m.n_cell)
-    
-    #println("****** First loop *******")
-    for k = 1:m.n_cell
-        #DPhi_mod = modify_ansatzfunction_v(velocity[:,:,k], DF[:,:,:,k], DPhi)
-        DPhi_mod = modify_ansatzfunction_v(velocity[:,:,k], DPhi_mesh[:,:,:,k])
-        a1_loc[:,:,k] = Phi_test * diagm(weight_elem[:,k])  * DPhi_mod'
-    end
-
-    A1 = sparse(ind_test, ind, vec(a1_loc), d.n_true_dof, d.n_true_dof)
-end
+#DPhi_mesh = mesh_expand(DPhi, DF)
 
 
 A2 = sparse(d.ind_test, d.ind, zeros(Float64, length(d.ind)), d.n_true_dof, d.n_true_dof)
-@time begin
-    a2_loc = Array{Float64,2}(n,n)
-    #println("****** Second loop *******")
+function adv2!(A  :: SparseMatrixCSC{Float64,Int64},
+               m :: Mesh.TriMesh,
+               d :: FEM.AbstractDof,
+               r :: FEM.RefEl_Pk,
+               q :: Quad.AbstractQuad,
+               par :: Parameter.Parameter_FEM,
+               p :: Problem.AbstractProblem)
+
+    n = r.n_node
+    
+    # fixed quantities for mesh
+    weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
+    DF = Mesh.map_ref_point_grad_inv(m, q.point, 1:d.n_elem);
+
+    x = Mesh.map_ref_point(m, q.point, 1:d.n_elem)
+    velocity = Problem.velocity(p, 1.0, x)
+
+    DPhi = FEM.eval_grad(r, q.point)
+    Phi_test = FEM.eval(r, q.point) * diagm(q.weight)
+    
+    a_loc = Array{Float64,2}(n,n)
     for k = 1:m.n_cell
-        #DPhi_mod = modify_ansatzfunction_v(velocity[:,:,k], DF[:,:,:,k], DPhi)
-        DPhi_mod = modify_ansatzfunction_v(velocity[:,:,k], DPhi_mesh[:,:,:,k])
-        a2_loc[:,:] = Phi_test * diagm(weight_elem[:,k]) * DPhi_mod'
+        DPhi_mod = modify_ansatzfunction_v(velocity[:,:,k], DF[:,:,:,k], DPhi)
+        a_loc[:,:] = Phi_test * diagm(weight_elem[:,k]) * DPhi_mod'
         for l in 1:9
-            A2[d.ind_test[9*(k-1)+l],d.ind[9*(k-1)+l]] += a2_loc[l]
+            A[d.ind_test[9*(k-1)+l],d.ind[9*(k-1)+l]] += a_loc[l]
         end
     end
+
+    return nothing
 end
+#@time adv2!(A2, m, d, r, q, par, p)
 
 
-A3 = sparse(d.ind_test, d.ind, zeros(Float64, length(d.ind)), d.n_true_dof, d.n_true_dof)
-@time begin
-    a3_loc = Array{Float64,2}(n,n)
-    #println("****** Second loop *******")
+
+
+#A3 = sparse(d.ind_test, d.ind, zeros(Float64, length(d.ind)), d.n_true_dof, d.n_true_dof)
+function adv3!(A  :: SparseMatrixCSC{Float64,Int64},
+               m :: Mesh.TriMesh,
+               d :: FEM.AbstractDof,
+               r :: FEM.RefEl_Pk,
+               q :: Quad.AbstractQuad,
+               par :: Parameter.Parameter_FEM,
+               p :: Problem.AbstractProblem)
+
+    n = r.n_node
+    
+    # fixed quantities for mesh
+    weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
+    DF = Mesh.map_ref_point_grad_inv(m, q.point, 1:d.n_elem);
+
+    x = Mesh.map_ref_point(m, q.point, 1:d.n_elem)
+    velocity = Problem.velocity(p, 1.0, x)
+
+    DPhi = FEM.eval_grad(r, q.point)
+    Phi_test = FEM.eval(r, q.point) * diagm(q.weight)
+    
+    a_loc = Array{Float64,2}(n,n)
     for k = 1:m.n_cell
         for j = 1:length(q.weight)
 
-            
             for ii_test in 1:n
                 for ii in 1:n
-                    a3_loc[ii_test,ii] = Phi_test[ii_test,j] * weight_elem[j,k] * (DPhi[ii,j,1]*velocity[j,1,k] + DPhi[ii,j,2]*velocity[j,2,k])
+                    a_loc[ii_test,ii] = Phi_test[ii_test,j] * weight_elem[j,k] * (DPhi[ii,j,1]*velocity[j,1,k] + DPhi[ii,j,2]*velocity[j,2,k])
                 end
             end
-
             
-            #a3_loc[:,:] = Phi_test[:,j] * weight_elem[j,k] * (DPhi[:,j,:]*velocity[j,:,k])'
+            #a_loc[:,:] = Phi_test[:,j] * weight_elem[j,k] * (DPhi[:,j,:]*velocity[j,:,k])'
             for l in 1:9
-                A3[d.ind_test[9*(k-1)+l],d.ind[9*(k-1)+l]] += a3_loc[l]
+                A[d.ind_test[9*(k-1)+l],d.ind[9*(k-1)+l]] += a_loc[l]
             end
         end
     end
+    
+    return nothing
 end
+@time adv3!(A3, m, d, r, q, par, p)
+
+
+
+
+#M3 = sparse(d.ind_test, d.ind, zeros(Float64, length(d.ind)), d.n_true_dof, d.n_true_dof)
+function mass3!(M  :: SparseMatrixCSC{Float64,Int64},
+                      m :: Mesh.TriMesh,
+                      d :: FEM.AbstractDof,
+                      r :: FEM.RefEl_Pk,
+                      q :: Quad.AbstractQuad,
+                      par :: Parameter.Parameter_FEM,
+                      p :: Problem.AbstractProblem)
+
+    n = r.n_node
+    
+    # fixed quantities for mesh
+    weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
+    #DF = Mesh.map_ref_point_grad_inv(m, q.point, 1:d.n_elem);
+    #x = Mesh.map_ref_point(m, q.point, 1:d.n_elem)
+
+    Phi = FEM.eval(r, q.point)
+    Phi_test = FEM.eval(r, q.point) * diagm(q.weight)
+    
+    m_loc = Array{Float64,2}(n,n)
+    for k = 1:m.n_cell
+        for j = 1:length(q.weight)          
+            for ii in 1:n
+                for ii_test in 1:n
+                    m_loc[ii_test,ii] = Phi_test[ii_test,j] * weight_elem[j,k] * Phi[ii,j]
+                end
+            end
+
+            for l in 1:9
+                M[d.ind_test[9*(k-1)+l],d.ind[9*(k-1)+l]] += m_loc[l]
+            end
+        end
+    end
+
+    return nothing
+end
+#@time mass3!(M3, m, d, r, q, par, p)
 
 println("\n")
 #-------------------------------------------------------------
