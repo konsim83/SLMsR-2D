@@ -26,6 +26,9 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
     # holds solution of system in dof-indices. Note that Dirichlet
     # nodes can occur with periodic boundaries.
     u_temp :: Array{Float64, 1}
+
+    #weight_elem :: Array{Float64,2}
+    #DPhi :: Array{Float64,4}
     
     function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractProblem)
         
@@ -43,6 +46,8 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
         system_matrix = mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
         system_rhs = rhs[dof.ind_node_non_dirichlet]
 
+        #weight_elem = weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
+        
         u_temp = FEM.map_ind_mesh2dof(dof, Problem.u_init(problem, mesh.point))
         
         return new(mass, advection, diffusion, rhs, system_matrix, system_rhs, u_temp)

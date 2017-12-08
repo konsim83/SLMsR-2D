@@ -1,10 +1,10 @@
 function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Array{Int64,1})
     
-    y = transpose( [x  ones(size(x,1))] )
+    y = [x  ones(size(x,1))]
     n_points = size(x,1)
 
-    T = reshape(permutedims(m.T_ref2cell[:,:,ind_c],[2,1,3]),3,2*length(ind_c))'
-    P = reshape((T*y)', 3,2,length(ind_c))
+    T = reshape(permutedims(m.T_ref2cell[:,:,ind_c],[2,1,3]),3,2*length(ind_c))
+    P = reshape(y*T, n_points, 2, length(ind_c))
     
     return P
 end

@@ -18,7 +18,7 @@ type TriMesh
 
     T_ref2cell :: Array{Float64,3}
     T_cell2ref :: Array{Float64,3}
-
+    
     mesh_info :: String
     
     # ---------------------------------------------------------------------------------------------
@@ -26,59 +26,66 @@ type TriMesh
         this = new()
 
         this.mesh_info = string("Triangular mesh of " , info)
+
+
+        # ------------------ This function has two bottlenecks:
+        # 1. Menory layout of C vs. Fortran while loading the pointers
+        # 2. The loop is slow
+        # ------------------
         
+
         # Points
         this.n_point = mesh.numberofpoints
-        this.point = zeros(mesh.numberofpoints, 2)
-        this.point_marker = zeros(mesh.numberofpoints)
-        for i=1:this.n_point
-            this.point[i,1] = unsafe_load(mesh.pointlist, 2*i-1);
-            this.point[i,2] = unsafe_load(mesh.pointlist, 2*i);
-            this.point_marker[i] = unsafe_load(mesh.pointmarkerlist, i);
-        end
-                
+        
+        this.point = Array{Float64,2}(this.n_point, 2)
+        this.point = unsafe_wrap(Array, mesh.pointlist, (2,this.n_point))'
+
+        this.point_marker = Array{Int64,1}(this.n_point)
+        this.point_marker = unsafe_wrap(Array, mesh.pointmarkerlist, this.n_point)
+
+        
         #Triangles
         this.n_cell = mesh.numberoftriangles
-        this.cell = zeros(mesh.numberoftriangles, 3)
         this.T_ref2cell = zeros(2, 3, mesh.numberoftriangles)
         this.T_cell2ref = zeros(2, 3, mesh.numberoftriangles)
-        this.cell_neighbor = zeros(mesh.numberoftriangles, 3)
+
+        this.cell = Array{Int64,2}(this.n_cell, 3)
+        this.cell = unsafe_wrap(Array, mesh.trianglelist, (3, this.n_cell))'
+
+        this.cell_neighbor = Array{Int64,2}(this.n_cell, 3)
+        this.cell_neighbor = unsafe_wrap(Array, mesh.neighborlist, (3,this.n_cell))'
+
         for i=1:this.n_cell
-            this.cell[i,1] = unsafe_load(mesh.trianglelist, 3*i-2);
-            this.cell[i,2] = unsafe_load(mesh.trianglelist, 3*i-1);
-            this.cell[i,3] = unsafe_load(mesh.trianglelist, 3*i);
-            
-            this.cell_neighbor[i,1] = unsafe_load(mesh.neighborlist, 3*i-2);
-            this.cell_neighbor[i,2] = unsafe_load(mesh.neighborlist, 3*i-1);
-            this.cell_neighbor[i,3] = unsafe_load(mesh.neighborlist, 3*i);
-            
             # Extended transformation matrices for mapping from and to the reference cell K = [(0,0), (1,0), (0,1)]
             this.T_ref2cell[:,:,i] = [   this.point[this.cell[i,2]+1,:]-this.point[this.cell[i,1]+1,:]   this.point[this.cell[i,3]+1,:]-this.point[this.cell[i,1]+1,:]   this.point[this.cell[i,1]+1,:]   ]
             this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  -this.point[this.cell[i,1]+1,:]   ]
         end
+        
         this.cell_neighbor = this.cell_neighbor + 1;
         this.cell = this.cell + 1;
+
         
         # Edges
         this.n_edge = mesh.numberofedges
-        this.edge = zeros(mesh.numberofedges, 2)
-        this.edge_marker = zeros(mesh.numberofedges)
-        for i=1:this.n_edge
-            this.edge[i,1] = unsafe_load(mesh.edgelist, 2*i-1);
-            this.edge[i,2] = unsafe_load(mesh.edgelist, 2*i);
-            this.edge_marker[i] = unsafe_load(mesh.edgemarkerlist, i);
-        end
+
+        this.edge = Array{Int64,2}(this.n_edge, 2)
+        this.edge = unsafe_wrap(Array, mesh.edgelist, (2, this.n_edge))'
+        
+        this.edge_marker = Array{Int64,1}(this.n_edge)
+        this.edge_marker = unsafe_wrap(Array, mesh.edgemarkerlist, this.n_edge)
+
         this.edge = this.edge + 1;
+
 
         # Segments
         this.n_segment = mesh.numberofsegments
-        this.segment = zeros(mesh.numberofsegments, 2)
-        this.segment_marker = zeros(mesh.numberofedges)
-        for i=1:this.n_segment
-            this.segment[i,1] = unsafe_load(mesh.segmentlist, 2*i-1);
-            this.segment[i,2] = unsafe_load(mesh.segmentlist, 2*i);
-            this.segment_marker[i] = unsafe_load(mesh.segmentmarkerlist, i);
-        end
+
+        this.segment = Array{Int64,2}(this.n_segment, 2)
+        this.segment = unsafe_wrap(Array, mesh.segmentlist, (2,this.n_segment))'
+
+        this.segment_marker = Array{Int64,1}(this.n_segment)
+        this.segment_marker = unsafe_wrap(Array, mesh.segmentmarkerlist, this.n_segment)
+
         this.segment = this.segment + 1;
         
         return this

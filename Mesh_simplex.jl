@@ -6,7 +6,7 @@ function mesh_unit_simplex(h = 0.1 :: Float64, angle = 33.0 :: Float64)
     else
         switches = string("pzYq", angle, "a", @sprintf("%10.10f",area_max), "en")
     end
-    println(switches)
+    #println(switches)
     
     mesh_buffer = ccall((:tesselate_unit_simplex, "libtesselate"), Triangle_mesh_C, (Float64, Cstring), h, switches);
 
@@ -30,7 +30,7 @@ function mesh_unit_simplex_uniform_edges(n_segs_per_edge :: Int64, angle = 0.0 :
     else
         switches = string("pzYq", angle, "a", @sprintf("%10.10f",area_max), "en")
     end
-    println(switches)
+    #println(switches)
     
     mesh_buffer = ccall((:tesselate_unit_simplex_uniform_edges, "libtesselate"), Triangle_mesh_C, (Int64, Cstring), n_segs_per_edge, switches);
 

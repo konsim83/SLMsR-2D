@@ -21,24 +21,21 @@ function assemble_mass!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
     
 
     """
-    
-    time = k_time * par.dt
 
-    # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
-
-    Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = diagm(quad.weight) * FEM.eval(ref_el, quad.point)
     weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+        
+    Phi = FEM.eval(ref_el, quad.point)
+    Phi_test = FEM.eval(ref_el, quad.point) * diagm(quad.weight)
 
-    mat_loc = Array{Float64,2}(3,3)
+    m_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
     
     for k = 1:mesh.n_cell
-        mat_loc[:,:] = Phi_test' * diagm(weight_elem[:,k]) * Phi
+        m_loc[:,:] = Phi_test * diagm(weight_elem[:,k]) * Phi'
         for l in 1:9
-            Mat_global[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += mat_loc[l]
+            Mat_global[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += m_loc[l]
         end
     end
-    
+
     return nothing
 end
 # ------------------------
@@ -66,62 +63,40 @@ function assemble_advection!(Mat_global  :: SparseMatrixCSC{Float64,Int64},
     """
     time = k_time * par.dt
 
-    # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
-
-    Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = diagm(quad.weight) * FEM.eval(ref_el, quad.point)
     weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    DF = Mesh.map_ref_point_grad_inv(mesh, quad.point, 1:dof.n_elem);
 
-    #mat_loc = assemble_elem_a(mesh, ref_el, dof, quad, problem, time)
-    mat_loc = Array{Float64,2}(3,3)
+    x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
+    velocity = Problem.velocity(problem, 1.0, x)
+
+    DPhi = FEM.eval_grad(ref_el, quad.point)
+    Phi_test = FEM.eval(ref_el, quad.point) * diagm(quad.weight)
+    
+    
+    a_loc = Array{Float64,2}(ref_el.n_node,ref_el.n_node)
     
     for k = 1:mesh.n_cell
-        mat_loc[:,:] = Phi_test' * diagm(weight_elem[:,k]) * Phi
+        DPhi_mod = modify_ansatzfunction_v_inplace(velocity[:,:,k], DF[:,:,:,k], DPhi)
+        a_loc[:,:] = Phi_test * diagm(weight_elem[:,k]) * DPhi_mod'
         for l in 1:9
-            Mat_global[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += mat_loc[l]
+            Mat_global[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += a_loc[l]
         end
     end
     
     return nothing
 end
 
-function assemble_elem_a!(mesh :: Mesh.TriMesh,
-                         ref_el :: RefEl_Pk,
-                         dof :: FEM.AbstractDof,
-                         quad :: Quad.AbstractQuad,
-                         problem :: Problem.AbstractProblem,
-                         time :: Float64)
-    
-    n = ref_el.n_node
-    a = zeros(n, n, mesh.n_cell)    
-    
-    x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
-    velocity = Problem.velocity(problem, time, x)
 
-    DF = Mesh.map_ref_point_grad_inv(mesh, quad.point, 1:dof.n_elem);
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+function modify_ansatzfunction_v_inplace(v :: Array{Float64,2}, DF :: Array{Float64,3}, DPhi :: Array{Float64,3})
 
-    Phi = FEM.eval_grad(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point)
-    
-    for k = 1:mesh.n_cell    
-        a[:,:,k] = Phi_test' * diagm(quad.weight) * diagm(weight_elem[:,k]) * modify_ansatzfunction_v(velocity[:,:,k], DF[:,:,:,k], Phi)
-    end
+    DPhi_mod = Array{Float64,2}(size(DPhi,1), size(DPhi,2))
 
-    return a
-end # end function
-
-function modify_ansatzfunction_v!(v :: Array{Float64,2}, DF :: Array{Float64,3}, Phi :: Array{Float64,3})
-
-    Phi_mod = Array{Float64,2}(size(Phi,1), size(Phi,2))
-
-    for i=1:size(Phi,1)
-        Phi_mod[i,:] = Phi[i,:,:] * DF[i,:,:] * v[i,:]
+    for i=1:size(DPhi,2)
+        DPhi_mod[:,i] = DPhi[:,i,:] * DF[i,:,:] * v[i,:]
     end
     
-    return Phi_mod
+    return DPhi_mod
 end
-
 # -----------------------------
 # -----------------------------
 

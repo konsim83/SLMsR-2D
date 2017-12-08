@@ -19,13 +19,6 @@ function assemble_mass(mesh :: Mesh.TriMesh,
     
 
     """
-
-    # Assembly pattern is []
-    #=
-    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
-    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-    =#
     
     time = k_time * par.dt
     
@@ -56,7 +49,7 @@ function assemble_elem_m(mesh :: Mesh.TriMesh,
     Phi_test = FEM.eval(ref_el, quad.point)
 
     for k = 1:mesh.n_cell    
-        m[:,:,k] = Phi_test' * diagm(quad.weight) * diagm(weight_elem[:,k]) * Phi
+        m[:,:,k] = Phi_test * diagm(quad.weight) * diagm(weight_elem[:,k]) * Phi'
     end
 
     return m
@@ -84,13 +77,6 @@ function assemble_advection(mesh :: Mesh.TriMesh,
     
 
     """
-
-    # Assembly pattern
-    #=
-    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
-    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-    =#
 
     time = k_time * par.dt
     
@@ -123,21 +109,21 @@ function assemble_elem_a(mesh :: Mesh.TriMesh,
     Phi_test = FEM.eval(ref_el, quad.point)
     
     for k = 1:mesh.n_cell    
-        a[:,:,k] = Phi_test' * diagm(quad.weight) * diagm(weight_elem[:,k]) * modify_ansatzfunction_v(velocity[:,:,k], DF[:,:,:,k], Phi)
+        a[:,:,k] = Phi_test * diagm(quad.weight) * diagm(weight_elem[:,k]) * modify_ansatzfunction_v(velocity[:,:,k], DF[:,:,:,k], Phi)'
     end
 
     return a
 end # end function
 
-function modify_ansatzfunction_v(v :: Array{Float64,2}, DF :: Array{Float64,3}, Phi :: Array{Float64,3})
+function modify_ansatzfunction_v(v :: Array{Float64,2}, DF :: Array{Float64,3}, DPhi :: Array{Float64,3})
 
-    Phi_mod = Array{Float64,2}(size(Phi,1), size(Phi,2))
+    DPhi_mod = Array{Float64,2}(size(DPhi,1), size(DPhi,2))
 
-    for i=1:size(Phi,1)
-        Phi_mod[i,:] = Phi[i,:,:] * DF[i,:,:] * v[i,:]
+    for i=1:size(DPhi,2)
+        DPhi_mod[:,i] = DPhi[:,i,:] * DF[i,:,:] * v[i,:]
     end
     
-    return Phi_mod
+    return DPhi_mod
 end
 
 # -----------------------------
