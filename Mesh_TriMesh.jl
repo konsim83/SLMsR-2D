@@ -139,47 +139,41 @@ end # end type
 # -----------------------------   Functions on TriMesh   -----------------------------
 # --------------------------------------------------------------------------------------------
 
-# -------   Three versions of get_cell   -------
+# -------   Two versions of get_cell   -------
 function get_cell( m :: TriMesh, ind_c :: UnitRange{Int64} )
-    ind_c = vec(collect(ind_c))
     
-    return m.cell[ind_c,:]
+    return get_cell( m :: TriMesh, collect(ind_c) )
 end # end get_cell
 
 
 function get_cell( m :: TriMesh, ind_c :: Array{Int64,1} )
-    ind_c = vec(collect(ind_c))
     
     return m.cell[ind_c,:]
 end # end get_cell
-# -------   Three versions of get_cell   -------
+# -------   Two versions of get_cell   -------
 
 
 
-# -------   Three versions of get_edge   -------
-function get_edge( m :: TriMesh, ind_e :: UnitRange{Int64} )
-    ind_e = vec(collect(ind_e))
+# -------   Two versions of get_edge   -------
+function get_edge(m :: TriMesh, ind_e :: UnitRange{Int64} )
     
-    return m.edge[ind_e,:]
+    return get_edge(m, collect(ind_e))
 end # end get_edge
 
 
 function get_edge( m :: TriMesh, ind_e :: Array{Int64,1} )
-    ind_e = vec(collect(ind_e))
     
     return m.edge[ind_e,:]
 end # end get_edge
-# -------   Three versions of get_edge   -------
+# -------   Two versions of get_edge   -------
 
 
 
 # -------   Three versions of get_point   -------
 function get_point( m :: TriMesh, ind_p :: UnitRange{Int64} )
     """ Version for type UnitRange """
-
-    ind_p = vec(collect(ind_p))
     
-    return m.point[ind_p,:]
+    return get_point(m, collect(ind_p))
 end # end get_point
 
 
@@ -197,8 +191,10 @@ function get_point( m :: TriMesh, ind_p :: Array{Int64,2})
     (n_point_per_cell, 2, n_cell)
     
     """
-    
-    P = [reshape(m.point[ind_p,1], size(ind_p,2), 1, size(ind_p,1))   reshape(m.point[ind_p,2], size(ind_p,2), 1, size(ind_p,1))]
+    P = Array{Float64,3}(3, 2, size(ind_p,1))
+
+    P[:,1,:] = m.point[ind_p',1]
+    P[:,2,:] = m.point[ind_p',2]
     
     return P
 end # end get_point

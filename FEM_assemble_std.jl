@@ -11,19 +11,16 @@ function assemble_mass(mesh :: Mesh.TriMesh,
                        ref_el :: FEM.RefEl_Pk,
                        quad :: Quad.AbstractQuad,
                        par :: Parameter.Parameter_FEM,
-                       problem :: Problem.AbstractProblem,
-                       k_time :: Int64)
+                       problem :: Problem.AbstractProblem)
     
     """
 
     
 
     """
-    
-    time = k_time * par.dt
     
     # Assemble element matrices in a list of size (n, n, n_elem)
-    mat_local = assemble_elem_m(mesh, ref_el, dof, quad, problem, time)
+    mat_local = assemble_elem_m(mesh, ref_el, dof, quad)
 
     Mat_global = sparse(dof.ind_test, dof.ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
 
@@ -34,22 +31,18 @@ end
 function assemble_elem_m(mesh :: Mesh.TriMesh,
                          ref_el :: RefEl_Pk,
                          dof :: FEM.AbstractDof,
-                         quad :: Quad.AbstractQuad,
-                         problem :: Problem.AbstractProblem,
-                         time :: Float64)
+                         quad :: Quad.AbstractQuad)
     
     n = ref_el.n_node
     m = Array{Float64,3}(n, n, mesh.n_cell)
     
-    # x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
-    
     weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
 
     Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point)
+    Phi_test = FEM.eval(ref_el, quad.point) * diagm(quad.weight)
 
     for k = 1:mesh.n_cell    
-        m[:,:,k] = Phi_test * diagm(quad.weight) * diagm(weight_elem[:,k]) * Phi'
+        m[:,:,k] = Phi_test  * diagm(weight_elem[:,k]) * Phi'
     end
 
     return m
@@ -149,13 +142,6 @@ function assemble_diffusion(mesh :: Mesh.TriMesh,
 
     """
 
-    # Assembly pattern
-    #=
-    i = get_dof_elem(dof, mesh, 1:dof.n_elem)
-    ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-    ind_test = vec(transpose(repmat(i, 1, size(i,2))))
-    =#
-
     time = k_time * par.dt
     
     # Assemble element matrices in a list of size (n, n, n_elem)
@@ -184,27 +170,30 @@ function assemble_elem_d(mesh :: Mesh.TriMesh,
     DF = Mesh.map_ref_point_grad_inv(mesh, quad.point, 1:dof.n_elem);
     weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
 
-    Phi = FEM.eval_grad(ref_el, quad.point)
-    Phi_test = FEM.eval_grad(ref_el, quad.point)
+    DPhi = FEM.eval_grad(ref_el, quad.point)
+    DPhi_test = FEM.eval_grad(ref_el, quad.point)
     
-    for k = 1:mesh.n_cell    
-        a[:,:,k] = build_elem_matrix_d(diffusion[:,:,:,k], DF[:,:,:,k], Phi_test, Phi, quad.weight, weight_elem[:,k])
+    for l = 1:mesh.n_cell
+        for k = 1:length(quad.weight)
+            a[:,:,l] -= (view(DPhi_test,:,k,:) * view(DF,k,:,:,l)) * (quad.weight[k] * weight_elem[k,l]) *  (view(DPhi,:,k,:) * view(DF,k,:,:,l) * view(diffusion,k,:,:,l))'
+        end
+        #a[:,:,k] = build_elem_matrix_d(diffusion[:,:,:,k], DF[:,:,:,k], DPhi_test, DPhi, quad.weight, weight_elem[:,k])
     end
 
     return a
 end # end function
 
 function build_elem_matrix_d(diff :: Array{Float64,3}, DF :: Array{Float64,3},
-                                 Phi_test :: Array{Float64,3}, Phi :: Array{Float64,3},
+                                 DPhi_test :: Array{Float64,3}, DPhi :: Array{Float64,3},
                                  q_weight :: Array{Float64,1}, weight_elem :: Array{Float64,1})
 
-    Phi_mod = zeros(size(Phi,1), size(Phi,2))
-
-    for i=1:size(Phi,1)
-        Phi_mod += (Phi_test[i,:,:] * DF[i,:,:]) * (q_weight[i] * weight_elem[i]) *  (Phi[i,:,:] * DF[i,:,:] * diff[i,:,:])'
+    DPhi_mod = zeros(size(DPhi,1), size(DPhi,2))
+    
+    for k = 1:length(q_weight)
+        DPhi_mod += (DPhi_test[:,k,:] * DF[k,:,:]) * (q_weight[k] * weight_elem[k]) *  (DPhi[:,k,:] * DF[k,:,:] * diff[k,:,:])'
     end
     
-    return -Phi_mod
+    return -DPhi_mod
 end
 
 # -----------------------------

@@ -9,7 +9,7 @@ function plot_mesh(m :: TriMesh)
     tri = ax[:triplot](m.point[:,1], m.point[:,2], m.cell - 1 )
     setp(tri, linestyle = "-",
          marker = "None",
-         linewidth = 2,
+         linewidth = 1,
          color = "green")
     
     fig[:canvas][:draw]()

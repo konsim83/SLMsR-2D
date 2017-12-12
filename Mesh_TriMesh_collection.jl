@@ -25,9 +25,9 @@ type TriMesh_collection
         this.mesh = mesh
         this.mesh_f = Array(TriMesh, mesh.n_cell)
 
-        point = mesh.get_point(mesh.get_cell(1:mesh.n_cell))
+        point = get_point(mesh, get_cell(mesh, 1:mesh.n_cell))
         for i=1:mesh.n_cell
-            this.mesh_f[i] = mesh_triangle_uniform_edges(point[i,:,:], n_segs_per_edge_f)
+            this.mesh_f[i] = mesh_triangle_uniform_edges(point[:,:,i], n_segs_per_edge_f)
         end
 
         return this
