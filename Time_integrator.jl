@@ -139,20 +139,17 @@ function update_system!(solution :: FEM.AbstractSolution,
                         problem :: Problem.AbstractProblem,
                         k_time :: Int64)
 
-    #=
+    
     # ----   This is the fast version   ---
     FEM.assemble_mass!(system_data.mass,
-                       solution,
                        mesh,
                        dof,
                        ref_el,
                        quad,
                        par,
-                       problem,
-                       k_time)
+                       problem)
     
     FEM.assemble_advection!(system_data.advection,
-                            solution,
                             mesh,
                             dof,
                             ref_el,
@@ -162,7 +159,6 @@ function update_system!(solution :: FEM.AbstractSolution,
                             k_time)
     
     FEM.assemble_diffusion!(system_data.diffusion,
-                            solution,
                             mesh,
                             dof,
                             ref_el,
@@ -171,22 +167,19 @@ function update_system!(solution :: FEM.AbstractSolution,
                             problem,
                             k_time)
     # ----   This is the fast version   ---
-    =#
-
-
     
+
+
+    #=
     # ----   This is the slow version   ---
-    system_data.mass = FEM.assemble_mass(solution,
-                                         mesh,
+    system_data.mass = FEM.assemble_mass(mesh,
                                          dof,
                                          ref_el,
                                          quad,
                                          par,
-                                         problem,
-                                         k_time)
+                                         problem)
     
-    system_data.advection = FEM.assemble_advection(solution,
-                                                   mesh,
+    system_data.advection = FEM.assemble_advection(mesh,
                                                    dof,
                                                    ref_el,
                                                    quad,
@@ -194,9 +187,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                    problem,
                                                    k_time)
     
-    system_data.diffusion = FEM.assemble_diffusion(
-                                                   solution,
-                                                   mesh,
+    system_data.diffusion = FEM.assemble_diffusion(mesh,
                                                    dof,
                                                    ref_el,
                                                    quad,
@@ -204,7 +195,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                    problem,
                                                    k_time)
     # ----   This is the slow version   ---
-
+    =#
 
     
     if dof.n_node_neumann > 0

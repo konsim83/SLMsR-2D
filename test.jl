@@ -8,7 +8,7 @@ if true
     include("Solver.jl")
 end
 
-n_edge_per_seg = 5
+n_edge_per_seg = 20
 n_order_quad = 4
 n_order_FEM = 1
 
@@ -51,21 +51,26 @@ end
 
 
 println("Standard assembly...")
-#@time M = FEM.assemble_mass(m, d, r, q, par, p)
-#@time A = FEM.assemble_advection(m, d, r, q, par, p, 1)
+@time M = FEM.assemble_mass(m, d, r, q, par, p)
+@time A = FEM.assemble_advection(m, d, r, q, par, p, 1)
 @time D = FEM.assemble_diffusion(m, d, r, q, par, p, 1)
 println("---------------------------\n\n")
 
 
 
+# -----------------------------------------------------------------------------------------------------------------
+ind_cell = FEM.get_dof_elem(d, m, 1:d.n_elem)
+ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
+ind_lin = sub2ind((d.n_true_dof,d.n_true_dof), ind_test, ind)
 
-#M1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
-#A1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
+M1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
+A1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
 D1 = sparse(ind_test, ind, zeros(Float64, length(ind)), d.n_true_dof, d.n_true_dof)
-#println("\n")
+# -----------------------------------------------------------------------------------------------------------------
 
 println("In place assembly...")
-#@time FEM.assemble_mass!(M1, m, d, r, q, par, p)
-#@time FEM.assemble_advection!(A1, m, d, r, q, par, p, 1)
+@time FEM.assemble_mass!(M1, m, d, r, q, par, p)
+@time FEM.assemble_advection!(A1, m, d, r, q, par, p, 1)
 @time FEM.assemble_diffusion!(D1, m, d, r, q, par, p, 1)
 println("---------------------------\n\n")

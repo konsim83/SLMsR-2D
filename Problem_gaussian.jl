@@ -25,7 +25,7 @@ type Gaussian <: AbstractProblem
         this.covariance_mat = diagm([lambda_1 ; lambda_2])
         this.covariance_mat_det = lambda_1 * lambda_2
         this.covariance_mat_sqrt_inv = sqrtm( this.covariance_mat \ eye(2))
-        expectation = [1/2 ; 1/2]
+        this.expectation = [1/2 ; 1/2]
 
         return this
     end # end constructor
@@ -114,12 +114,25 @@ end
 
 # --------------------------------------------------------------------
 
+function u_init(problem :: Gaussian, x :: Array{Float64,1})
+                
+    length(x)!=2 ? error(" Vector x must length=2.") :
+
+    x -= problem.expectation
+                
+    out = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * x'*problem.covariance_mat_sqrt_inv * x )
+    
+    return out
+end
+
 
 function u_init(problem :: Gaussian, x :: Array{Float64,2})
                 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
-                
-    out = 1/sqrt(2*pi*problem.covariance_mat_det) * exp.( -1/2 * vec(sum(problem.covariance_mat_sqrt_inv * x', 1)) )
+
+    x = broadcast(+, problem.expectation', x)
+    
+    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * sum((x*problem.covariance_mat_sqrt_inv).*x,2) )
     
     return out
 end

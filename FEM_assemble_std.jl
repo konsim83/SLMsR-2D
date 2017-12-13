@@ -161,7 +161,7 @@ function assemble_elem_d(mesh :: Mesh.TriMesh,
                          time :: Float64)
     
     n = ref_el.n_node
-    a = zeros(n, n, mesh.n_cell)
+    d_loc = zeros(n, n, mesh.n_cell)
     
     
     x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
@@ -175,12 +175,12 @@ function assemble_elem_d(mesh :: Mesh.TriMesh,
     
     for l = 1:mesh.n_cell
         for k = 1:length(quad.weight)
-            a[:,:,l] -= (view(DPhi_test,:,k,:) * view(DF,k,:,:,l)) * (quad.weight[k] * weight_elem[k,l]) *  (view(DPhi,:,k,:) * view(DF,k,:,:,l) * view(diffusion,k,:,:,l))'
+            d_loc[:,:,l] += (view(DPhi_test,:,k,:) * view(DF,k,:,:,l)) * (quad.weight[k] * weight_elem[k,l]) *  (view(DPhi,:,k,:) * view(DF,k,:,:,l) * view(diffusion,k,:,:,l))'
         end
-        #a[:,:,k] = build_elem_matrix_d(diffusion[:,:,:,k], DF[:,:,:,k], DPhi_test, DPhi, quad.weight, weight_elem[:,k])
+        #d[:,:,k] = build_elem_matrix_d(diffusion[:,:,:,k], DF[:,:,:,k], DPhi_test, DPhi, quad.weight, weight_elem[:,k])
     end
 
-    return a
+    return -d_loc
 end # end function
 
 function build_elem_matrix_d(diff :: Array{Float64,3}, DF :: Array{Float64,3},
@@ -189,7 +189,7 @@ function build_elem_matrix_d(diff :: Array{Float64,3}, DF :: Array{Float64,3},
 
     DPhi_mod = zeros(size(DPhi,1), size(DPhi,2))
     
-    for k = 1:length(q_weight)
+    for k = 1:length(q_weight)        
         DPhi_mod += (DPhi_test[:,k,:] * DF[k,:,:]) * (q_weight[k] * weight_elem[k]) *  (DPhi[:,k,:] * DF[k,:,:] * diff[k,:,:])'
     end
     

@@ -20,10 +20,10 @@ function assemble_mass!(M  :: SparseMatrixCSC{Float64,Int64},
     
 
     """   
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    weight_elem = diagm(quad.weight) * Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
         
     Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point) * diagm(quad.weight)
+    Phi_test = FEM.eval(ref_el, quad.point)
     
     m_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
 
@@ -61,17 +61,17 @@ function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
     """
     time = k_time * par.dt
 
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    weight_elem = diagm(quad.weight) * Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
     DF = Mesh.map_ref_point_grad_inv(mesh, quad.point, 1:dof.n_elem);
 
     x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
     velocity = Problem.velocity(problem, time, x)
 
     DPhi = FEM.eval_grad(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point) * diagm(quad.weight)
+    Phi_test = FEM.eval(ref_el, quad.point) 
     
     
-    a_loc = Array{Float64,2}(ref_el.n_node,ref_el.n_node)
+    a_loc = zeros(ref_el.n_node,ref_el.n_node)
     
     for k = 1:mesh.n_cell
         DPhi_mod = modify_ansatzfunction_v_inplace(velocity[:,:,k], DF[:,:,:,k], DPhi)
@@ -118,8 +118,8 @@ function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
     time = k_time * par.dt
     
     # fixed quantities for mesh
-    weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
-    DF = Mesh.map_ref_point_grad_inv(m, q.point, 1:d.n_elem);
+    weight_elem = diagm(q.weight) * Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
+    DF = Mesh.map_ref_point_grad_inv(m, q.point, 1:d.n_elem)
 
     x = Mesh.map_ref_point(m, q.point, 1:d.n_elem)
     diffusion = Problem.diffusion(p, time, x)
@@ -127,19 +127,20 @@ function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
     DPhi = FEM.eval_grad(r, q.point)
     DPhi_test = FEM.eval_grad(r, q.point)
     
-    d_loc = Array{Float64,2}(n,n)
+    d_loc = zeros(n,n)
 
-    for ll = 1:m.n_cell
-        for kk = 1:length(q.weight)
-            d_loc[:,:] -= (view(DPhi_test,:,kk,:) * view(DF,kk,:,:,ll)) * (q.weight[kk] * weight_elem[kk,ll]) *  (view(DPhi,:,kk,:) * view(DF,kk,:,:,ll) * view(diffusion,kk,:,:,ll))'
+    for ll in 1:m.n_cell
+        for kk in 1:length(q.weight)
+            tmp = view(DPhi_test,:,kk,:) * view(DF,kk,:,:,ll)
+            d_loc += (tmp) * (weight_elem[kk,ll]) *  (tmp * view(diffusion,kk,:,:,ll))'
         end
-
+        
         for l in 1:9
-            D[d.ind_test[9*(ll-1)+l],d.ind[9*(ll-1)+l]] += d_loc[l]
+            D[d.ind_test[9*(ll-1)+l],d.ind[9*(ll-1)+l]] -= d_loc[l]
         end
-        error("Something is wrong with the indices here...")
+        d_loc .= 0
     end
-
+    
     return nothing
 end
 
