@@ -1,40 +1,33 @@
-type Gaussian <: AbstractProblem
+type BasisFun <: AbstractProblem
     
     info :: String
     type_info :: String
     
     T :: Float64
-    
-    covariance_mat :: Array{Float64,2}
-    covariance_mat_det :: Float64
-    covariance_mat_inv :: Array{Float64,2}
-    expectation :: Array{Float64,1}
+
+    ind_basis :: Int64
+    coeff :: Array{Float64,1}
 
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
     
-    function Gaussian(T :: Float64)
+    function BasisFun(ind_basis :: Int64, T :: Float64)
 
         this = new()
         
-        this.info = "Evolution of symmetric Gaussian."
+        this.info = "Evolution of basis finction with index   $ind_basis."
         this.type_info = "ADE"
 
         this.T = T
 
-        lambda_1 = 0.05
-        lambda_2 = 0.1
-
-        alpha = pi/8
-        rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
-        
-        this.covariance_mat = rot * diagm([lambda_1 ; lambda_2]) * rot'
-        this.covariance_mat_det = det(this.covariance_mat)
-        this.covariance_mat_inv = this.covariance_mat \ eye(2)
-        this.expectation = [1/2 ; 1/2]
+        this.ind_basis = ind_basis
+        this.coeff = [-1.0 -1.0 1.0 ;
+                      1.0 0.0 0.0 ;
+                      0.0 1.0 0.0][ind_basis,:]
 
         is_transient_diffusion = false
         is_transient_velocity = false
+        
         return this
     end # end constructor
 end # end type
@@ -46,7 +39,7 @@ end # end type
 # --------------------------------------------------------------
 
 
-function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64,2})
     """
 
     Diffusion is represented by a positive 2-by-2 tensor.
@@ -66,7 +59,7 @@ function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
 end
 
 
-function diffusion(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+function diffusion(problem :: BasisFun,  t :: Float64, x :: Array{Float64,3})
     """
 
     Diffusion is represented by a positive 2-by-2 tensor.
@@ -89,7 +82,7 @@ end
 # --------------------------------------------------------------------
 
 
-function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
     """
 
     Velocity is represented by a 2-vector. The solenoidal part can be
@@ -99,11 +92,11 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
     
-    return ones(size(x))
+    return 0*ones(size(x))
 end
 
 
-function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,3})
     """
 
     Velocity is represented by a 2-vector. The solenoidal part can be
@@ -115,40 +108,36 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
 
     #out = Array{Float64, 3}(size(x,1), 2, size(x,3))
 
-    return ones(size(x))
+    return 0*ones(size(x))
     
 end
 
 
 # --------------------------------------------------------------------
 
-function u_init(problem :: Gaussian, x :: Array{Float64,1})
+function u_init(problem :: BasisFun, x :: Array{Float64,1})
                 
     length(x)!=2 ? error(" Vector x must length=2.") :
-
-    x -= problem.expectation
+   
+    out = problem.coeff' * [x ; 1] 
                 
-    out = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * x'*problem.covariance_mat_inv * x )
-    
     return out
 end
 
 
-function u_init(problem :: Gaussian, x :: Array{Float64,2})
+function u_init(problem :: BasisFun, x :: Array{Float64,2})
                 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
-
-    x = broadcast(+, -problem.expectation', x)
     
-    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * sum((x*problem.covariance_mat_inv).*x,2) )
+    out = [x ones(size(x,1))] * problem.coeff
     
     return out
 end
 
-function u_init(problem :: Gaussian, x :: Array{Float64,3})
+function u_init(problem :: BasisFun, x :: Array{Float64,3})
                 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
-
+        
     out = Array{Float64, 3}(size(x,1), 1, size(x,3))
 
     for i=1:size(x,3)
