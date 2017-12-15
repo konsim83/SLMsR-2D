@@ -1,6 +1,7 @@
 # Ignore the following files
 
 *~
+*.vtu
 
 *.out
 *.aux

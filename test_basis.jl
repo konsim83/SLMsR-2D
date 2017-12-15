@@ -31,8 +31,8 @@ Standard FEM. Solves Advection diffusion equation for the basis functions.
 """
 
 # -------   Mesh parameters   -------
-n_edge_per_seg = 10
-n_edge_per_seg = 50
+n_edge_per_seg = 20
+#n_edge_per_seg = 50
 
 
 # -------   FEM parameters   -------

@@ -47,7 +47,8 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
         system_rhs = rhs[dof.ind_node_non_dirichlet]
 
         #weight_elem = weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
-        
+
+        # initialize a temporary array that holds the 
         u_temp = FEM.map_ind_mesh2dof(dof, Problem.u_init(problem, mesh.point))
         
         return new(mass, advection, diffusion, rhs, system_matrix, system_rhs, u_temp)
@@ -229,11 +230,19 @@ function update_system!(solution :: FEM.AbstractSolution,
         system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * (FEM.map_ind_mesh2dof(dof, solution.u[:,k_time])[dof.ind_node_non_dirichlet])
     else
         
+        system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,:]
+                                      * solution.u[:,k_time] -
+
+                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
+                                      * solution.u[dof.ind_node_dirichlet,k_time]) )
+        #=
+        # ---------------   Contains a bug --------------------------
         system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
                                       * solution.u[dof.ind_node_non_dirichlet,k_time] -
                                       (system_data.mass -
                                        par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
                                       * solution.u[dof.ind_node_dirichlet,k_time]) )
+        =#
     end
     
 end

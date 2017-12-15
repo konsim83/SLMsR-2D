@@ -57,11 +57,17 @@ function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
         
     out = Array{Float64}(size(x,1), 2, 2)
 
+    out[:,1,1] = 0.0101-0.01*sin.(2*pi*35*x[:,1])
+    out[:,2,1] = 0.0
+    out[:,1,2] = 0.0
+    out[:,2,2] = 0.0101-0.01*cos.(2*pi*30*x[:,2])
+    
+    #=
     out[:,1,1] = 0.01
     out[:,2,1] = 0.0
     out[:,1,2] = 0.0
     out[:,2,2] = 0.002 
-    
+    =#
     return out
 end
 

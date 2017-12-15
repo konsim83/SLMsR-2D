@@ -124,7 +124,6 @@ type Dof_Pk{FEM_order} <: AbstractDof
             this.n_true_dof = mesh.n_point
 
             this.map_vec_ind_mesh2dof = collect(1:this.n_node)
-            #this.map_vec_ind_dof2mesh :: Array{Int64,1}
             # ----------------------------------------
 
             ind_cell = Mesh.get_cell(mesh, 1:mesh.n_cell)

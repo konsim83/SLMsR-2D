@@ -22,9 +22,9 @@ end
 
 function mesh_unit_simplex_uniform_edges(n_segs_per_edge :: Int64, angle = 0.0 :: Float64)
 
-    h = 1# 1/n_segs_per_edge
-    
+    h = 1/n_segs_per_edge
     area_max = round(sqrt(3)/4, 10)*h^2
+    
     if angle == 0.0
         switches = string("pzYqa", @sprintf("%10.10f",area_max), "en")
     else

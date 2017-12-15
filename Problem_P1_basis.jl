@@ -53,7 +53,7 @@ function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64,2})
     out[:,1,1] = 0.01
     out[:,2,1] = 0.0
     out[:,1,2] = 0.0
-    out[:,2,2] = 0.002 
+    out[:,2,2] = 0.002
     
     return out
 end
