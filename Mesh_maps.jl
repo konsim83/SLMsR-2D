@@ -1,3 +1,11 @@
+function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Int64)
+
+    P = [x  ones(size(x,1))] * m.T_ref2cell[:,:,ind_c]'
+    
+    return P
+end
+
+
 function map_ref_point(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Array{Int64,1})
     
     y = [x  ones(size(x,1))]
@@ -47,6 +55,20 @@ end
 
 # --------------------------------------------------------------------------
 
+function map_ref_point_grad_inv(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Int64)
+    ind_c = vec(collect(ind_c))
+    
+    n_points = size(x,1)
+    
+    P_grad = Array{Float64,3}(n_points, 2, 2)
+
+    for j=1:n_points
+        P_grad[j,:,:,:] = m.T_cell2ref[:,1:2,ind_c]
+    end
+    
+    return P_grad
+end
+
 
 function map_ref_point_grad_inv(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Array{Int64,1})
     ind_c = vec(collect(ind_c))
@@ -74,6 +96,18 @@ end
 
 # --------------------------------------------------------------------------
 
+function map_ref_point_grad_det(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Int64)
+    
+    n_points = size(x,1)
+
+    P_det = Array{Float64,1}(n_points)
+    
+    for j=1:n_points
+        P_det[j] = abs(m.T_ref2cell[1,1,ind_c]*m.T_ref2cell[2,2,ind_c]-m.T_ref2cell[2,1,ind_c]*m.T_ref2cell[1,2,ind_c])
+    end
+    
+    return P_det
+end
 
 function map_ref_point_grad_det(m :: TriMesh, x :: Array{Float64,2}, ind_c :: Array{Int64,1})
     

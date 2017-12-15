@@ -66,14 +66,14 @@ function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
 
     x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
     velocity = Problem.velocity(problem, time, x)
-
+        
     DPhi = FEM.eval_grad(ref_el, quad.point)
     Phi_test = FEM.eval(ref_el, quad.point) 
     
     
     a_loc = zeros(ref_el.n_node,ref_el.n_node)
     
-    for k = 1:mesh.n_cell
+    for k = 1:mesh.n_cell       
         DPhi_mod = modify_ansatzfunction_v_inplace(velocity[:,:,k], DF[:,:,:,k], DPhi)
         a_loc[:,:] = Phi_test * diagm(weight_elem[:,k]) * DPhi_mod'
         for l in 1:9
