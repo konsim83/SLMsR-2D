@@ -1,7 +1,13 @@
 module Problem
 
+
+using Geometry
+
+
 # -------   Type hierarchies   -------
 abstract type AbstractProblem end
+abstract type AbstractPhysicalProblem <: AbstractProblem end
+abstract type AbstractBasisProblem <: AbstractProblem end
 
 # ------------------------------------------------------------------------    
 include("Problem_gaussian.jl")

@@ -1,6 +1,6 @@
 module Solver
 
-using FEM, Mesh, Parameter, Problem, Quad, Time_integrator, ProgressMeter
+using FEM, Mesh, Parameter, Problem, Quad, Time_integrator, ProgressMeter, Geometry
 
 
 # -------   Core routines for workflow   -------

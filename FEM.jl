@@ -15,6 +15,7 @@ include("FEM_RefEl.jl")
 # -------   Dof types   -------
 include("FEM_DoF_Pk.jl")
 include("FEM_DoF_Pk_periodic.jl")
+include("FEM_DoF_collection.jl")
 
 
 # -------   Solution types   -------

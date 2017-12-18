@@ -54,5 +54,5 @@ par_FEM_coarse = Parameter.Parameter_FEM(problem.T,
 
 
 # -------   Call the solver   -------
-@time solution, mesh = Solver.solve_FEM_basis(par_FEM_coarse, problem)
+@time solution, mesh = Solver.solve_FEM_simplex(par_FEM_coarse, problem)
 # ---------------------------------------------------------------------------

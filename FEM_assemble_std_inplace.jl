@@ -12,7 +12,7 @@ function assemble_mass!(M  :: SparseMatrixCSC{Float64,Int64},
                         dof :: FEM.AbstractDof,
                         ref_el :: FEM.RefEl_Pk,
                         quad :: Quad.AbstractQuad,
-                        par :: Parameter.Parameter_FEM,
+                        par :: Parameter.AbstractParameter,
                         problem :: Problem.AbstractProblem)
     
     """
@@ -50,7 +50,7 @@ function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
                              dof :: FEM.AbstractDof,
                              ref_el :: FEM.RefEl_Pk,
                              quad :: Quad.AbstractQuad,
-                             par :: Parameter.Parameter_FEM,
+                             par :: Parameter.AbstractParameter,
                              problem :: Problem.AbstractProblem,
                              k_time :: Int64)
     
@@ -109,7 +109,7 @@ function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
                              d :: FEM.AbstractDof,
                              r :: FEM.RefEl_Pk,
                              q :: Quad.AbstractQuad,
-                             par :: Parameter.Parameter_FEM,
+                             par :: Parameter.AbstractParameter,
                              p :: Problem.AbstractProblem,
                              k_time :: Int64)
 

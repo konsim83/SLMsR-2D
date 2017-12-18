@@ -206,7 +206,7 @@ function map_ind_dof2mesh(dof :: Dof_Pk_periodic_square{1}, vec_dof :: Array{Flo
     """
 
     # expand a dof-vector into a mesh-vector (only periodic boundaries)
-    vec_mesh = vec_dof[dof.map_vec_ind_mesh2dof]
+    vec_mesh = vec_dof[dof.map_vec_ind_mesh2dof,:]
 
     return vec_mesh
 end
@@ -224,7 +224,7 @@ function map_ind_mesh2dof(dof :: Dof_Pk_periodic_square{1}, vec_mesh :: Array{Fl
     """
 
     # reduce a mesh-vector to a dof-vector (only periodic boundaries)
-    vec_dof = vec_mesh[indexin(unique(dof.map_vec_ind_mesh2dof), dof.map_vec_ind_mesh2dof)]
+    vec_dof = vec_mesh[indexin(unique(dof.map_vec_ind_mesh2dof), dof.map_vec_ind_mesh2dof),:]
 
     return vec_dof
 end

@@ -1,4 +1,4 @@
-type Gaussian <: AbstractProblem
+type Gaussian <: AbstractPhysicalProblem
     
     info :: String
     type_info :: String
@@ -57,17 +57,21 @@ function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
         
     out = Array{Float64}(size(x,1), 2, 2)
 
+    #=
     out[:,1,1] = 0.0101-0.01*sin.(2*pi*35*x[:,1])
     out[:,2,1] = 0.0
     out[:,1,2] = 0.0
     out[:,2,2] = 0.0101-0.01*cos.(2*pi*30*x[:,2])
-    
-    #=
-    out[:,1,1] = 0.01
-    out[:,2,1] = 0.0
-    out[:,1,2] = 0.0
-    out[:,2,2] = 0.002 
     =#
+
+    
+    k = 25
+    out[:,1,1] = 0.01
+    out[:,2,1] = 1/k * sin.(k*(x[:,1]-x[:,2]))
+    out[:,1,2] = -1/k * sin.(k*(x[:,1]-x[:,2]))
+    out[:,2,2] = 0.01 
+    
+    
     return out
 end
 
@@ -105,7 +109,7 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
     
-    return ones(size(x))
+    return 0*ones(size(x)) #[cos.(k*(x[:,1]-x[:,2])) cos.(k*(x[:,1]-x[:,2]))]#0*ones(size(x))
 end
 
 
@@ -121,7 +125,7 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
 
     #out = Array{Float64, 3}(size(x,1), 2, size(x,3))
 
-    return ones(size(x))
+    return 0*ones(size(x)) #[cos.(k*(x[:,1]-x[:,2])) cos.(k*(x[:,1]-x[:,2]))]
     
 end
 

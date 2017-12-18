@@ -1,34 +1,32 @@
-type BasisFun <: AbstractProblem
+type BasisFun <: AbstractBasisProblem
     
     info :: String
     type_info :: String
     
     T :: Float64
 
-    ind_basis :: Int64
-    coeff :: Array{Float64,1}
+    coeff :: Array{Float64,2}
 
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
+
+    problem_parent :: AbstractProblem
     
-    function BasisFun(ind_basis :: Int64, T :: Float64)
-
-        this = new()
+    function BasisFun(problem :: AbstractProblem, tri :: Geometry.Triangle)
         
-        this.info = "Evolution of basis finction with index   $ind_basis."
-        this.type_info = "ADE"
+        info = "Evolution of basis."
+        type_info = problem.type_info
 
-        this.T = T
+        T = problem.T
 
-        this.ind_basis = ind_basis
-        this.coeff = [-1.0 -1.0 1.0 ;
-                      1.0 0.0 0.0 ;
-                      0.0 1.0 0.0][ind_basis,:]
+        coeff = Geometry.compute_P1_basis_coeff(tri)
 
-        is_transient_diffusion = false
-        is_transient_velocity = false
+        is_transient_diffusion = problem.is_transient_diffusion
+        is_transient_velocity = problem.is_transient_velocity
+
+        problem_parent = problem
         
-        return this
+        return new(info, type_info, T, coeff, is_transient_diffusion, is_transient_velocity, problem_parent)
     end # end constructor
 end # end type
 
@@ -39,50 +37,21 @@ end # end type
 # --------------------------------------------------------------
 
 
-function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64})
     """
 
-    Diffusion is represented by a positive 2-by-2 tensor.
+    Delegate function calls to the original abstract problem.
 
     """
     
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
-        
-    out = Array{Float64}(size(x,1), 2, 2)
-
-    out[:,1,1] = 0.01
-    out[:,2,1] = 0.0
-    out[:,1,2] = 0.0
-    out[:,2,2] = 0.002
-    
-    return out
-end
-
-
-function diffusion(problem :: BasisFun,  t :: Float64, x :: Array{Float64,3})
-    """
-
-    Diffusion is represented by a positive 2-by-2 tensor.
-
-    """
-
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
-        
-    out = Array{Float64}(size(x,1), 2, 2, size(x,3))
-
-    for i=1:size(x,3)
-        out[:,:,:,i] = diffusion(problem, t, x[:,:,i])
-    end
-    
-    return out
-    
+    return diffusion(problem.problem_parent, t, x)
 end
 
 
 # --------------------------------------------------------------------
 
 
-function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64})
     """
 
     Velocity is represented by a 2-vector. The solenoidal part can be
@@ -90,36 +59,18 @@ function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
 
     """
 
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
-    
-    return 0*ones(size(x))
-end
-
-
-function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,3})
-    """
-
-    Velocity is represented by a 2-vector. The solenoidal part can be
-    represented by a stream function.
-
-    """
-
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
-
-    #out = Array{Float64, 3}(size(x,1), 2, size(x,3))
-
-    return 0*ones(size(x))
-    
+    return velocity(problem.problem_parent, t, x)
 end
 
 
 # --------------------------------------------------------------------
+
 
 function u_init(problem :: BasisFun, x :: Array{Float64,1})
                 
     length(x)!=2 ? error(" Vector x must length=2.") :
    
-    out = problem.coeff' * [x ; 1] 
+    out = [x ; 1]'  * problem.coeff
                 
     return out
 end
@@ -138,10 +89,10 @@ function u_init(problem :: BasisFun, x :: Array{Float64,3})
                 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
         
-    out = Array{Float64, 3}(size(x,1), 1, size(x,3))
+    out = Array{Float64, 3}(size(x,1), 3, size(x,3))
 
     for i=1:size(x,3)
-        out[:,1,i] = u_init(problem, x[:,:,i])
+        out[:,:,i] = u_init(problem, x[:,:,i])
     end
     
     return out

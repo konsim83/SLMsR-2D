@@ -18,19 +18,19 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
     mass :: SparseMatrixCSC{Float64,Int64}
     advection :: SparseMatrixCSC{Float64,Int64}
     diffusion :: SparseMatrixCSC{Float64,Int64}
-    rhs :: Array{Float64, 1}
+    rhs :: Array{Float64}
     
     system_matrix :: SparseMatrixCSC{Float64,Int64}
-    system_rhs :: Array{Float64, 1}
+    system_rhs :: Array{Float64}
 
     # holds solution of system in dof-indices. Note that Dirichlet
     # nodes can occur with periodic boundaries.
-    u_temp :: Array{Float64, 1}
+    u_temp :: Array{Float64}
 
     #weight_elem :: Array{Float64,2}
     #DPhi :: Array{Float64,4}
     
-    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractProblem)
+    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractPhysicalProblem)
         
         # Create a pattern
         i = FEM.get_dof_elem(dof, mesh, 1:dof.n_elem)
@@ -50,7 +50,32 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
 
         # initialize a temporary array that holds the 
         u_temp = FEM.map_ind_mesh2dof(dof, Problem.u_init(problem, mesh.point))
+       
+        return new(mass, advection, diffusion, rhs, system_matrix, system_rhs, u_temp)
+    end
+
+    
+    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractBasisProblem)
         
+        # Create a pattern
+        i = FEM.get_dof_elem(dof, mesh, 1:dof.n_elem)
+        ind = vec(i[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+        ind_test = vec(transpose(repmat(i, 1, size(i,2))))
+
+        # Allocate memory for sparse matrix
+        mass = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        advection = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        diffusion = sparse(ind_test, ind, zeros(Float64, length(ind)), dof.n_true_dof, dof.n_true_dof)
+        rhs = zeros(dof.n_true_dof,3)
+
+        system_matrix = mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
+        system_rhs = rhs[dof.ind_node_non_dirichlet,:]
+
+        #weight_elem = weight_elem = Mesh.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
+
+        # initialize a temporary array that holds the 
+        u_temp = FEM.map_ind_mesh2dof(dof, Problem.u_init(problem, mesh.point))
+       
         return new(mass, advection, diffusion, rhs, system_matrix, system_rhs, u_temp)
     end
     
@@ -93,7 +118,7 @@ function make_step!(solution :: FEM.AbstractSolution,
                     ref_el :: FEM.AbstractRefEl,
                     quad :: Quad.AbstractQuad,
                     par :: Parameter.AbstractParameter,
-                    problem :: Problem.AbstractProblem,
+                    problem :: Problem.AbstractPhysicalProblem,
                     k_time :: Int64)
     
 
@@ -137,7 +162,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                         ref_el :: FEM.AbstractRefEl,
                         quad :: Quad.AbstractQuad,
                         par :: Parameter.AbstractParameter,
-                        problem :: Problem.AbstractProblem,
+                        problem :: Problem.AbstractPhysicalProblem,
                         k_time :: Int64)
 
     """
@@ -145,7 +170,7 @@ function update_system!(solution :: FEM.AbstractSolution,
     Update the system at time index k_time+1 because we need
     information at the next time step.
 
-    """
+    """    
     
     # ----   This is the fast version   ---
     if k_time==1
@@ -235,13 +260,174 @@ function update_system!(solution :: FEM.AbstractSolution,
 
                                       (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
                                       * solution.u[dof.ind_node_dirichlet,k_time]) )
+    end
+    
+end
+# ------------------------------------------------------------------------------
+
+
+
+# ------------------------------------------------------------------------------
+function make_step!(solution :: FEM.AbstractSolution,
+                    time_int :: ImplEuler,
+                    mesh :: Mesh.TriMesh,
+                    dof :: FEM.AbstractDof,
+                    ref_el :: FEM.AbstractRefEl,
+                    quad :: Quad.AbstractQuad,
+                    par :: Parameter.AbstractParameter,
+                    problem :: Problem.AbstractBasisProblem,
+                    k_time :: Int64,
+                    ind_cell :: Int64)
+    
+
+    """
+
+    Accept as input an Implicit Euler system in form of a type
+    and do time step from k_time -> k_time+1.
+
+    """
+
+
+    # ---------------------------------------
+    # Manipulate the system data locally
+    update_system!(solution,
+                   time_int.system_data,
+                   mesh,
+                   dof,
+                   ref_el,
+                   quad,
+                   par,
+                   problem,
+                   k_time,
+                   ind_cell)
+    # ---------------------------------------
+
+    
+    # Solve the system and map to mesh variables
+    time_int.system_data.u_temp[dof.ind_node_non_dirichlet,:] = time_int.system_data.system_matrix \ time_int.system_data.system_rhs
+    solution.phi_1[ind_cell][:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp[:,1])
+    solution.phi_2[ind_cell][:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp[:,2])
+    solution.phi_3[ind_cell][:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp[:,3])
+    
+    #solution.u[dof.ind_node_non_dirichlet,k_time+1] = FEM.map_ind_dof2mesh( dof,  )
+    #solution.u[dof.ind_node_dirichlet,k_time+1] = solution.u[dof.ind_node_dirichlet, k_time]    
+    return nothing
+end
+# ----------------------------------
+
+
+
+function update_system!(solution :: FEM.AbstractSolution,
+                        system_data :: System_data_implEuler_ADE,
+                        mesh :: Mesh.TriMesh,
+                        dof :: FEM.AbstractDof,
+                        ref_el :: FEM.AbstractRefEl,
+                        quad :: Quad.AbstractQuad,
+                        par :: Parameter.AbstractParameter,
+                        problem :: Problem.AbstractBasisProblem,
+                        k_time :: Int64,
+                        ind_cell :: Int64)
+
+    """
+
+    Update the system at time index k_time+1 because we need
+    information at the next time step.
+
+    """
+    
+    # ----   This is the fast version   ---
+    if k_time==1
+        FEM.assemble_mass!(system_data.mass,
+                           mesh,
+                           dof,
+                           ref_el,
+                           quad,
+                           par,
+                           problem)
+    end
+
+    if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
+        FEM.assemble_advection!(system_data.advection,
+                                mesh,
+                                dof,
+                                ref_el,
+                                quad,
+                                par,
+                                problem,
+                                k_time+1)
+    end
+
+    if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
+        FEM.assemble_diffusion!(system_data.diffusion,
+                                mesh,
+                                dof,
+                                ref_el,
+                                quad,
+                                par,
+                                problem,
+                                k_time+1)
+    end
+    # ----   This is the fast version   ---
+    
+
+
+    #=
+    # ----   This is the slow version   ---
+    if k_time==1
+    system_data.mass = FEM.assemble_mass(mesh,
+                                         dof,
+                                         ref_el,
+                                         quad,
+                                         par,
+                                         problem)
+    end
+    
+    if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
+    system_data.advection = FEM.assemble_advection(mesh,
+                                                   dof,
+                                                   ref_el,
+                                                   quad,
+                                                   par,
+                                                   problem,
+                                                   k_time+1)
+    end
+
+    if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
+    system_data.diffusion = FEM.assemble_diffusion(mesh,
+                                                   dof,
+                                                   ref_el,
+                                                   quad,
+                                                   par,
+                                                   problem,
+                                                   k_time+1)
+    end
+    # ----   This is the slow version   ---
+    =#
+
+    
+    if dof.n_node_neumann > 0
+        error("Neumann boundary integral not implemented yet.")
+    end
+
+    system_data.system_matrix = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] )
+    
+    if dof.is_periodic
+        system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * (FEM.map_ind_mesh2dof(dof, solution.phi[ind_cell][:,k_time])[dof.ind_node_non_dirichlet])
+    else
+
+        phi_tmp =  [solution.phi_1[ind_cell][:,k_time] solution.phi_2[ind_cell][:,k_time] solution.phi_3[ind_cell][:,k_time]]
+        system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,:]
+                                      * phi_tmp -
+
+                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
+                                      * phi_tmp[dof.ind_node_dirichlet,:]) )
         #=
         # ---------------   Contains a bug --------------------------
         system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet]
-                                      * solution.u[dof.ind_node_non_dirichlet,k_time] -
+                                      * solution.phi[ind_cell][dof.ind_node_non_dirichlet,k_time] -
                                       (system_data.mass -
                                        par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
-                                      * solution.u[dof.ind_node_dirichlet,k_time]) )
+                                      * solution.phi[ind_cell][dof.ind_node_dirichlet,k_time]) )
         =#
     end
     

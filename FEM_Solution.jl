@@ -8,13 +8,11 @@ type Solution_FEM <: AbstractSolution
 
     function Solution_FEM(dof :: AbstractDof,
                           par :: Parameter_FEM)
-        
-        this = new()
 
         # Reserve memory for the solution
-        this.u = Array{Float64,2}(dof.n_node, par.n_steps+1)
+        u = Array{Float64,2}(dof.n_node, par.n_steps+1)
         
-        return this
+        return new(u)
     end
 end # end type
 
@@ -35,26 +33,37 @@ type Solution_MsFEM <: AbstractSolution
     phi_2 :: Array{Array{Float64,2},1}
     phi_3 :: Array{Array{Float64,2},1}
 
-    function Solution_MsFEM(dof :: AbstractDof,
-                          par :: Parameter_MsFEM)
+    # Storage of element matrices
+    mass :: Array{SparseMatrixCSC{Float64,Int64},1}
+    advection :: Array{SparseMatrixCSC{Float64,Int64},1}
+    diffusion :: Array{SparseMatrixCSC{Float64,Int64},1}
+    
+    function Solution_MsFEM(dof :: Dof_collection,
+                            par :: Parameter_MsFEM)
         
-        this = new()
-
         # Reserve memory for the solution
-        this.u = Array(Float64, dof.n_node, par.n_steps+1)
-
+        u = Array{Float64, 2}(dof.dof.n_node, par.n_steps+1)
+        
         # Set up an array of arrays for the basis
-        this.phi_1 = Array{Array{Float64,2}}(par.n_elem)
-        this.phi_2 = Array{Array{Float64,2}}(par.n_elem)
-        this.phi_3 = Array{Array{Float64,2}}(par.n_elem)
-
+        phi_1 = Array{Array{Float64,2}}(dof.dof.n_elem)
+        phi_2 = Array{Array{Float64,2}}(dof.dof.n_elem)
+        phi_3 = Array{Array{Float64,2}}(dof.dof.n_elem)
+        
+        mass = Array{SparseMatrixCSC{Float64,Int64},1}(par.n_steps+1)
+        advection = Array{SparseMatrixCSC{Float64,Int64},1}(par.n_steps+1)
+        diffusion = Array{SparseMatrixCSC{Float64,Int64},1}(par.n_steps+1)
+        
         # Reserve memory for each element of the uninitialized array
-        for i=1:par.n_elem
-            this.phi_1[i] = Array{Float64,2}(dof.n_nodes, par.n_steps+1)
-            this.phi_2[i] = Array{Float64,2}(dof.n_nodes, par.n_steps+1)
-            this.phi_3[i] = Array{Float64,2}(dof.n_nodes, par.n_steps+1)
+        for i=1:dof.dof.n_elem
+            phi_1[i] = Array{Float64,2}(dof.dof_f[i].n_node, par.n_steps+1)
+            phi_2[i] = Array{Float64,2}(dof.dof_f[i].n_node, par.n_steps+1)
+            phi_3[i] = Array{Float64,2}(dof.dof_f[i].n_node, par.n_steps+1)
+
+            mass[i] = sparse(dof.dof_f[i].ind_test, dof.dof_f[i].ind, zeros(Float64, length(dof.dof_f[i].ind)), dof.dof_f[i].n_true_dof, dof.dof_f[i].n_true_dof)
+            advection[i] = sparse(dof.dof_f[i].ind_test, dof.dof_f[i].ind, zeros(Float64, length(dof.dof_f[i].ind)), dof.dof_f[i].n_true_dof, dof.dof_f[i].n_true_dof)
+            diffusion[i] = sparse(dof.dof_f[i].ind_test, dof.dof_f[i].ind, zeros(Float64, length(dof.dof_f[i].ind)), dof.dof_f[i].n_true_dof, dof.dof_f[i].n_true_dof)
         end
         
-        return this
+        return new(u, phi_1, phi_2, phi_3, mass, advection, diffusion)
     end
 end # end type
