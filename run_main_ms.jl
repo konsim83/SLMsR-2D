@@ -17,7 +17,7 @@ Initialize the problem.
 """
 
 # -------   Problem Parameters   -------
-T_max = 1.0
+T_max = 0.3
 
 problem = Problem.Gaussian(T_max)
 
@@ -32,7 +32,7 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 
 # -------   Mesh parameters   -------
 n_edge_per_seg = 1
-n_edge_per_seg_f = 10
+n_edge_per_seg_f = 25
 
 
 # -------   FEM parameters   -------

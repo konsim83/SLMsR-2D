@@ -9,7 +9,7 @@ type TriMesh_collection
         this = new()
 
         this.mesh = mesh
-        this.mesh_f = Array(TriMesh, mesh.n_cell)
+        this.mesh_f = Array{TriMesh}(mesh.n_cell)
 
         point_mapped = map_ref_point(mesh, mesh_simplex.point, 1:mesh.n_cell)
         for i=1:mesh.n_cell
@@ -23,7 +23,7 @@ type TriMesh_collection
         this = new()
 
         this.mesh = mesh
-        this.mesh_f = Array(TriMesh, mesh.n_cell)
+        this.mesh_f = Array{TriMesh}(mesh.n_cell)
 
         point = get_point(mesh, get_cell(mesh, 1:mesh.n_cell))
         for i=1:mesh.n_cell
