@@ -69,10 +69,10 @@ function solve_problem_local!(mesh :: Mesh.TriMesh,
                               dof :: FEM.AbstractDof,
                               quad :: Quad.AbstractQuad,
                               time_stepper :: Time_integrator.AbstractTime_integrator,
-                              par :: Parameter.AbstractParameter,
-                              problem :: Problem.AbstractProblem,
+                              par :: Parameter.Parameter_MsFEM,
+                              problem :: Problem.AbstractBasisProblem,
                               solution :: FEM.AbstractSolution,
-                              ind_cell :: Int64)
+                              ind_cell :: Int64, n_cell :: Int64)
 
     """
 
@@ -89,7 +89,7 @@ function solve_problem_local!(mesh :: Mesh.TriMesh,
     """
 
     println("\n\n--------------------------------------------------------------")
-    println("Computing local multiscale FEM solution:\n")
+    println("Computing local multiscale FEM solution:   $(ind_cell) / $(n_cell)\n")
     println("\t Mesh type:   $(mesh.mesh_info)")
     if dof.is_periodic
         println("\t Problem type:   periodic --- $(problem.type_info)")

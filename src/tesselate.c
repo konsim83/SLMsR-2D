@@ -684,9 +684,9 @@ my_triangulation tesselate_triangle_uniform_edges(REAL a_x, REAL a_y,
     out.edgemarkerlist = int_alloc(0,"out.edgemarkerlist");
 
     /* Triangulate the points. */
-    printf("\n\n\n+++++++++++++++++++   Meshing of input   +++++++++++++++++++\n\n");
+    //printf("\n\n\n+++++++++++++++++++   Meshing of input   +++++++++++++++++++\n\n");
     triangulate(switches, &in, &out, (struct triangulateio *) NULL);
-    printf("+++++++++++++++++++   End meshing   +++++++++++++++++++\n\n\n");
+    //printf("+++++++++++++++++++   End meshing   +++++++++++++++++++\n\n\n");
 
 
     if (print_flag != 0)

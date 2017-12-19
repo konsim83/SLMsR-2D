@@ -6,11 +6,10 @@ function mesh_triangle_uniform_edges(point:: Array{Float64,2}, n_segs_per_edge :
     area_max = round(sqrt(3)/4, 10)*h^2
     
     if angle == 0.0
-        switches = string("pzYqa", @sprintf("%10.10f",area_max), "en")
+        switches = string("pzYQqa", @sprintf("%10.10f",area_max), "en")
     else
-        switches = string("pzYq", angle, "a", @sprintf("%10.10f",area_max), "en")
+        switches = string("pzYQq", angle, "a", @sprintf("%10.10f",area_max), "en")
     end
-    println(switches)
     
     mesh_buffer = ccall((:tesselate_triangle_uniform_edges, "libtesselate"), Triangle_mesh_C,
                         (Float64, Float64, Float64, Float64, Float64, Float64, Int64, Cstring),
