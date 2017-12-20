@@ -122,6 +122,11 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
                              solution,
                              i_cell,
                              mesh_collection.mesh.n_cell)
+
+        # Compute time derivative of basis functions via finite differencing
+        FiniteDiff.central!(solution.phi_1_t[i_cell], solution.phi_1[i_cell], par.dt)
+        FiniteDiff.central!(solution.phi_2_t[i_cell], solution.phi_2[i_cell], par.dt)
+        FiniteDiff.central!(solution.phi_3_t[i_cell], solution.phi_3[i_cell], par.dt)
     end
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -129,21 +134,20 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
 
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    #=
     # Set up time integrator
     time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof_collection.dof,
                                                                                         mesh_collection.mesh,
                                                                                         problem)
 
     # Call actual solver. Pass solution data by reference.       
-    solve_problem!(mesh_collection.mesh,
+    solve_problem!(mesh_collection,
                    ref_el,
                    dof_collection.dof,
+                   quad_f,
                    time_stepper,
                    par,
                    problem,
                    solution)
-    =#
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     

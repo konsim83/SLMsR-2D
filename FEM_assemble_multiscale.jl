@@ -3,11 +3,12 @@
 # ---------------------------------------------------------------------------------------------
 
 
-function assemble_mass!(M  :: SparseMatrixCSC{Float64,Int64},
+function assemble_mass!(M :: SparseMatrixCSC{Float64,Int64},
+                        mass :: Array{SparseMatrixCSC{Float64,Int64},1},
                         solution :: Solution_MsFEM,
                         mesh :: Mesh.TriMesh,
-                        dof :: FEM.Dof,
-                        ref_el :: FEM.RefEl_Pk,
+                        dof :: FEM.AbstractDof,
+                        ref_el :: FEM.RefEl_Pk{1},
                         par :: Parameter.Parameter_MsFEM,
                         problem :: Problem.AbstractPhysicalProblem,
                         k_time :: Int64)
@@ -17,16 +18,14 @@ function assemble_mass!(M  :: SparseMatrixCSC{Float64,Int64},
     
 
     """
-
-
-    
-    Phi = [solution.phi_1[:,k_time] solution.phi_2[:,k_time] solution.phi_3[:,k_time]]
-    Phi_test = transpose([solution.phi_1[:,k_time] solution.phi_2[:,k_time] solution.phi_3[:,k_time]])
     
     m_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
     
     for k = 1:mesh.n_cell
-        m_loc[:,:] = Phi_test * solution.mass * Phi
+        Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]
+        Phi_test = transpose([solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]])
+        
+        m_loc[:,:] = Phi_test * mass[k] * Phi
         for l in 1:9
             M[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += m_loc[l]
         end
@@ -40,31 +39,30 @@ end
 
 
 function assemble_mass_t!(Mt  :: SparseMatrixCSC{Float64,Int64},
-                        solution :: Solution_MsFEM,
-                        mesh :: Mesh.TriMesh,
-                        dof :: FEM.Dof,
-                        ref_el :: FEM.RefEl_Pk,
-                        par :: Parameter.Parameter_MsFEM,
-                        problem :: Problem.AbstractPhysicalProblem,
-                        k_time :: Int64)
+                          mass :: Array{SparseMatrixCSC{Float64,Int64},1},
+                          solution :: Solution_MsFEM,
+                          mesh :: Mesh.TriMesh,
+                          dof :: FEM.AbstractDof,
+                          ref_el :: FEM.RefEl_Pk{1},
+                          par :: Parameter.Parameter_MsFEM,
+                          problem :: Problem.AbstractPhysicalProblem,
+                          k_time :: Int64)
     
     """
 
     
 
     """
-
-    weight_elem = diagm(quad.weight) * Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
     
-    Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point)
-    
-    m_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    mt_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
     
     for k = 1:mesh.n_cell
-        m_loc[:,:] = Phi_test * diagm(view(weight_elem,:,k)) * Phi'
+        Phi_t = [solution.phi_1_t[k][:,k_time] solution.phi_2_t[k][:,k_time] solution.phi_3_t[k][:,k_time]]
+        Phi_test = transpose([solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]])
+        
+        mt_loc[:,:] = Phi_test * mass[k] * Phi_t
         for l in 1:9
-            M[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += m_loc[l]
+            Mt[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += mt_loc[l]
         end
     end
     
@@ -76,10 +74,11 @@ end
 
 
 function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
+                             advection :: Array{SparseMatrixCSC{Float64,Int64},1},
                              solution :: Solution_MsFEM,
                              mesh :: Mesh.TriMesh,
-                             dof :: FEM.Dof,
-                             ref_el :: FEM.RefEl_Pk,
+                             dof :: FEM.AbstractDof,
+                             ref_el :: FEM.RefEl_Pk{1},
                              par :: Parameter.Parameter_MsFEM,
                              problem :: Problem.AbstractPhysicalProblem,
                              k_time :: Int64)
@@ -89,7 +88,18 @@ function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
     
 
     """
-
+    
+    a_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    
+    for k = 1:mesh.n_cell
+        Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]
+        Phi_test = transpose([solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]])
+        
+        a_loc[:,:] = Phi_test * advection[k] * Phi
+        for l in 1:9
+            A[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += a_loc[l]
+        end
+    end
     
     return nothing
 end
@@ -99,10 +109,11 @@ end
 
 
 function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
+                             diffusion :: Array{SparseMatrixCSC{Float64,Int64},1},
                              solution :: Solution_MsFEM,
                              mesh :: Mesh.TriMesh,
-                             dof :: FEM.Dof,
-                             ref_el :: FEM.RefEl_Pk,
+                             dof :: FEM.AbstractDof,
+                             ref_el :: FEM.RefEl_Pk{1},
                              par :: Parameter.Parameter_MsFEM,
                              problem :: Problem.AbstractPhysicalProblem,
                              k_time :: Int64)
@@ -112,7 +123,18 @@ function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
     
 
     """
-
-
+    
+    d_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    
+    for k = 1:mesh.n_cell
+        Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]
+        Phi_test = transpose([solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]])
+        
+        d_loc[:,:] = Phi_test * diffusion[k] * Phi
+        for l in 1:9
+            D[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += d_loc[l]
+        end
+    end
+    
     return nothing
 end

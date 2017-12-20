@@ -4,16 +4,20 @@ type TriMesh_collection
 
     mesh :: TriMesh
     mesh_f :: Array{TriMesh, 1}
+
+    n_elem_f :: Array{Int64, 1}
     
     function TriMesh_collection(mesh :: TriMesh, mesh_simplex :: TriMesh)
         this = new()
 
         this.mesh = mesh
         this.mesh_f = Array{TriMesh}(mesh.n_cell)
+        this.n_elem_f = Array{Int64}(mesh.n_cell)
 
         point_mapped = map_ref_point(mesh, mesh_simplex.point, 1:mesh.n_cell)
         for i=1:mesh.n_cell
             this.mesh_f[i] = TriMesh(mesh_simplex, point_mapped[:,:,i], string("Mapped ", mesh_simplex.mesh_info))
+            this.n_elem_f[i] = this.mesh_f[i].n_cell
         end
 
         return this
@@ -24,10 +28,12 @@ type TriMesh_collection
 
         this.mesh = mesh
         this.mesh_f = Array{TriMesh}(mesh.n_cell)
+        this.n_elem_f = Array{Int64}(mesh.n_cell)
 
         point = get_point(mesh, get_cell(mesh, 1:mesh.n_cell))
         for i=1:mesh.n_cell
             this.mesh_f[i] = mesh_triangle_uniform_edges(point[:,:,i], n_segs_per_edge_f)
+            this.n_elem_f[i] = this.mesh_f[i].n_cell
         end
 
         return this
