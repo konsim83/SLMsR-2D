@@ -131,6 +131,46 @@ type TriMesh
         return this
     end # end constructor
     # ---------------------------------------------------------------------------------------------
+
+
+    # ---------------------------------------------------------------------------------------------
+    function TriMesh(P :: Array{Float64,2}, C :: Array{Int64,2})        
+        this = new()
+
+        this.mesh_info = "Mesh from Trimesh collection."
+        
+        # Points
+        this.n_point = size(P,1)
+        this.point = P
+        #this.point_marker = mesh.point_marker
+                
+        #Triangles
+        this.n_cell = size(C,1)
+        this.cell = C
+
+        this.T_ref2cell = zeros(2, 3, this.n_cell)
+        this.T_cell2ref = zeros(2, 3, this.n_cell)
+        #this.cell_neighbor = mesh.cell_neighbor
+
+        for i=1:this.n_cell            
+            # Extended transformation matrices for mapping from an to the reference cell K = [(0,0), (1,0), (0,1)]
+            this.T_ref2cell[:,:,i] = [   this.point[this.cell[i,2],:]-this.point[this.cell[i,1],:]   this.point[this.cell[i,3],:]-this.point[this.cell[i,1],:]   this.point[this.cell[i,1],:]   ]
+            this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  this.point[this.cell[i,1],:]   ]
+        end
+        
+        # Edges
+        #this.n_edge = mesh.n_edge
+        #this.edge = mesh.edge
+        #this.edge_marker = mesh.edge_marker
+
+        # Segments
+        #this.n_segment = mesh.n_segment
+        #this.segment = mesh.segment
+        #this.segment_marker = mesh.segment_marker
+
+        return this
+    end # end constructor
+    # ---------------------------------------------------------------------------------------------
 end # end type
 
 

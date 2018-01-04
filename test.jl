@@ -1,3 +1,82 @@
+#include("Mesh.jl")
+using PyPlot
+
+P1 = [0.0 0.0 ; 1.0 0.0 ; 1.0 1.0];
+ms1 = Mesh.mesh_triangle_uniform_edges(P1, 3);
+
+P2 = [0.0 0.0 ;1.0 1.0 ; 0 1.0]+1;
+ms2 = Mesh.mesh_triangle_uniform_edges(P2, 3);
+
+
+
+function add_meshes(mesh1 :: Mesh.TriMesh, mesh2 :: Mesh.TriMesh)
+
+    p1, c1 = copy(mesh1.point), copy(mesh1.cell)
+    p2, c2 = copy(mesh2.point), copy(mesh2.cell)
+
+    n_p1 = mesh1.n_point
+    n_p2 = mesh2.n_point
+   
+    c2 += n_p1
+
+    P = [p1 ; p2]
+    C = [c1 ; c2]
+    
+    #n_found = 0
+    ind_delete = []
+    for j in 1:n_p1
+        #p1_in_p2 = (Bool[ p1[j,:] == p2[i,:] for i in 1:n_p2 ])
+        p1_in_p2 = (Bool[ sum(abs.(p1[j,:] - p2[i,:]))<1e-10 for i in 1:n_p2 ])
+        display(p1_in_p2)
+        # This index in c2 must be set to j
+        ind_p1_in_p2 = find(p1_in_p2)
+        
+        length(ind_p1_in_p2)>1 ? error("something is wrong...") :
+            if ~isempty(ind_p1_in_p2)
+                push!(ind_delete, ind_p1_in_p2[1])
+                
+                c2[c2.==ind_p1_in_p2+n_p1] = -j # set it to -j to easily identify changed points
+                # increase by one if a point is found
+                #n_found += sum(p1_in_p2)
+            end
+    end
+    
+    p2 = p2[setdiff(1:n_p2,ind_delete),:]
+    #c2[c2.>0] = c2[c2.>0]  + n_p1 #- n_found
+    c2 = abs.(c2)
+
+    P = [p1 ; p2]
+    C = [c1 ; c2]
+
+    C = unique(C,1)
+       
+    return P, C
+end
+
+
+function plot_mesh(P :: Array{Float64,2}, C :: Array{Int64,2})
+
+    fig = matplotlib[:pyplot][:figure]("2D Mesh Plot", figsize = (10,10))
+    
+    ax = matplotlib[:pyplot][:axes]()
+    ax[:set_aspect]("equal")
+    
+    # Connectivity list -1 for Python
+    tri = ax[:triplot](P[:,1], P[:,2], C - 1 )
+    setp(tri, linestyle = "-",
+         marker = "None",
+         linewidth = 1)
+    
+    fig[:canvas][:draw]()
+    
+    return nothing
+end
+
+
+
+
+
+#=
 if true
     include("Parameter.jl")
     include("Problem.jl")
@@ -74,3 +153,4 @@ println("In place assembly...")
 @time FEM.assemble_advection!(A1, m, d, r, q, par, p, 1)
 #@time FEM.assemble_diffusion!(D1, m, d, r, q, par, p, 1)
 println("---------------------------\n\n")
+=#

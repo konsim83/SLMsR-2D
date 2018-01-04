@@ -32,13 +32,13 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 """
 
 # -------   Mesh parameters   -------
-n_edge_per_seg = 10
+n_edge_per_seg = 7
 n_edge_per_seg_f = 10
 
 
 # -------   FEM parameters   -------
 n_order_FEM_f = 1
-n_order_quad_f = 3
+n_order_quad_f = 2
 
 time_step_method = 1
 
