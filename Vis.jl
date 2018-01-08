@@ -1,6 +1,6 @@
 module Vis
 
-using FEM, Mesh, WriteVTK
+using FEM, Mesh, WriteVTK, ProgressMeter
 
 include("Vis_writeVTK_FEM.jl")
 

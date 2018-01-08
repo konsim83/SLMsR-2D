@@ -33,11 +33,15 @@ function writeSolution_all(solution :: FEM.Solution_MsFEM, mesh :: Mesh.TriMesh,
         cells = push!(cells, temp)
     end
 
+    N = size(solution.u,2)
+    p = Progress(N, 0.01, "Writing progress ...", 10)
+    
     for k_time in 1:size(solution.u,2)
         vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,0)), points, cells)
         vtk_point_data(vtkfile, convert(Array{Float32}, solution.u[:,k_time]), "point data")
     
         outfiles = vtk_save(vtkfile)
+        next!(p)
     end
 
     return nothing
