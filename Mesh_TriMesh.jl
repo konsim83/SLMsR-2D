@@ -1,5 +1,5 @@
 # Actual Julia mesh type
-type TriMesh
+mutable struct TriMesh
     point :: Array{Float64, 2}
     point_marker :: Array{Int64, 2}
     point_attribute :: Array{Float64, 2}
@@ -64,7 +64,7 @@ type TriMesh
 
 
     # ---------------------------------------------------------------------------------------------
-    function TriMesh(mesh :: TraingleMesh.TriMesh)
+    function TriMesh(mesh :: TriangleMesh.TriMesh)
         this = new()
 
         this.mesh_info = mesh.mesh_info
