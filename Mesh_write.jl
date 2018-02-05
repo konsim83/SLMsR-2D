@@ -1,4 +1,4 @@
-function write_mesh_vtk(mesh :: TriMesh, filename)
+function write_mesh_vtk(mesh :: TriangleMesh.TriMesh, filename)
 
     cell_type = VTKCellTypes.VTK_TRIANGLE
     points = transpose(mesh.point)

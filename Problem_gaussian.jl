@@ -22,10 +22,10 @@ type Gaussian <: AbstractPhysicalProblem
 
         this.T = T
 
-        lambda_1 = 0.05
+        lambda_1 = 0.1
         lambda_2 = 0.1
 
-        alpha = pi/8
+        alpha = 0*pi/8
         rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
         
         this.covariance_mat = rot * diagm([lambda_1 ; lambda_2]) * rot'
@@ -58,10 +58,10 @@ function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
     out = Array{Float64}(size(x,1), 2, 2)
 
     
-    out[:,1,1] = 0.1001-0.1*sin.(2*pi*20*x[:,1])
+    out[:,1,1] = 0.1001#-0.1*sin.(2*pi*20*x[:,1])
     out[:,2,1] = 0.0
     out[:,1,2] = 0.0
-    out[:,2,2] = 0.1001-0.1*cos.(2*pi*15*x[:,2])
+    out[:,2,2] = 0.1001#-0.1*cos.(2*pi*15*x[:,2])
     
 
     #=
@@ -109,7 +109,7 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
 
     size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
     
-    return 0*ones(size(x)) #[cos.(k*(x[:,1]-x[:,2])) cos.(k*(x[:,1]-x[:,2]))]#0*ones(size(x))
+    return 1*ones(size(x)) #[cos.(k*(x[:,1]-x[:,2])) cos.(k*(x[:,1]-x[:,2]))]#0*ones(size(x))
 end
 
 
@@ -125,7 +125,7 @@ function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
 
     #out = Array{Float64, 3}(size(x,1), 2, size(x,3))
 
-    return 0*ones(size(x)) #[cos.(k*(x[:,1]-x[:,2])) cos.(k*(x[:,1]-x[:,2]))]
+    return 1*ones(size(x)) #[cos.(k*(x[:,1]-x[:,2])) cos.(k*(x[:,1]-x[:,2]))]
     
 end
 

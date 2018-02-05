@@ -1,7 +1,7 @@
 # ----------------------------------
 function make_step!(solution :: FEM.AbstractSolution,
                     time_int :: ImplEuler,
-                    mesh :: Mesh.TriMesh,
+                    mesh :: Mesh.TriangleMesh.TriMesh,
                     dof :: FEM.AbstractDof,
                     ref_el :: FEM.AbstractRefEl,
                     quad :: Quad.AbstractQuad,
@@ -46,7 +46,7 @@ end
 # ----------------------------------
 function make_step!(solution :: FEM.AbstractSolution,
                     time_int :: ImplEuler,
-                    mesh :: Mesh.TriMesh,
+                    mesh :: Mesh.TriangleMesh.TriMesh,
                     dof :: FEM.AbstractDof,
                     ref_el :: FEM.AbstractRefEl,
                     quad :: Quad.AbstractQuad,

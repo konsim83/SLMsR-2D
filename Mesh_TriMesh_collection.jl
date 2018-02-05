@@ -1,17 +1,17 @@
 # Actual Julia mesh type for collection of meshes (usefull for
 # multiscale and multigrid)
-type TriMesh_collection
+mutable struct TriMesh_collection
 
-    mesh :: TriMesh
-    mesh_f :: Array{TriMesh, 1}
+    mesh :: TriangleMesh.TriMesh
+    mesh_f :: Array{TriangleMesh.TriMesh, 1}
 
     n_elem_f :: Array{Int64, 1}
     
-    function TriMesh_collection(mesh :: TriMesh, mesh_simplex :: TriMesh)
+    function TriMesh_collection(mesh :: TriangleMesh.TriMesh, mesh_simplex :: TriangleMesh.TriMesh)
         this = new()
 
         this.mesh = mesh
-        this.mesh_f = Array{TriMesh}(mesh.n_cell)
+        this.mesh_f = Array{TriangleMesh.TriMesh}(mesh.n_cell)
         this.n_elem_f = Array{Int64}(mesh.n_cell)
 
         point_mapped = map_ref_point(mesh, mesh_simplex.point, 1:mesh.n_cell)
@@ -23,11 +23,11 @@ type TriMesh_collection
         return this
     end # end constructor
 
-    function TriMesh_collection(mesh :: TriMesh, n_segs_per_edge_f :: Int64)
+    function TriMesh_collection(mesh :: TriangleMesh.TriMesh, n_segs_per_edge_f :: Int64)
         this = new()
 
         this.mesh = mesh
-        this.mesh_f = Array{TriMesh}(mesh.n_cell)
+        this.mesh_f = Array{TriangleMesh.TriMesh}(mesh.n_cell)
         this.n_elem_f = Array{Int64}(mesh.n_cell)
 
         point = get_point(mesh, get_cell(mesh, 1:mesh.n_cell))

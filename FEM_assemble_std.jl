@@ -6,7 +6,7 @@
 # ------------------------
 # -------   Mass   -------
 # ------------------------
-function assemble_mass(mesh :: Mesh.TriMesh,
+function assemble_mass(mesh :: Mesh.TriangleMesh.TriMesh,
                        dof :: FEM.AbstractDof,
                        ref_el :: FEM.RefEl_Pk,
                        quad :: Quad.AbstractQuad,
@@ -28,7 +28,7 @@ function assemble_mass(mesh :: Mesh.TriMesh,
 end
 
 
-function assemble_elem_m(mesh :: Mesh.TriMesh,
+function assemble_elem_m(mesh :: Mesh.TriangleMesh.TriMesh,
                          ref_el :: RefEl_Pk,
                          dof :: FEM.AbstractDof,
                          quad :: Quad.AbstractQuad)
@@ -36,7 +36,7 @@ function assemble_elem_m(mesh :: Mesh.TriMesh,
     n = ref_el.n_node
     m = Array{Float64,3}(n, n, mesh.n_cell)
     
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
     Phi = FEM.eval(ref_el, quad.point)
     Phi_test = FEM.eval(ref_el, quad.point) * diagm(quad.weight)
@@ -57,7 +57,7 @@ end # end function
 # -----------------------------
 # -------   Advection   -------
 # -----------------------------
-function assemble_advection(mesh :: Mesh.TriMesh,
+function assemble_advection(mesh :: Mesh.TriangleMesh.TriMesh,
                             dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
                             quad :: Quad.AbstractQuad,
@@ -82,7 +82,7 @@ function assemble_advection(mesh :: Mesh.TriMesh,
 end
 
 
-function assemble_elem_a(mesh :: Mesh.TriMesh,
+function assemble_elem_a(mesh :: Mesh.TriangleMesh.TriMesh,
                          ref_el :: RefEl_Pk,
                          dof :: FEM.AbstractDof,
                          quad :: Quad.AbstractQuad,
@@ -92,11 +92,11 @@ function assemble_elem_a(mesh :: Mesh.TriMesh,
     n = ref_el.n_node
     a = zeros(n, n, mesh.n_cell)    
     
-    x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
+    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
     velocity = Problem.velocity(problem, time, x)
 
-    DF = Mesh.map_ref_point_grad_inv(mesh, quad.point, 1:dof.n_elem);
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem);
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
     Phi = FEM.eval_grad(ref_el, quad.point)
     Phi_test = FEM.eval(ref_el, quad.point)
@@ -128,7 +128,7 @@ end
 # -----------------------------
 # -------   Diffusion   -------
 # -----------------------------
-function assemble_diffusion(mesh :: Mesh.TriMesh,
+function assemble_diffusion(mesh :: Mesh.TriangleMesh.TriMesh,
                             dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
                             quad :: Quad.AbstractQuad,
@@ -153,7 +153,7 @@ function assemble_diffusion(mesh :: Mesh.TriMesh,
 end
 
 
-function assemble_elem_d(mesh :: Mesh.TriMesh,
+function assemble_elem_d(mesh :: Mesh.TriangleMesh.TriMesh,
                          ref_el :: RefEl_Pk,
                          dof :: FEM.AbstractDof,
                          quad :: Quad.AbstractQuad,
@@ -164,11 +164,11 @@ function assemble_elem_d(mesh :: Mesh.TriMesh,
     d_loc = zeros(n, n, mesh.n_cell)
     
     
-    x = Mesh.map_ref_point(mesh, quad.point, 1:dof.n_elem)
+    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
     diffusion = Problem.diffusion(problem, time, x)
 
-    DF = Mesh.map_ref_point_grad_inv(mesh, quad.point, 1:dof.n_elem);
-    weight_elem = Mesh.map_ref_point_grad_det(mesh, quad.point, 1:dof.n_elem)
+    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem);
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
     DPhi = FEM.eval_grad(ref_el, quad.point)
     DPhi_test = FEM.eval_grad(ref_el, quad.point)

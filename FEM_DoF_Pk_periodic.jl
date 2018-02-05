@@ -56,14 +56,16 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     n_true_dof :: Int64
 
     map_vec_ind_mesh2dof :: Array{Int64,1}
-
+    # ----------------------------------------
 
     ind :: Array{Int64,1}
     ind_test :: Array{Int64,1}
     ind_lin :: Array{Int64,1}    
-    # ----------------------------------------
+    
+    T_ref2cell :: Array{Float64,3}
+    T_cell2ref :: Array{Float64,3}
 
-    function Dof_Pk_periodic_square{FEM_order}(mesh :: Mesh.TriMesh) where {FEM_order}
+    function Dof_Pk_periodic_square{FEM_order}(mesh :: Mesh.TriangleMesh.TriMesh) where {FEM_order}
         
         this = new()
             
@@ -75,6 +77,23 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
         if FEM_order==1
             # ----------------------------------------------------------------------------------------------------------------------------------------
             
+
+            # ----------------------------------------
+            # Create the maps that translate dofs to mesh based
+            # variables. This is one of the core modules for the
+            # handling DoFs of periodic meshes (without actually
+            # touching the mesh).
+
+            # Tells where any mesh based variable can be found
+            # topologically
+
+            this.map_vec_ind_mesh2dof = copy(mesh.point_marker[:])
+            this.map_vec_ind_mesh2dof[find(mesh.point_marker.==0)] = (find(mesh.point_marker.==0)
+                                                                        - sum(mesh.point_marker.!=0)
+                                                                        + maximum(mesh.point_marker))
+            # ----------------------------------------
+
+
             # ----------------------------------------
             # Node infos
             this.n_node = mesh.n_point
@@ -89,7 +108,7 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             this.ind_node_interior = collect(1:mesh.n_point)
             this.ind_node_dirichlet  = []
 
-            n_node_boundary = sum(mesh.point_marker.==1)
+            n_node_boundary = sum(mesh.point_marker.!=0)
             n_true_dof = Int(mesh.n_point - 3 - 0.5*(n_node_boundary - 4))
             this.ind_node_non_dirichlet = setdiff(1:n_true_dof, this.ind_node_dirichlet)
             
@@ -131,53 +150,19 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             this.n_true_dof = n_true_dof
             # ----------------------------------------
 
-
-            # +++++++++++++++++++++++++
-            # Create the maps that translate dofs to mesh based
-            # variables. This is one of the core modules for the
-            # handling DoFs of periodic meshes (without actually
-            # touching the mesh).
-
-            # Tells where any mesh based variable can be found
-            # topologically
-            this.map_vec_ind_mesh2dof = zeros(mesh.n_point)
-
-            n_edge_per_seg = Int64(size(mesh.segment,1)/4)
-            
-            # Corners of the square
-            this.map_vec_ind_mesh2dof[1] = 1
-            this.map_vec_ind_mesh2dof[1+n_edge_per_seg] = 1
-            this.map_vec_ind_mesh2dof[1+2*n_edge_per_seg] = 1
-            this.map_vec_ind_mesh2dof[1+3*n_edge_per_seg] = 1
-
-            # Segment 1 (0,0)->(1,0)
-            for i=1:(n_edge_per_seg-1)
-                this.map_vec_ind_mesh2dof[1+i] = 1 + i
-            end
-
-            # Segment 2 (1,0)->(1,1)
-            for i=1:(n_edge_per_seg-1)
-                this.map_vec_ind_mesh2dof[1+n_edge_per_seg+i] = 1 + n_edge_per_seg + i - 1
-            end
-
-            # Segment 3 (1,1)->(0,1)
-            for i=1:(n_edge_per_seg-1)
-                this.map_vec_ind_mesh2dof[1+2*n_edge_per_seg+i] = this.map_vec_ind_mesh2dof[1+n_edge_per_seg - i]
-            end
-
-            # Segment 4 (0,1)->(0,0)
-            for i=1:(n_edge_per_seg-1)
-                this.map_vec_ind_mesh2dof[1+3*n_edge_per_seg+i] = this.map_vec_ind_mesh2dof[1+2*n_edge_per_seg - i]
-            end
-
-            this.map_vec_ind_mesh2dof[n_node_boundary+1:end] = collect(   ((n_node_boundary + 1):(mesh.n_point)) - 3 - 0.5*(n_node_boundary - 4)  )
-            # +++++++++++++++++++++++++
-
             ind_cell = this.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, 1:mesh.n_cell)]   
             this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
             this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
             this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
             
+            this.T_ref2cell = zeros(2, 3, mesh.n_cell)
+            this.T_cell2ref = zeros(2, 3, mesh.n_cell)
+            for i=1:this.n_elem
+                # Extended transformation matrices for mapping from an to the reference cell K = [(0,0), (1,0), (0,1)]
+                this.T_ref2cell[:,:,i] = [   mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,1],:]   ]
+                this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  mesh.point[mesh.cell[i,1],:]   ]
+            end
+
             # ----------------------------------------------------------------------------------------------------------------------------------------
                 
         elseif FEM_order==2
@@ -218,8 +203,8 @@ function map_ind_mesh2dof(dof :: Dof_Pk_periodic_square{1}, vec_mesh :: Array{Fl
 
     """
 
-    Map a vector in terms of Float values in terms of node indices to
-    degrees of freedom indices.
+    Map a vector of Float values in terms of node indices to degrees of
+    freedom indices.
 
     """
 
@@ -232,7 +217,7 @@ end
 
 
 # ----------------------------------------
-function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_c :: Array{Int64,1})
+function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: Array{Int64,1})
     # Put a filter before mesh indices to translate to dof
     # indices
     dofs = dof.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, ind_c)]
@@ -240,7 +225,7 @@ function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, in
     return dofs
 end # end function
 
-function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_c :: UnitRange{Int64})
+function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: UnitRange{Int64})
     ind_c = vec(collect(ind_c))
     
     # Put a filter before mesh indices to translate to dof
@@ -253,7 +238,7 @@ end # end function
 
 
 # ----------------------------------------
-function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_e :: Array{Int64,1})    
+function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: Array{Int64,1})    
     # Put a filter before mesh indices to translate to dof
     # indices
     dofs = dof.map_vec_ind_mesh2dof[Mesh.get_edge(mesh, ind_c)]
@@ -261,7 +246,7 @@ function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, in
     return dofs
 end # end function
 
-function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriMesh, ind_e :: UnitRange{Int64})
+function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: UnitRange{Int64})
     ind_c = vec(collect(ind_e))
     
     # Put a filter before mesh indices to translate to dof

@@ -17,7 +17,7 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
     #weight_elem :: Array{Float64,2}
     #DPhi :: Array{Float64,4}
     
-    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractPhysicalProblem)
+    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriangleMesh.TriMesh, problem :: Problem.AbstractPhysicalProblem)
         
         # Create a pattern
         i = FEM.get_dof_elem(dof, mesh, 1:dof.n_elem)
@@ -42,7 +42,7 @@ type System_data_implEuler_ADE <: AbstractSystem_data_implEuler
     end
 
     
-    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriMesh, problem :: Problem.AbstractBasisProblem)
+    function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriangleMesh.TriMesh, problem :: Problem.AbstractBasisProblem)
         
         # Create a pattern
         i = FEM.get_dof_elem(dof, mesh, 1:dof.n_elem)

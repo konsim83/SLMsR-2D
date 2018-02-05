@@ -1,4 +1,4 @@
-function writeSolution_at_timestep(solution :: FEM.Solution_FEM, mesh :: Mesh.TriMesh, k_time :: Int64, filename :: String)
+function writeSolution_at_timestep(solution :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh, k_time :: Int64, filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
     points = transpose(mesh.point)
@@ -22,7 +22,7 @@ end
 # ================================================
 
 
-function writeSolution_all(solution :: FEM.Solution_FEM, mesh :: Mesh.TriMesh, filename :: String)
+function writeSolution_all(solution :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh, filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
     points = transpose(mesh.point)

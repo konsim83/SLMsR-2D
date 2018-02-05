@@ -1,7 +1,7 @@
 # ----------------------------------
 function update_system!(solution :: FEM.AbstractSolution,
                         system_data :: System_data_implEuler_ADE,
-                        mesh :: Mesh.TriMesh,
+                        mesh :: Mesh.TriangleMesh.TriMesh,
                         dof :: FEM.AbstractDof,
                         ref_el :: FEM.AbstractRefEl,
                         quad :: Quad.AbstractQuad,
@@ -113,7 +113,7 @@ end
 # ----------------------------------
 function update_system!(solution :: FEM.AbstractSolution,
                         system_data :: System_data_implEuler_ADE,
-                        mesh :: Mesh.TriMesh,
+                        mesh :: Mesh.TriangleMesh.TriMesh,
                         dof :: FEM.AbstractDof,
                         ref_el :: FEM.AbstractRefEl,
                         quad :: Quad.AbstractQuad,
@@ -231,7 +231,7 @@ end
 # ----------------------------------
 function update_system!(solution :: FEM.Solution_MsFEM,
                         system_data :: System_data_implEuler_ADE,
-                        mesh :: Mesh.TriMesh,
+                        mesh :: Mesh.TriangleMesh.TriMesh,
                         dof :: FEM.AbstractDof,
                         ref_el :: FEM.AbstractRefEl,
                         quad :: Quad.AbstractQuad,

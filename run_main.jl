@@ -18,7 +18,7 @@ Initialize the problem.
 """
 
 # -------   Problem Parameters   -------
-T_max = 0.5
+T_max = 1.0
 
 problem = Problem.Gaussian(T_max)
 
@@ -32,8 +32,8 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 """
 
 # -------   Mesh parameters   -------
-n_edge_per_seg = 7
-n_edge_per_seg = 100
+n_edge_per_seg = 3
+n_refinement = 1
 
 
 # -------   FEM parameters   -------
@@ -49,11 +49,13 @@ dt = 1/500
 par_FEM_coarse = Parameter.Parameter_FEM(problem.T,
                                          dt,
                                          n_edge_per_seg,
+                                         n_refinement,
                                          n_order_FEM,
                                          n_order_quad,
                                          time_step_method)
 
 
 # -------   Call the solver   -------
-@time solution_FEM, mesh_FEM = Solver.solve_FEM_periodic_square(par_FEM_coarse, problem)
+#@time solution_FEM, mesh_FEM = Solver.solve_FEM_periodic_square(par_FEM_coarse, problem)
+@time mesh, mesh2 = Solver.solve_FEM_periodic_square(par_FEM_coarse, problem)
 # ---------------------------------------------------------------------------

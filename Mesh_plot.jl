@@ -1,4 +1,9 @@
-function plot_mesh(m :: TriMesh)
+function plot_mesh(m :: TriangleMesh.TriMesh; 
+                        linewidth :: Real = 1.5, 
+                        marker :: String = "None",
+                        markersize :: Real = 5,
+                        linestyle :: String = "-",
+                        color :: String = "blue")
 
     fig = matplotlib[:pyplot][:figure]("2D Mesh Plot", figsize = (10,10))
     
@@ -6,15 +11,16 @@ function plot_mesh(m :: TriMesh)
     ax[:set_aspect]("equal")
     
     # Connectivity list -1 for Python
-    tri = ax[:triplot](m.point[:,1], m.point[:,2], m.cell - 1 )
-    setp(tri, linestyle = "-",
-         marker = "None",
-         linewidth = 1,
-         color = "green")
+    tri = ax[:triplot](m.point[:,1], m.point[:,2], m.cell-1 )
+    setp(tri,   linestyle = linestyle,
+                linewidth = linewidth,
+                marker = marker,
+                markersize = markersize,
+                color = color)
     
     fig[:canvas][:draw]()
     
-    return nothing
+    return fig
 end
 
 

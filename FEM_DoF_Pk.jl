@@ -62,7 +62,10 @@ type Dof_Pk{FEM_order} <: AbstractDof
     ind_test :: Array{Int64,1}
     ind_lin :: Array{Int64,1}
 
-    function Dof_Pk{FEM_order}(mesh :: Mesh.TriMesh) where {FEM_order}
+    T_ref2cell :: Array{Float64,3}
+    T_cell2ref :: Array{Float64,3}
+
+    function Dof_Pk{FEM_order}(mesh :: Mesh.TriangleMesh.TriMesh) where {FEM_order}
         
         this = new()
             
@@ -123,6 +126,7 @@ type Dof_Pk{FEM_order} <: AbstractDof
             this.is_periodic = false
             this.n_true_dof = mesh.n_point
 
+            # No nodes need to be identified with each other
             this.map_vec_ind_mesh2dof = collect(1:this.n_node)
             # ----------------------------------------
 
@@ -130,7 +134,15 @@ type Dof_Pk{FEM_order} <: AbstractDof
             this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
             this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
             this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
-            
+
+            this.T_ref2cell = zeros(2, 3, mesh.n_cell)
+            this.T_cell2ref = zeros(2, 3, mesh.n_cell)
+            for i=1:this.n_elem
+                # Extended transformation matrices for mapping from an to the reference cell K = [(0,0), (1,0), (0,1)]
+                this.T_ref2cell[:,:,i] = [   mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,1],:]   ]
+                this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  mesh.point[mesh.cell[i,1],:]   ]
+            end
+
             # ----------------------------------------------------------------------------------------------------------------------------------------
 
         elseif FEM_order==2
@@ -178,12 +190,12 @@ end
 
 
 # ----------------------------------------
-function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_c :: Array{Int64,1})
+function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: Array{Int64,1})
     
     return Mesh.get_cell(mesh, ind_c)
 end # end function
 
-function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_c :: UnitRange{Int64})
+function get_dof_elem(dof :: Dof_Pk{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: UnitRange{Int64})
     
     return Mesh.get_cell(mesh, ind_c)
 end # end function
@@ -191,12 +203,12 @@ end # end function
 
 
 # ----------------------------------------
-function get_dof_edge(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_e :: Array{Int64,1})
+function get_dof_edge(dof :: Dof_Pk{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: Array{Int64,1})
     
     return Mesh.get_edge(mesh, ind_e)
 end # end function
 
-function get_dof_edge(dof :: Dof_Pk{1}, mesh :: Mesh.TriMesh, ind_e :: UnitRange{Int64})
+function get_dof_edge(dof :: Dof_Pk{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: UnitRange{Int64})
     
     return Mesh.get_edge(mesh, ind_e)
 end # end function

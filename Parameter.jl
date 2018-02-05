@@ -14,6 +14,7 @@ type Parameter_FEM <: AbstractParameter
     
     n_steps :: Int64
     n_edge_per_seg :: Int64
+    n_refinement :: Int64
     n_order_FEM :: Int64
     n_order_quad :: Int64
 
@@ -24,15 +25,17 @@ type Parameter_FEM <: AbstractParameter
 
     function Parameter_FEM(T :: Float64,
                            dt :: Float64,
-                	   n_edge_per_seg :: Int64,
+                	       n_edge_per_seg :: Int64,
+                           n_refinement :: Int64,
                            n_order_FEM :: Int64,
                            n_order_quad :: Int64,
-                	   time_step_method :: Int64)
+                    	   time_step_method :: Int64)
         
 	this = new()
 
 	this.n_order_FEM = n_order_FEM
 	this.n_edge_per_seg = n_edge_per_seg
+    this.n_refinement  = n_refinement
 	this.n_order_quad = n_order_quad
         this.n_steps = round(floor( T/dt ))
         
@@ -57,6 +60,7 @@ type Parameter_MsFEM <: AbstractParameter
     
     n_steps :: Int64
     n_edge_per_seg :: Int64
+    n_refinement :: Int64
 
     n_edge_per_seg_f :: Int64
     n_order_FEM_f :: Int64
@@ -69,16 +73,18 @@ type Parameter_MsFEM <: AbstractParameter
 
     function Parameter_MsFEM(T :: Float64,
                              dt :: Float64,
-                	     n_edge_per_seg :: Int64,
+                             n_edge_per_seg :: Int64,
+                             n_refinement :: Int64,
                              n_edge_per_seg_f :: Int64,
                              n_order_FEM_f :: Int64,
                              n_order_quad_f :: Int64,
-                	     time_step_method :: Int64)
+                	         time_step_method :: Int64)
         
 	this = new()
 
 	this.n_edge_per_seg = n_edge_per_seg
-        this.n_steps = round(floor( T/dt ))
+    this.n_refinement = n_refinement
+    this.n_steps = round(floor( T/dt ))
         
 	this.dt = dt
 
@@ -87,10 +93,10 @@ type Parameter_MsFEM <: AbstractParameter
 	this.time_step_method = time_step_method
 
 
-        # Fine scale parameters
-        this.n_edge_per_seg_f = n_edge_per_seg_f
-        this.n_order_FEM_f = n_order_FEM_f
-        this.n_order_quad_f = n_order_quad_f
+    # Fine scale parameters
+    this.n_edge_per_seg_f = n_edge_per_seg_f
+    this.n_order_FEM_f = n_order_FEM_f
+    this.n_order_quad_f = n_order_quad_f
 
         
 	return this

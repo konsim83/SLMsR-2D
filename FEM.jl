@@ -17,6 +17,8 @@ include("FEM_DoF_Pk.jl")
 include("FEM_DoF_Pk_periodic.jl")
 include("FEM_DoF_collection.jl")
 
+include("FEM_DoF_maps.jl")
+
 
 # -------   Solution types   -------
 include("FEM_Solution.jl")

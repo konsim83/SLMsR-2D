@@ -1,4 +1,4 @@
-function solve_problem!(mesh :: Mesh.TriMesh,
+function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
                         ref_el :: FEM.AbstractRefEl,
                         dof :: FEM.AbstractDof,
                         quad :: Quad.AbstractQuad,
@@ -66,7 +66,7 @@ end
 # -------------------------------------------------------------------------------------------
 
 
-function solve_problem_local!(mesh :: Mesh.TriMesh,
+function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
                               ref_el :: FEM.AbstractRefEl,
                               dof :: FEM.AbstractDof,
                               quad :: Quad.AbstractQuad,
