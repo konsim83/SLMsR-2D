@@ -97,3 +97,13 @@ function gather_data(mesh_collection :: Mesh.TriMesh_collection, solution :: FEM
     
     return data
 end
+
+
+# -------   Add two meshes   -------
+function add_meshes(p1 :: Array{Float64,2}, c1 :: Array{Int64,2}, mesh2 :: Mesh.TriangleMesh.TriMesh)
+    
+    P = vcat(p1, mesh2.point)
+    C = vcat(c1, mesh2.cell+size(p1,1))
+    
+    return P, C
+end

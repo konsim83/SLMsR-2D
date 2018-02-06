@@ -87,10 +87,25 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             # Tells where any mesh based variable can be found
             # topologically
 
-            this.map_vec_ind_mesh2dof = copy(mesh.point_marker[:])
-            this.map_vec_ind_mesh2dof[find(mesh.point_marker.==0)] = (find(mesh.point_marker.==0)
-                                                                        - sum(mesh.point_marker.!=0)
-                                                                        + maximum(mesh.point_marker))
+            # Needs information on  the mesh
+            edge_marker_pair = [1 3 ; 2 4]
+            f_e1_to_e3 = function(p :: Array{Float64,2})
+                # Periodicity in y-direction, maps lower edge to upper edge
+
+                return broadcast(+, [0.0 1.0], p)
+            end
+
+            f_e2_to_e4 = function(p :: Array{Float64,2})
+                # Periodicity in x-direction, maps right edge to left edge
+
+                return broadcast(+, [-1.0 0.0], p)
+            end
+            this.map_vec_ind_mesh2dof = identify_points(mesh, edge_marker_pair)
+
+            # this.map_vec_ind_mesh2dof = copy(mesh.point_marker[:])
+            # this.map_vec_ind_mesh2dof[find(mesh.point_marker.==0)] = (find(mesh.point_marker.==0)
+            #                                                             - sum(mesh.point_marker.!=0)
+            #                                                             + maximum(mesh.point_marker))
             # ----------------------------------------
 
 
@@ -257,5 +272,32 @@ function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMes
 end # end function
 # ----------------------------------------
 
+
 # -------------------------------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------------
+
+
+# ----------------------------------------
+function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
+                            edge_marker_pair :: Array{Int64,2},
+                            edge_trafo :: Array{Function,1})
+
+    length(edge_trafo)!=length(edge_marker_pair) ? 
+        error("Number of Matched edge pairs must coincide with transformations.") :
+
+    for i in 1:size(edge_marker_pair,1)
+        pair = edge_marker_pair[i,:]
+
+        edge1 = unique(vec(mesh.edge[mesh.edge_marker.==pair[1],:]'))
+        edge2 = unique(vec(mesh.edge[mesh.edge_marker.==pair[2],:]'))
+
+        f = edge_trafo[i]
+
+        # apply f to edge1, gives permuted edge2
+        f_on_edge1 = f(mesh.point[edge1,:])
+
+
+    end
+
+end
+# ----------------------------------------
