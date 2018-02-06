@@ -33,6 +33,7 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 
 # -------   Mesh parameters   -------
 n_edge_per_seg = 7
+n_refinement = 0
 n_edge_per_seg_f = 10
 
 
@@ -49,6 +50,7 @@ dt = 1/500
 par_MsFEM = Parameter.Parameter_MsFEM(problem.T,
                                       dt,
                                       n_edge_per_seg,
+                                      n_refinement,
                                       n_edge_per_seg_f,
                                       n_order_FEM_f,
                                       n_order_quad_f,

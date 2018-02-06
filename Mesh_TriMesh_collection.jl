@@ -16,7 +16,7 @@ mutable struct TriMesh_collection
 
         point_mapped = map_ref_point(mesh, mesh_simplex.point, 1:mesh.n_cell)
         for i=1:mesh.n_cell
-            this.mesh_f[i] = TriMesh(mesh_simplex, point_mapped[:,:,i], string("Mapped ", mesh_simplex.mesh_info))
+            this.mesh_f[i] = TriangleMesh.TriMesh(mesh_simplex, point_mapped[:,:,i], string("Mapped ", mesh_simplex.mesh_info))
             this.n_elem_f[i] = this.mesh_f[i].n_cell
         end
 
@@ -32,7 +32,7 @@ mutable struct TriMesh_collection
 
         point = get_point(mesh, get_cell(mesh, 1:mesh.n_cell))
         for i=1:mesh.n_cell
-            this.mesh_f[i] = mesh_triangle_uniform_edges(point[:,:,i], n_segs_per_edge_f)
+            this.mesh_f[i] = mesh_triangle(point[:,:,i], n_segs_per_edge_f)
             this.n_elem_f[i] = this.mesh_f[i].n_cell
         end
 

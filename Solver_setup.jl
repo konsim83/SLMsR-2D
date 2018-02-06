@@ -71,7 +71,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     # Solve the local problems
     for i_cell in 1:mesh_collection.mesh.n_cell
         # Set up local problem by geometry
-        tri = Geometry.Triangle(Mesh.map_ref_point(mesh_collection.mesh, ref_el.node, i_cell))
+        tri = Geometry.Triangle(FEM.map_ref_point(dof_collection.dof, ref_el.node, i_cell))
         problem_f = Problem.BasisFun(problem, tri)
         
         # Set up time integrator
