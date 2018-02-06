@@ -2,35 +2,35 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
 
     # Build mesh of unit square (0,1)x(0,1)
     mesh = Mesh.mesh_unit_square(par.n_edge_per_seg)
-    mesh2 = Mesh.refine_rg(mesh, par.n_refinement)
+    #mesh = Mesh.refine_rg(mesh, par.n_refinement)
 
-    # # Set up reference element
-    # ref_el = FEM.RefEl_Pk{par.n_order_FEM}()
+    # Set up reference element
+    ref_el = FEM.RefEl_Pk{par.n_order_FEM}()
 
-    # # Set up quadrature rule
-    # quad = Quad.Quad_simplex(par.n_order_quad)
+    # Set up quadrature rule
+    quad = Quad.Quad_simplex(par.n_order_quad)
 
-    # # Set up degrees of freedom handler
-    # dof = FEM.Dof_Pk_periodic_square{ref_el.n_order}(mesh)
+    # Set up degrees of freedom handler
+    dof = FEM.Dof_Pk_periodic_square{ref_el.n_order}(mesh)
 
-    # # Set up solution structure
-    # solution = FEM.Solution_FEM(dof, par)
+    # Set up solution structure
+    solution = FEM.Solution_FEM(dof, par)
 
-    # # Set up time integrator
-    # time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof, mesh, problem)
-    # # +++++++++++++++++++
+    # Set up time integrator
+    time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof, mesh, problem)
+    # +++++++++++++++++++
 
-    # # Call actual solver. Pass solution data by reference.       
-    # solve_problem!(mesh,
-    #                ref_el,
-    #                dof,
-    #                quad,
-    #                time_stepper,
-    #                par,
-    #                problem,
-    #                solution)
+    # Call actual solver. Pass solution data by reference.       
+    solve_problem!(mesh,
+                   ref_el,
+                   dof,
+                   quad,
+                   time_stepper,
+                   par,
+                   problem,
+                   solution)
     
-    return mesh, mesh2 #solution, mesh
+    return solution, mesh
 end
 
 
@@ -38,17 +38,18 @@ end
 
 
 function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :: T) where {T<:Problem.AbstractProblem}
+    
+    # Build mesh of unit square (0,1)x(0,1)
+    # m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)
+    # Fine meshes are built by refining the reference cell several times
+    # mesh_simplex = Mesh.mesh_unit_simplex_uniform_edges()
+    # mesh_simplex = Mesh.refine_rg(mesh_simplex, par.n_refinement)
+    # Map the refined simplex onto the mesh collection
+    # mesh_collection = Mesh.Trimesh_collection(m_coarse, mesh_simplex)
 
     # Build mesh of unit square (0,1)x(0,1)
-    m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)
-    
-    # Fine meshes are built by refining the reference cell several times
-    mesh_simplex = Mesh.mesh_unit_simplex_uniform_edges()
-    mesh_simplex = Mesh.refine_rg(mesh_simplex, par.n_refinement)
-    # Map the refined simplex onto the mesh collection
-    mesh_collection = Mesh.Trimesh_collection(m_coarse, mesh_simplex)
-    
-    # mesh_collection = Mesh.TriMesh_collection(m_coarse, par.n_edge_per_seg_f)
+    m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)    
+    mesh_collection = Mesh.TriMesh_collection(m_coarse, par.n_edge_per_seg_f)
     
 
     # Set up reference element

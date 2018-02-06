@@ -117,11 +117,11 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     # Add the points, edge 1
     segment[end,:] = [n_point ; 1]
     segment_marker[end] = 4
-    # point_marker[1,1] = 1
+    point_marker[1,1] = 1
     point[1,:] = [0.0 ; 0.0]
     for i = 2:(n_segs_per_edge)
         point[i,:] = point[i-1,:] + [1.0 ; 0.0]/n_segs_per_edge
-        # point_marker[i,1] = i
+        point_marker[i,1] = i
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 1
     end
@@ -129,11 +129,11 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     # Add the points, edge 2
     segment[n_segs_per_edge,:] = [n_segs_per_edge ; n_segs_per_edge+1]
     segment_marker[n_segs_per_edge] = 1
-    # point_marker[n_segs_per_edge+1,1] = 1
+    point_marker[n_segs_per_edge+1,1] = 1
     point[n_segs_per_edge+1,:] = [1.0 ; 0.0]
     for i in (n_segs_per_edge+2):(2*n_segs_per_edge)
         point[i,:] = point[i-1,:] + [0.0 ; 1.0]/n_segs_per_edge
-        # point_marker[i,1] = i - 1
+        point_marker[i,1] = i - 1
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 2
     end
@@ -141,11 +141,11 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     # Add the points, edge 3
     segment[2*n_segs_per_edge,:] = [2*n_segs_per_edge ; 2*n_segs_per_edge+1]
     segment_marker[2*n_segs_per_edge] = 2
-    # point_marker[2*n_segs_per_edge+1,1] = 1
+    point_marker[2*n_segs_per_edge+1,1] = 1
     point[2*n_segs_per_edge+1,:] = [1.0 ; 1.0]
     for i in (2*n_segs_per_edge+2):(3*n_segs_per_edge)
         point[i,:] = point[i-1,:] + [-1.0 ; 0.0]/n_segs_per_edge
-        # point_marker[i,1] = i
+        point_marker[i,1] = i
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 3
     end
@@ -153,18 +153,18 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     # Add the points, edge 4
     segment[3*n_segs_per_edge,:] = [3*n_segs_per_edge ; 3*n_segs_per_edge+1]
     segment_marker[3*n_segs_per_edge] = 3
-    # point_marker[3*n_segs_per_edge+1,1] = 1
+    point_marker[3*n_segs_per_edge+1,1] = 1
     point[3*n_segs_per_edge+1,:] = [0.0 ; 1.0]
     for i in (3*n_segs_per_edge+2):(4*n_segs_per_edge)
         point[i,:] = point[i-1,:] + [0.0 ; -1.0]/n_segs_per_edge
-        # point_marker[i,1] = i
+        point_marker[i,1] = i
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 4
     end
 
     # Change point markers on edges 3 and 4
-    # point_marker[(2*n_segs_per_edge+2):(3*n_segs_per_edge)] = reverse(point_marker[2:(n_segs_per_edge)])
-    # point_marker[(3*n_segs_per_edge+2):(4*n_segs_per_edge)] = reverse(point_marker[(n_segs_per_edge+2):(2*n_segs_per_edge)])
+    point_marker[(2*n_segs_per_edge+2):(3*n_segs_per_edge)] = reverse(point_marker[2:(n_segs_per_edge)])
+    point_marker[(3*n_segs_per_edge+2):(4*n_segs_per_edge)] = reverse(point_marker[(n_segs_per_edge+2):(2*n_segs_per_edge)])
 
     TriangleMesh.set_polygon_point!(p, point)
     TriangleMesh.set_polygon_point_marker!(p, point_marker)

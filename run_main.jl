@@ -3,10 +3,10 @@ include("Geometry.jl")
 include("Problem.jl")
 include("Quad.jl")
 include("Mesh.jl")
+include("FiniteDiff.jl")
 include("FEM.jl")
 include("Time_integrator.jl")
 include("Solver.jl")
-include("FiniteDiff.jl")
 include("Vis.jl")
 # ---------------------------------------------------------------------------
 
@@ -32,8 +32,8 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 """
 
 # -------   Mesh parameters   -------
-n_edge_per_seg = 3
-n_refinement = 1
+n_edge_per_seg = 5
+n_refinement = 0
 
 
 # -------   FEM parameters   -------
@@ -56,6 +56,5 @@ par_FEM_coarse = Parameter.Parameter_FEM(problem.T,
 
 
 # -------   Call the solver   -------
-#@time solution_FEM, mesh_FEM = Solver.solve_FEM_periodic_square(par_FEM_coarse, problem)
-@time mesh, mesh2 = Solver.solve_FEM_periodic_square(par_FEM_coarse, problem)
+@time solution_FEM, mesh_FEM = Solver.solve_FEM_periodic_square(par_FEM_coarse, problem)
 # ---------------------------------------------------------------------------
