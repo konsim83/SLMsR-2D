@@ -90,15 +90,15 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             # Needs information on  the mesh
             edge_marker_pair = [1 3 ; 2 4]
             f_e1_to_e3 = function(p :: Array{Float64,2})
-                # Periodicity in y-direction, maps lower edge to upper edge
+                # Periodicity in y-direction, maps upper edge to lower edge
 
-                return broadcast(+, [0.0 1.0], p)
+                return broadcast(+, [0.0 -1.0], p)
             end
 
             f_e2_to_e4 = function(p :: Array{Float64,2})
-                # Periodicity in x-direction, maps right edge to left edge
+                # Periodicity in x-direction, maps left edge to right edge
 
-                return broadcast(+, [-1.0 0.0], p)
+                return broadcast(+, [1.0 0.0], p)
             end
             this.map_vec_ind_mesh2dof = identify_points(mesh, edge_marker_pair)
 
@@ -285,18 +285,27 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
     length(edge_trafo)!=length(edge_marker_pair) ? 
         error("Number of Matched edge pairs must coincide with transformations.") :
 
+    index_map = collect(1:mesh.n_point)
+
     for i in 1:size(edge_marker_pair,1)
         pair = edge_marker_pair[i,:]
 
-        edge1 = unique(vec(mesh.edge[mesh.edge_marker.==pair[1],:]'))
-        edge2 = unique(vec(mesh.edge[mesh.edge_marker.==pair[2],:]'))
+        point_ind_on_edge1 = unique(vec(mesh.edge[mesh.edge_marker.==pair[1],:]'))
+        point_ind_on_edge2 = unique(vec(mesh.edge[mesh.edge_marker.==pair[2],:]'))
 
         f = edge_trafo[i]
 
-        # apply f to edge1, gives permuted edge2
-        f_on_edge1 = f(mesh.point[edge1,:])
+        point_edge1 = mesh.point[point_ind_on_edge1,:]
+        # Apply f to edge1, gives permuted edge2
+        point_edge2_on_edge1 = f(mesh.point[point_ind_on_edge2,:])
 
-
+        # Find the indices of mapped points on edge2 in edge1, then change the
+        # index of points on edge2 to get identified with edge1
+        for j=1:size(point_edge2_on_edge1,1)
+            ind_p2_in_p1 = find(all(point_edge2_on_edge1[j,:].==point_edge1,2))
+            index_map[point_ind_on_edge2[j]] = ind_p2_in_p1[1]
+        end
+        error("Not finished yet.")
     end
 
 end
