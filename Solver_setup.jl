@@ -2,7 +2,7 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
 
     # Build mesh of unit square (0,1)x(0,1)
     mesh = Mesh.mesh_unit_square(par.n_edge_per_seg)
-    #mesh = Mesh.refine_rg(mesh, par.n_refinement)
+    mesh = Mesh.refine_rg(mesh, par.n_refinement)
 
     # Set up reference element
     ref_el = FEM.RefEl_Pk{par.n_order_FEM}()
