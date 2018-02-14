@@ -9,9 +9,12 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
     length(edge_trafo)!=size(edge_marker_pair,1) ? 
         error("Number of Matched edge pairs must coincide with transformations.") :
 
-    # index_map = collect(1:mesh.n_point)
+
     ind_point_boundary = find(mesh.point_marker.!=0)
-    index_map = []
+    ind_point_inner = find(mesh.point_marker.==0)
+
+    index_map = Array{Array{Int64,1},1}(0)
+
     for i in ind_point_boundary
         push!(index_map,[i])
     end
@@ -33,38 +36,41 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
         # index of points on edge2 to get identified with edge1
         for j=1:size(point_edge2_on_edge1,1)
             ind_p2_in_p1 = closest_index(point_edge1, point_edge2_on_edge1[j,:])
-            push!(index_map[point_ind_on_edge2[ind_p2_in_p1]],point_ind_on_edge1[j])
+            
+            ind_of_point_found_in_global_vec = find(map(x->x[1]==point_ind_on_edge2[ind_p2_in_p1],index_map))[]
+
+            # index_map[ind_of_point_found_in_global_vec][end+1] = point_ind_on_edge1[j]
+            push!(index_map[ind_of_point_found_in_global_vec],point_ind_on_edge1[j])
         end
     end
-    # index_map = map(x->unique(sort(x)), index_map)
+    index_map = map(x->unique(sort(x)), index_map)
 
-    # for k=1:length(index_map)
-    #     while length(index_map[k])>1
-    #         ind_2b_replaced = index_map[k][end]
-    #         ind_new = index_map[k][1]
+    for k=1:length(index_map)
+        while length(index_map[k])>1
+            ind_2b_replaced = index_map[k][end]
+            ind_new = index_map[k][1]
             
-    #         map(x-> (x[x.==ind_2b_replaced]=ind_new), index_map);
+            map(x-> (x[x.==ind_2b_replaced]=ind_new), index_map);
            
-    #         # Keep only unique values
-    #         index_map = map(x->unique(x), index_map)
-    #     end        
-    # end
+            # Keep only unique values
+            index_map = map(x->unique(x), index_map)
+        end        
+    end
 
-    # index_map = vcat(index_map...)
+    index_map = vcat(index_map...)
 
-    # # Squeze vector
-    # d = setdiff(1:maximum(index_map), index_map)
-    # while length(d)>0
-    #     index_map[index_map.>d[1]] -= 1
-    #     d = setdiff(1:maximum(index_map), index_map)
-    # end
-    
-    # # append the inner points
-    # n_point_interior = sum(mesh.point_marker.==0)
-    # ind_point_interior = collect(1:n_point_interior) + maximum(index_map)
-    # append!(index_map, ind_point_interior)
+    index_map_all = collect(1:mesh.n_point)
+    index_map_all[ind_point_boundary] = index_map
+    index_map_all_orig = copy(index_map_all)
 
-    return index_map
+    # Squeze vector
+    d = setdiff(1:maximum(index_map_all), index_map_all)
+    while length(d)>0
+        index_map_all[index_map_all.>d[1]] -= 1
+        d = setdiff(1:maximum(index_map_all), index_map_all)
+    end
+
+    return index_map_all, index_map_all_orig
 end
 
 # find closest point in array
@@ -88,8 +94,15 @@ end
 
 
 
-mesh = Mesh.mesh_unit_square(n)
-mesh = Mesh.refine_rg(mesh, 1)
+mesh = Mesh.mesh_unit_square(1)
+
+if true
+    mesh = Mesh.refine_rg(mesh, 1)
+
+    ind_point_boundary = sort(unique(mesh.edge[mesh.edge_marker.!=0,:]'))
+    mesh.point_marker[:] = zeros(Int, size(mesh.point_marker))
+    mesh.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
+end
 
 edge_marker_pair = [1 3 ; 2 4]
 f_edge_to_edge = Array{Function,1}(2)
@@ -104,4 +117,6 @@ f_edge_to_edge[2] = function(p :: Array{Float64,2})
 
     return broadcast(+, [1.0 0.0], p)
 end
-@time index_map = identify_points(mesh, edge_marker_pair, f_edge_to_edge)
+
+i = collect(1:mesh.n_point)
+@time index_map, index_map_orig = identify_points(mesh, edge_marker_pair, f_edge_to_edge)

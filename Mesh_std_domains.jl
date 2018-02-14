@@ -121,7 +121,7 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     point[1,:] = [0.0 ; 0.0]
     for i = 2:(n_segs_per_edge)
         point[i,:] = point[i-1,:] + [1.0 ; 0.0]/n_segs_per_edge
-        point_marker[i,1] = i
+        point_marker[i,1] = 1 #i
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 1
     end
@@ -133,7 +133,7 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     point[n_segs_per_edge+1,:] = [1.0 ; 0.0]
     for i in (n_segs_per_edge+2):(2*n_segs_per_edge)
         point[i,:] = point[i-1,:] + [0.0 ; 1.0]/n_segs_per_edge
-        point_marker[i,1] = i - 1
+        point_marker[i,1] = 1 #i - 1
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 2
     end
@@ -145,7 +145,7 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     point[2*n_segs_per_edge+1,:] = [1.0 ; 1.0]
     for i in (2*n_segs_per_edge+2):(3*n_segs_per_edge)
         point[i,:] = point[i-1,:] + [-1.0 ; 0.0]/n_segs_per_edge
-        point_marker[i,1] = i
+        point_marker[i,1] = 1 #i
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 3
     end
@@ -157,7 +157,7 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     point[3*n_segs_per_edge+1,:] = [0.0 ; 1.0]
     for i in (3*n_segs_per_edge+2):(4*n_segs_per_edge)
         point[i,:] = point[i-1,:] + [0.0 ; -1.0]/n_segs_per_edge
-        point_marker[i,1] = i
+        point_marker[i,1] = 1 #i
         segment[i-1,:] = [i-1 ; i]
         segment_marker[i-1] = 4
     end

@@ -55,7 +55,8 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     is_periodic :: Bool
     n_true_dof :: Int64
 
-    map_vec_ind_mesh2dof :: Array{Int64,1}
+    index_map_dof2mesh :: Array{Int64,1}
+    index_map_mesh2dof :: Array{Int64,1}
     # ----------------------------------------
 
     ind :: Array{Int64,1}
@@ -101,14 +102,8 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
 
                 return broadcast(+, [1.0 0.0], p)
             end
-            this.map_vec_ind_mesh2dof = identify_points(mesh, edge_marker_pair, f_edge_to_edge)
-
-            # this.map_vec_ind_mesh2dof = copy(mesh.point_marker[:])
-            # this.map_vec_ind_mesh2dof[find(mesh.point_marker.==0)] = (find(mesh.point_marker.==0)
-            #                                                             - sum(mesh.point_marker.!=0)
-            #                                                             + maximum(mesh.point_marker))
-            # ----------------------------------------
-
+            this.index_map_dof2mesh = identify_points(mesh, edge_marker_pair, f_edge_to_edge)
+            this.index_map_mesh2dof = indexin(unique(this.index_map_dof2mesh), this.index_map_dof2mesh)
 
             # ----------------------------------------
             # Node infos
@@ -166,7 +161,7 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             this.n_true_dof = n_true_dof
             # ----------------------------------------
 
-            ind_cell = this.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, 1:mesh.n_cell)]   
+            ind_cell = this.index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]   
             this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
             this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
             this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
@@ -174,7 +169,8 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             this.T_ref2cell = zeros(2, 3, mesh.n_cell)
             this.T_cell2ref = zeros(2, 3, mesh.n_cell)
             for i=1:this.n_elem
-                # Extended transformation matrices for mapping from an to the reference cell K = [(0,0), (1,0), (0,1)]
+                # Extended transformation matrices for mapping from and to the
+                # reference cell K = [(0,0), (1,0), (0,1)]
                 this.T_ref2cell[:,:,i] = [   mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,1],:]   ]
                 this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  mesh.point[mesh.cell[i,1],:]   ]
             end
@@ -207,7 +203,7 @@ function map_ind_dof2mesh(dof :: Dof_Pk_periodic_square{1}, vec_dof :: Array{Flo
     """
 
     # expand a dof-vector into a mesh-vector (only periodic boundaries)
-    vec_mesh = vec_dof[dof.map_vec_ind_mesh2dof,:]
+    vec_mesh = vec_dof[dof.index_map_dof2mesh,:]
 
     return vec_mesh
 end
@@ -225,7 +221,7 @@ function map_ind_mesh2dof(dof :: Dof_Pk_periodic_square{1}, vec_mesh :: Array{Fl
     """
 
     # reduce a mesh-vector to a dof-vector (only periodic boundaries)
-    vec_dof = vec_mesh[indexin(unique(dof.map_vec_ind_mesh2dof), dof.map_vec_ind_mesh2dof),:]
+    vec_dof = vec_mesh[dof.index_map_mesh2dof,:]
 
     return vec_dof
 end
@@ -236,7 +232,7 @@ end
 function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: Array{Int64,1})
     # Put a filter before mesh indices to translate to dof
     # indices
-    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, ind_c)]
+    dofs = dof.index_map_dof2mesh[Mesh.get_cell(mesh, ind_c)]
     
     return dofs
 end # end function
@@ -246,7 +242,7 @@ function get_dof_elem(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMes
     
     # Put a filter before mesh indices to translate to dof
     # indices
-    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_cell(mesh, ind_c)]
+    dofs = dof.index_map_dof2mesh[Mesh.get_cell(mesh, ind_c)]
     
     return dofs
 end # end function
@@ -257,7 +253,7 @@ end # end function
 function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: Array{Int64,1})    
     # Put a filter before mesh indices to translate to dof
     # indices
-    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_edge(mesh, ind_c)]
+    dofs = dof.index_map_dof2mesh[Mesh.get_edge(mesh, ind_c)]
     
     return dofs
 end # end function
@@ -267,7 +263,7 @@ function get_dof_edge(dof :: Dof_Pk_periodic_square{1}, mesh :: Mesh.TriangleMes
     
     # Put a filter before mesh indices to translate to dof
     # indices
-    dofs = dof.map_vec_ind_mesh2dof[Mesh.get_edge(mesh, ind_c)]
+    dofs = dof.index_map_dof2mesh[Mesh.get_edge(mesh, ind_c)]
     
     return dofs
 end # end function
@@ -286,9 +282,12 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
     length(edge_trafo)!=size(edge_marker_pair,1) ? 
         error("Number of Matched edge pairs must coincide with transformations.") :
 
-    # index_map = collect(1:mesh.n_point)
+
     ind_point_boundary = find(mesh.point_marker.!=0)
-    index_map = []
+    ind_point_inner = find(mesh.point_marker.==0)
+
+    index_map = Array{Array{Int64,1},1}(0)
+
     for i in ind_point_boundary
         push!(index_map,[i])
     end
@@ -310,7 +309,11 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
         # index of points on edge2 to get identified with edge1
         for j=1:size(point_edge2_on_edge1,1)
             ind_p2_in_p1 = closest_index(point_edge1, point_edge2_on_edge1[j,:])
-            push!(index_map[point_ind_on_edge2[ind_p2_in_p1]],point_ind_on_edge1[j])
+            
+            ind_of_point_found_in_global_vec = find(map(x->x[1]==point_ind_on_edge2[ind_p2_in_p1],index_map))[]
+
+            # index_map[ind_of_point_found_in_global_vec][end+1] = point_ind_on_edge1[j]
+            push!(index_map[ind_of_point_found_in_global_vec],point_ind_on_edge1[j])
         end
     end
     index_map = map(x->unique(sort(x)), index_map)
@@ -329,19 +332,17 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
 
     index_map = vcat(index_map...)
 
-    # Squeze vector
-    d = setdiff(1:maximum(index_map), index_map)
-    while length(d)>0
-        index_map[index_map.>d[1]] -= 1
-        d = setdiff(1:maximum(index_map), index_map)
-    end
-    
-    # append the inner points
-    n_point_interior = sum(mesh.point_marker.==0)
-    ind_point_interior = collect(1:n_point_interior) + maximum(index_map)
-    append!(index_map, ind_point_interior)
+    index_map_all = collect(1:mesh.n_point)
+    index_map_all[ind_point_boundary] = index_map
 
-    return index_map
+    # Squeze dof indices
+    d = setdiff(1:maximum(index_map_all), index_map_all)
+    while length(d)>0
+        index_map_all[index_map_all.>d[1]] -= 1
+        d = setdiff(1:maximum(index_map_all), index_map_all)
+    end
+
+    return index_map_all
 end
 
 # find closest point in array
