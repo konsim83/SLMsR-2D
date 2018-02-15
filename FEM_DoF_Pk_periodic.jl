@@ -161,7 +161,7 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
             this.n_true_dof = n_true_dof
             # ----------------------------------------
 
-            ind_cell = this.index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]   
+            ind_cell = this.index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]
             this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
             this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
             this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
