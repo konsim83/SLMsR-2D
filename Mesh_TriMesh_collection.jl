@@ -14,9 +14,12 @@ mutable struct TriMesh_collection
         this.mesh_f = Array{TriangleMesh.TriMesh}(mesh.n_cell)
         this.n_elem_f = Array{Int64}(mesh.n_cell)
 
-        point_mapped = map_ref_point(mesh, mesh_simplex.point, 1:mesh.n_cell)
         for i=1:mesh.n_cell
-            this.mesh_f[i] = TriangleMesh.TriMesh(mesh_simplex, point_mapped[:,:,i], string("Mapped ", mesh_simplex.mesh_info))
+            T_ref2cell = [mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:] mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]  mesh.point[mesh.cell[i,1],:]]
+
+            point_mapped = [mesh_simplex.point ones(size(mesh_simplex.point,1))] * T_ref2cell'
+
+            this.mesh_f[i] = TriangleMesh.TriMesh(mesh_simplex, point_mapped, string("Mapped ", mesh_simplex.mesh_info))
             this.n_elem_f[i] = this.mesh_f[i].n_cell
         end
 

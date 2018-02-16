@@ -302,22 +302,30 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
         f = edge_trafo[i]
 
         point_edge1 = mesh.point[point_ind_on_edge1,:]
-        # Apply f to edge1, gives permuted edge2
+        # Apply f to edge2, gives permuted edge1
         point_edge2_on_edge1 = f(mesh.point[point_ind_on_edge2,:])
 
-        # Find the indices of mapped points on edge2 in edge1, then change the
+        # Find the indices of mapped points of edge2 in edge1, then change the
         # index of points on edge2 to get identified with edge1
         for j=1:size(point_edge2_on_edge1,1)
             ind_p2_in_p1 = closest_index(point_edge1, point_edge2_on_edge1[j,:])
-            
-            ind_of_point_found_in_global_vec = find(map(x->x[1]==point_ind_on_edge2[ind_p2_in_p1],index_map))[]
+            # This means point_ind_on_edge2[j] -> point_ind_on_edge1[ind_p2_in_p1]
 
-            # index_map[ind_of_point_found_in_global_vec][end+1] = point_ind_on_edge1[j]
-            push!(index_map[ind_of_point_found_in_global_vec],point_ind_on_edge1[j])
+            # Index of point_ind_on_edge2[j] must now be found in index_map
+            ind_of_point_found_in_global_vec = find(map(x->x[1]==point_ind_on_edge2[j],index_map))[]
+            
+            # Then we change add to
+            # index_map[ind_of_point_found_in_global_vec] the identified
+            # corresponding point
+            push!(index_map[ind_of_point_found_in_global_vec],point_ind_on_edge1[ind_p2_in_p1])
         end
     end
+    
+    # sort the list of points that are identified with each other
     index_map = map(x->unique(sort(x)), index_map)
 
+    # For each point indentified with a point of a lower index chnage the
+    # identifier of that point to the lower index
     for k=1:length(index_map)
         while length(index_map[k])>1
             ind_2b_replaced = index_map[k][end]
@@ -330,12 +338,15 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
         end        
     end
 
+    # convert this to a column vector
     index_map = vcat(index_map...)
 
+    # The indexing has gaps. We need to reduce indices as long as thera are
+    # gaps.
     index_map_all = collect(1:mesh.n_point)
     index_map_all[ind_point_boundary] = index_map
 
-    # Squeze dof indices
+    # This is the actual reduction.
     d = setdiff(1:maximum(index_map_all), index_map_all)
     while length(d)>0
         index_map_all[index_map_all.>d[1]] -= 1

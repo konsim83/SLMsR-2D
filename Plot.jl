@@ -1,3 +1,7 @@
+module Plot
+
+using Mesh, PyPlot
+
 function plot_mesh(m :: TriangleMesh.TriMesh; 
                         linewidth :: Real = 1.5, 
                         marker :: String = "None",
@@ -31,6 +35,7 @@ function plot_mesh(m :: TriangleMesh.TriMesh, idx :: Array{Int,1};
                         markersize :: Real = 200,
                         linestyle :: String = "-",
                         color :: String = "blue",
+                        color_text :: String = "green",
                         offset :: Float64 = 0.02)
 
     fig = matplotlib[:pyplot][:figure]("2D Mesh Plot", figsize = (10,10))
@@ -48,7 +53,7 @@ function plot_mesh(m :: TriangleMesh.TriMesh, idx :: Array{Int,1};
     scatter(m.point[:,1], m.point[:,2], s=markersize, color="green")
 
     for i=1:m.n_point
-        ax[:text](m.point[i,1]+offset, m.point[i,2]+offset, string(idx[i]), fontsize=20, color="green")
+        ax[:text](m.point[i,1]+offset, m.point[i,2]+offset, string(idx[i]), fontsize=20, color=color_text)
     end
 
     
@@ -86,4 +91,6 @@ function plot_mesh_collection(M :: TriMesh_collection, ind_c = 1:M.mesh.n_cell)
     
     return nothing
     
+end
+
 end

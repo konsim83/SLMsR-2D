@@ -3,11 +3,11 @@
 # ---------------------------------------------------------------------------------------------
 function TriangleMesh.TriMesh(mesh :: TriangleMesh.TriMesh, point :: Array{Float64,2}, mesh_info :: String)
 
-    voronoi = TriangleMesh.Voronoi("No Voronoi diagram", 
-                                    0, Array{Float64,2}(0,2),
-                                    0, Array{Float64,2}(0,0),
-                                    0, Array{Int,2}(0,2),
-                                    Array{Int,2}(0,2))
+    voronoi = TriangleMesh.VoronoiDiagram("No Voronoi diagram", 
+                                            0, Array{Float64,2}(0,2),
+                                            0, Array{Float64,2}(0,0),
+                                            0, Array{Int,2}(0,2),
+                                            Array{Int,2}(0,2))
     n_hole = 0
     hole = Array{Float64,2}(0,2)
 

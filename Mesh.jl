@@ -1,6 +1,6 @@
 module Mesh
 
-using PyPlot, WriteVTK
+using WriteVTK
 
 import TriangleMesh
 

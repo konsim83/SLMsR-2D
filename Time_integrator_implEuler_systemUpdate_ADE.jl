@@ -17,45 +17,45 @@ function update_system!(solution :: FEM.AbstractSolution,
     """    
     
     # ----   This is the fast version   ---
-    if k_time==1
-        system_data.mass = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
-        FEM.assemble_mass!(system_data.mass,
-                           mesh,
-                           dof,
-                           ref_el,
-                           quad,
-                           par,
-                           problem)
-    end
+    # if k_time==1
+    #     system_data.mass = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+    #     FEM.assemble_mass!(system_data.mass,
+    #                        mesh,
+    #                        dof,
+    #                        ref_el,
+    #                        quad,
+    #                        par,
+    #                        problem)
+    # end
 
-    if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
-        system_data.advection = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
-        FEM.assemble_advection!(system_data.advection,
-                                mesh,
-                                dof,
-                                ref_el,
-                                quad,
-                                par,
-                                problem,
-                                k_time+1)
-    end
+    # if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
+    #     system_data.advection = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+    #     FEM.assemble_advection!(system_data.advection,
+    #                             mesh,
+    #                             dof,
+    #                             ref_el,
+    #                             quad,
+    #                             par,
+    #                             problem,
+    #                             k_time+1)
+    # end
 
-    if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
-        system_data.diffusion = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
-        FEM.assemble_diffusion!(system_data.diffusion,
-                                mesh,
-                                dof,
-                                ref_el,
-                                quad,
-                                par,
-                                problem,
-                                k_time+1)
-    end
+    # if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
+    #     system_data.diffusion = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+    #     FEM.assemble_diffusion!(system_data.diffusion,
+    #                             mesh,
+    #                             dof,
+    #                             ref_el,
+    #                             quad,
+    #                             par,
+    #                             problem,
+    #                             k_time+1)
+    # end
     # ----   This is the fast version   ---
     
 
 
-    #=
+    
     # ----   This is the slow version   ---
     if k_time==1
     system_data.mass = FEM.assemble_mass(mesh,
@@ -86,7 +86,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                    k_time+1)
     end
     # ----   This is the slow version   ---
-    =#
+    
 
     
     if dof.n_node_neumann > 0

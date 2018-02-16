@@ -5,6 +5,8 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
     if par.n_refinement>0
         mesh = Mesh.refine_rg(mesh, par.n_refinement)
 
+        # Subdividing edges messes up boundary markers. We need to correct
+        # that.
         ind_point_boundary = sort(unique(mesh.edge[mesh.edge_marker.!=0,:]'))
         mesh.point_marker[:] = zeros(Int, size(mesh.point_marker))
         mesh.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
@@ -46,16 +48,22 @@ end
 function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :: T) where {T<:Problem.AbstractProblem}
     
     # Build mesh of unit square (0,1)x(0,1)
-    # m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)
-    # Fine meshes are built by refining the reference cell several times
-    # mesh_simplex = Mesh.mesh_unit_simplex_uniform_edges()
-    # mesh_simplex = Mesh.refine_rg(mesh_simplex, par.n_refinement)
-    # Map the refined simplex onto the mesh collection
-    # mesh_collection = Mesh.Trimesh_collection(m_coarse, mesh_simplex)
+    m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)
+    m_simplex = Mesh.mesh_unit_simplex()
+    if par.n_refinement>0
+        # If this is not the case then the conformal MsFEM is just the
+        # standard FEM
+        m_simplex = Mesh.refine_rg(m_simplex, par.n_refinement)
 
-    # Build mesh of unit square (0,1)x(0,1)
-    m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)    
-    mesh_collection = Mesh.TriMesh_collection(m_coarse, par.n_edge_per_seg_f)
+        # Subdividing edges messes up boundary markers. We need to correct
+        # that.
+        ind_point_boundary = sort(unique(m_simplex.edge[m_simplex.edge_marker.!=0,:]'))
+        m_simplex.point_marker[:] = zeros(Int, size(m_simplex.point_marker))
+        m_simplex.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
+    end
+    
+    mesh_collection = Mesh.TriMesh_collection(m_coarse, m_simplex)
+    #mesh_collection = Mesh.TriMesh_collection(m_coarse, par.n_edge_per_seg_f)
     
 
     # Set up reference element
