@@ -2,7 +2,7 @@ module Plot
 
 using Mesh, PyPlot
 
-function plot_mesh(m :: TriangleMesh.TriMesh; 
+function plot_mesh(m :: Mesh.TriangleMesh.TriMesh; 
                         linewidth :: Real = 1.5, 
                         marker :: String = "None",
                         markersize :: Real = 5,
@@ -29,7 +29,7 @@ end
 
 
 
-function plot_mesh(m :: TriangleMesh.TriMesh, idx :: Array{Int,1}; 
+function plot_mesh(m :: Mesh.TriangleMesh.TriMesh, idx :: Array{Int,1}; 
                         linewidth :: Real = 1.5, 
                         marker :: String = "None",
                         markersize :: Real = 200,
@@ -64,7 +64,7 @@ end
 
 
 
-function plot_mesh_collection(M :: TriMesh_collection, ind_c = 1:M.mesh.n_cell)
+function plot_mesh_collection(M :: Mesh.TriMesh_collection, ind_c = 1:M.mesh.n_cell)
 
     fig = matplotlib[:pyplot][:figure]("2D Mesh collection Plot", figsize = (10,10))
     
