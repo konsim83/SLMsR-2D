@@ -7,6 +7,7 @@ include("FEM.jl")
 include("Time_integrator.jl")
 include("Solver.jl")
 include("FiniteDiff.jl")
+include("PostProcess.jl")
 include("Vis.jl")
 # ---------------------------------------------------------------------------
 
@@ -33,7 +34,7 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 
 # -------   Mesh parameters   -------
 n_edge_per_seg = 5
-n_refinement = 4
+n_refinement = 2
 n_edge_per_seg_f = 0
 
 

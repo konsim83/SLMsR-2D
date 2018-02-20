@@ -4,48 +4,43 @@ using Mesh, FEM, ProgressMeter
 
 export find_cell
 
-function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64,2})
+# --------------------------------------------
+struct Evaluate_FEM
 
-	P = [Mesh.get_point(mesh, mesh.cell) ones(3,1,mesh.n_cell)]
-	X = [x ones(size(x,1))]
+	n_time_point :: Int
+	data :: Array{Array{Float64,2},1}
+	local_function :: Array{Function,1}
 
-	x_cell = zeros(Int, size(x,1))
-	x_bary_coord = zeros(size(x,1),3)
-
-	for i in 1:size(P,3)
-		bary_coord = X * inv(P[:,:,i])
-
-		in_triangle = (sum((bary_coord.>=0.0) .& (bary_coord.<=1.0),2).==3)[:]
-
-		x_cell[in_triangle] = i
-		x_bary_coord[in_triangle,:] = bary_coord[in_triangle,:]
-	end
-
-	return x_cell, x_bary_coord
 end
 
+# Outer constructor
+function Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh)
 
-function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float64,2})
+	n_time_point = size(sol.u,2)
 
-	error("Not implemented yet.")
+	data = Array{Array{Float64,2},1}(mesh.n_cell)
+	local_function = Array{Function,1}(mesh.n_cell)
 
-	P = [Mesh.get_point(mesh, mesh.cell) ones(3,1,mesh.n_cell)]
-	X = [x ones(size(x,1))]
+	for i in 1:mesh.n_cell
+		data[i] = sol.u[mesh.cell[i,:],:]
+		
+		local_function[i] = function(bary :: Array{Float64,1})
+			length(bary)!=3 ? error("Barycentirc coordinates vector must be of length 3.") :
 
-	x_cell = zeros(Int, size(x,1))
-	x_bary_coord = zeros(size(x,1),3)
-
-	for i in 1:size(P,3)
-		bary_coord = X * inv(P[:,:,i])
-
-		in_triangle = (sum((bary_coord.>=0.0) .& (bary_coord.<=1.0),2).==3)[:]
-
-		x_cell[in_triangle] = i
-		x_bary_coord[in_triangle,:] = bary_coord[in_triangle,:]
+			return data[i][1,:]*bary[1] + data[i][2,:]*bary[2] + data[i][3,:]*bary[3]
+		end
 	end
 
-	return x_cell, x_bary_coord
+	return Evaluate_FEM(n_time_point, data, local_function)
 end
+
+# --------------------------------------------
+
+
+include("PostProcess_find_cell.jl")
+
+include("PostProcess_evaluate_FEM.jl")
+
 
 
 end
