@@ -1,4 +1,4 @@
-type Solution_FEM <: AbstractSolution
+struct Solution_FEM <: AbstractSolution
     """
     Solution type for standard FEM.
     """
@@ -6,21 +6,42 @@ type Solution_FEM <: AbstractSolution
     # Solution at nodes
     u :: Array{Float64,2}
 
-    function Solution_FEM(dof :: AbstractDof,
-                          par :: Parameter_FEM)
+    function Solution_FEM(u :: Array{Float64,2})
 
-        # Reserve memory for the solution
-        u = Array{Float64,2}(dof.n_node, par.n_steps+1)
-        
         return new(u)
     end
 end # end type
 
 
+# Outer constructor
+function Solution_FEM(u_in :: Array{Array{Array{Float64,1},1},1},
+                        n_node :: Int64,
+                        n_steps :: Int64)
+
+    # Reserve memory for the solution
+    u = Array{Float64,2}(n_node, n_steps+1)
+
+    for i in 1:length(u_in)
+        u[i,:] = u_in[i][1][:]
+    end
+
+    return Solution_FEM(u)
+end
+
+# Outer constructor
+function Solution_FEM(dof :: AbstractDof,
+                          par :: Parameter_FEM)
+
+    # Reserve memory for the solution
+    u = Array{Float64,2}(dof.n_node, par.n_steps+1)
+    
+    return Solution_FEM(u)
+end
+
 # ----------------------------------------------------------------------------------------
 
 
-type Solution_MsFEM <: AbstractSolution
+struct Solution_MsFEM <: AbstractSolution
     """
     Solution type for multiscale FEM.
     """
