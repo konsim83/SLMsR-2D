@@ -1,4 +1,4 @@
-function evaluate(E :: Evaluate_FEM, mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64,2})
+function evaluate(E :: Evaluate_FEM, mesh :: TriangleMesh.TriMesh, x :: Array{Float64,2})
 
 	x_cell, x_bary = PostProcess.find_cell(mesh, x);
 

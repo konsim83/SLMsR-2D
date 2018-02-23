@@ -1,3 +1,10 @@
+"""
+	find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64,2}, warning = true :: Bool)
+
+    For a given set of points 'x' find all the cells in 'mesh' that each point
+    is in.
+
+""" 
 function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64,2}, warning = true :: Bool)
 
 	if warning
@@ -34,6 +41,13 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64,2}, war
 end
 
 
+"""
+	find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float64,2})
+
+    For a given set of points 'x' find all the cells in the mesh_collection,
+    i.e., first the coarse cell and then for each coarse cell all fine cells.
+
+""" 
 function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float64,2})
 
 	# Find coarse cell
@@ -42,12 +56,17 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 	# Find fine cell
 	x_cell_f = [[Int[] for ixd_inner in 1:length(x_cell[idx])] for idx in 1:size(x,1)]
 	x_bary_f = [[[Float64[]] for ixd_inner in 1:length(x_cell[idx])] for idx in 1:size(x,1)]
+
+	N = length(x_cell)
+    p = Progress(N, 0.01, "Searching points in coarse mesh...", 10)
 	for idx in 1:size(x,1)
 		for ixd_inner in 1:length(x_cell[idx])
 			pop!(x_bary_f[idx][ixd_inner])
 		end
 	end
 
+	N = length(x_cell)
+    p = Progress(N, 0.01, "Searching points in fine meshes...", 10)
 	for idx in 1:length(x_cell)
 		y = convert(Array{Float64,2}, x[idx,:]')
 		for ixd_inner in 1:length(x_cell[idx])
@@ -58,6 +77,8 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 			x_cell_f[idx][ixd_inner] = x_cell_loc[1]
 			x_bary_f[idx][ixd_inner] = x_bary_loc[1]
 		end
+
+		next!(p)
 	end
 
 	return x_cell, x_bary, x_cell_f, x_bary_f

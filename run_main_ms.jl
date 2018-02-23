@@ -1,14 +1,16 @@
-include("Parameter.jl")
-include("Geometry.jl")
-include("Problem.jl")
-include("Quad.jl")
-include("Mesh.jl")
-include("FEM.jl")
-include("Time_integrator.jl")
-include("Solver.jl")
-include("FiniteDiff.jl")
-include("PostProcess.jl")
-include("Vis.jl")
+if false
+	include("Parameter.jl")
+	include("Geometry.jl")
+	include("Problem.jl")
+	include("Quad.jl")
+	include("Mesh.jl")
+	include("FEM.jl")
+	include("Time_integrator.jl")
+	include("Solver.jl")
+	include("FiniteDiff.jl")
+	include("PostProcess.jl")
+	include("Vis.jl")
+end
 # ---------------------------------------------------------------------------
 
 
@@ -34,7 +36,7 @@ Coarse standard FEM. Solves Advection diffusion equation on coarse mesh.
 
 # -------   Mesh parameters   -------
 n_edge_per_seg = 5
-n_refinement = 2
+n_refinement = 4
 n_edge_per_seg_f = 0
 
 

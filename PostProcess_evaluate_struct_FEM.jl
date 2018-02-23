@@ -1,3 +1,11 @@
+"""
+	struct Evaluate_FEM
+
+	Structure contains a data of the solution in an ordered fashion and a set
+	of local functions used to evaluate the solution at points given in
+	barycentric coordinates.
+
+"""
 struct Evaluate_FEM
 
 	n_time_point :: Int
@@ -6,8 +14,14 @@ struct Evaluate_FEM
 
 end
 
-# Outer constructor
-function Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh)
+
+"""
+	Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh)
+
+	Outer constructor for the struct 'Evaluate_FEM'.
+
+"""
+function Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: TriangleMesh.TriMesh)
 
 	n_time_point = size(sol.u,2)
 
