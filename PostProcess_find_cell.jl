@@ -63,6 +63,8 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 		for ixd_inner in 1:length(x_cell[idx])
 			pop!(x_bary_f[idx][ixd_inner])
 		end
+		
+		next!(p)
 	end
 
 	N = length(x_cell)

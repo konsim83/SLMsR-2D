@@ -121,15 +121,19 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
                                                                                         mesh_collection.mesh,
                                                                                         problem)
 
-    # Call actual solver. Pass solution data by reference.       
-    solve_problem!(mesh_collection,
-                   ref_el,
-                   dof_collection.dof,
-                   quad_f,
-                   time_stepper,
-                   par,
-                   problem,
-                   solution)
+    try
+        # Call actual solver. Pass solution data by reference.       
+        solve_problem!(mesh_collection,
+                       ref_el,
+                       dof_collection.dof,
+                       quad_f,
+                       time_stepper,
+                       par,
+                       problem,
+                       solution)
+    catch
+        warn("Problem computing the Muliscale solution.")
+    end
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     
