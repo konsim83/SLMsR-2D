@@ -3,7 +3,7 @@ module Geometry
 abstract type PolygonDomain end
 
 #------------------------------------------------------------
-type Triangle <: PolygonDomain
+struct Triangle <: PolygonDomain
     
     point :: Array{Float64, 2}
     segment :: Array{Int64, 2}
@@ -23,7 +23,7 @@ end
 #------------------------------------------------------------
 
 #------------------------------------------------------------
-type UnitSquare <: PolygonDomain
+struct UnitSquare <: PolygonDomain
     
     point :: Array{Float64, 2}
     segment :: Array{Int64, 2}
