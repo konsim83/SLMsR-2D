@@ -1,9 +1,12 @@
-type BasisFun <: AbstractBasisProblem
+struct BasisFun <: AbstractBasisProblem
     
-    info :: String
+    info_prob :: String
     type_info :: String
     
     T :: Float64
+
+    index_dirichlet_edge :: Array{Int}
+    index_neumann_edge :: Array{Int}
 
     coeff :: Array{Float64,2}
 
@@ -14,10 +17,13 @@ type BasisFun <: AbstractBasisProblem
     
     function BasisFun(problem :: AbstractProblem, tri :: Geometry.Triangle)
         
-        info = "Evolution of basis."
+        info_prob = "Evolution of basis on triangular cell."
         type_info = problem.type_info
 
         T = problem.T
+
+        index_dirichlet_edge = [1 ; 2 ; 3]
+        index_neumann_edge = Array{Int}(0)
 
         coeff = Geometry.compute_P1_basis_coeff(tri)
 
@@ -26,7 +32,12 @@ type BasisFun <: AbstractBasisProblem
 
         problem_parent = problem
         
-        return new(info, type_info, T, coeff, is_transient_diffusion, is_transient_velocity, problem_parent)
+        return new(info_prob, type_info, 
+                    T,
+                    index_dirichlet_edge, index_neumann_edge, 
+                    coeff, 
+                    is_transient_diffusion, is_transient_velocity,
+                    problem_parent)
     end # end constructor
 end # end type
 
@@ -36,13 +47,13 @@ end # end type
 # ----------------------   Functions   ----------------------
 # --------------------------------------------------------------
 
-
-function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64})
-    """
+"""
+    diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64})
 
     Delegate function calls to the original abstract problem.
 
-    """
+"""
+function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64})
     
     return diffusion(problem.problem_parent, t, x)
 end
@@ -50,14 +61,13 @@ end
 
 # --------------------------------------------------------------------
 
+"""
+    velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64})
 
+    Delegate function calls to the original abstract problem.
+
+"""
 function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64})
-    """
-
-    Velocity is represented by a 2-vector. The solenoidal part can be
-    represented by a stream function.
-
-    """
 
     return velocity(problem.problem_parent, t, x)
 end
@@ -66,34 +76,37 @@ end
 # --------------------------------------------------------------------
 
 
-function u_init(problem :: BasisFun, x :: Array{Float64,1})
+function u_init(problem :: BasisFun, x :: Array{Float64})
                 
-    length(x)!=2 ? error(" Vector x must length=2.") :
-   
-    out = [x ; 1]'  * problem.coeff
-                
-    return out
-end
-
-
-function u_init(problem :: BasisFun, x :: Array{Float64,2})
-                
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
+    size(x,1)!=2 ? error("Input points must be of size 2-by-n.") :
     
-    out = [x ones(size(x,1))] * problem.coeff
+    out = problem.coeff * [x ; ones(1,size(x,2))]
     
     return out
 end
 
-function u_init(problem :: BasisFun, x :: Array{Float64,3})
-                
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
+function u_init(problem :: BasisFun, x :: Array{Array{Float64},1})
         
-    out = Array{Float64, 3}(size(x,1), 3, size(x,3))
+    out = [Array{Float64}(size(y,2)) for y in x]
 
-    for i=1:size(x,3)
-        out[:,:,i] = u_init(problem, x[:,:,i])
+    for y in x
+        out[i] = u_init(problem, y)
     end
     
     return out
 end
+
+
+# --------------------------------------------------------------------
+
+
+function u_dirichlet(problem :: BasisFun, x :: Array{Float64})
+
+    size(x,1)!=2 ? error("Input points must be of size 2-by-n.") :
+    
+    out = problem.coeff * [x ; ones(1,size(x,2))]
+
+end
+
+
+# --------------------------------------------------------------------

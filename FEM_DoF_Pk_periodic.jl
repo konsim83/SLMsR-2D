@@ -1,8 +1,8 @@
-type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
+struct Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     
     # ----------------------------------------
     # General infos
-    FEM_order :: Int64
+    n_order :: Int64
     FEM_info :: String
     # ----------------------------------------
 
@@ -30,14 +30,14 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     n_edge :: Int64
     n_edge_boundary :: Int64
     n_edge_interior :: Int64
-    #n_edge_dirichlet :: Int64
-    #n_edge_neumann :: Int64
+    n_edge_dirichlet :: Int64
+    n_edge_neumann :: Int64
     n_edge_per_elem :: Int64
 
     ind_edge_boundary :: Array{Int64,1}
     ind_edge_interior :: Array{Int64,1}
-    #ind_edge_dirichlet :: Array{Int64,1}
-    #ind_edge_neumann :: Array{Int64,1}
+    ind_edge_dirichlet :: Array{Int64,1}
+    ind_edge_neumann :: Array{Int64,1}
     # ----------------------------------------
 
     # ----------------------------------------
@@ -65,125 +65,182 @@ type Dof_Pk_periodic_square{FEM_order} <: AbstractDof
     
     T_ref2cell :: Array{Float64,3}
     T_cell2ref :: Array{Float64,3}
-
-    function Dof_Pk_periodic_square{FEM_order}(mesh :: Mesh.TriangleMesh.TriMesh) where {FEM_order}
-        
-        this = new()
-            
-        # ----------------------------------------
-        this.FEM_order = FEM_order
-        this.FEM_info = "DoF object for ---   periodic unit square  --- Pk-Lagrange FEM of order $(FEM_order)."
-        # ----------------------------------------
-
-        if FEM_order==1
-            # ----------------------------------------------------------------------------------------------------------------------------------------
-            
-
-            # ----------------------------------------
-            # Create the maps that translate dofs to mesh based
-            # variables. This is one of the core modules for the
-            # handling DoFs of periodic meshes (without actually
-            # touching the mesh).
-
-            # Tells where any mesh based variable can be found
-            # topologically
-
-            # Needs information on  the mesh
-            edge_marker_pair = [1 3 ; 2 4]
-            f_edge_to_edge = Array{Function,1}(2)
-            f_edge_to_edge[1] = function(p :: Array{Float64,2})
-                # Periodicity in y-direction, maps upper edge to lower edge
-
-                return broadcast(+, [0.0 -1.0], p)
-            end
-
-            f_edge_to_edge[2] = function(p :: Array{Float64,2})
-                # Periodicity in x-direction, maps left edge to right edge
-
-                return broadcast(+, [1.0 0.0], p)
-            end
-            this.index_map_dof2mesh = identify_points(mesh, edge_marker_pair, f_edge_to_edge)
-            this.index_map_mesh2dof = indexin(unique(this.index_map_dof2mesh), this.index_map_dof2mesh)
-
-            # ----------------------------------------
-            # Node infos
-            this.n_node = mesh.n_point
-            this.n_node_boundary = 0
-            this.n_node_interior = mesh.n_point
-            this.n_node_dirichlet = 0
-            this.n_node_neumann = 0
-            this.n_node_per_edge = 2
-            this.n_node_per_elem = 3
-            
-            this.ind_node_boundary = []
-            this.ind_node_interior = collect(1:mesh.n_point)
-            this.ind_node_dirichlet  = []
-
-            n_node_boundary = sum(mesh.point_marker.!=0)
-            n_true_dof = Int(mesh.n_point - 3 - 0.5*(n_node_boundary - 4))
-            this.ind_node_non_dirichlet = setdiff(1:n_true_dof, this.ind_node_dirichlet)
-            
-            this.ind_node_neumann = []
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            # Edge infos
-            this.n_edge = mesh.n_edge
-            this.n_edge_boundary = 0
-            this.n_edge_interior = mesh.n_edge
-            #this.n_edge_dirichlet = []
-            #this.n_edge_neumann = []
-            this.n_edge_per_elem = 3
-            
-            this.ind_edge_boundary  = []
-            this.ind_edge_interior = collect(1:mesh.n_edge)
-            #this.ind_edge_dirichlet = []
-            #this.ind_edge_neumann = []
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            # Element infos
-            this.n_elem = mesh.n_cell
-            this.n_elem_boundary = 0
-            this.n_elem_interior = mesh.n_cell
-            
-            this.ind_elem_boundary = []
-            this.ind_elem_interior = collect(1:mesh.n_cell)
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            # Topology info
-            this.is_periodic = true
-
-            this.n_true_dof = n_true_dof
-            # ----------------------------------------
-
-            ind_cell = this.index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]
-            this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-            this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
-            this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
-            
-            this.T_ref2cell = zeros(2, 3, mesh.n_cell)
-            this.T_cell2ref = zeros(2, 3, mesh.n_cell)
-            for i=1:this.n_elem
-                # Extended transformation matrices for mapping from and to the
-                # reference cell K = [(0,0), (1,0), (0,1)]
-                this.T_ref2cell[:,:,i] = [   mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,1],:]   ]
-                this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  mesh.point[mesh.cell[i,1],:]   ]
-            end
-
-            # ----------------------------------------------------------------------------------------------------------------------------------------
-                
-        elseif FEM_order==2
-            error("Order 2 DoF not implemented yet (periodic setting).")
-        end # end if order
-        
-        return this    
-    end # end constructor
+    
 end # end type
+
+
+
+function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
+                            problem :: Problem.AbstractProblem,
+                            periodicityInfo :: Mesh.PeriodicityInfo,
+                            n_order :: Int)
+    
+    FEM_info = "DoF object for ---   periodic  --- Pk-Lagrange FEM of order $(n_order)."
+    # ----------------------------------------
+
+    if n_order==1
+        # ----------------------------------------------------------------------------------------------------------------------------------------
+        
+
+        # ----------------------------------------
+        index_map_dof2mesh = identify_points(mesh, periodicityInfo)
+        index_map_mesh2dof = indexin(unique(index_map_dof2mesh), index_map_dof2mesh)
+
+        # ----------------------------------------
+        n_node = mesh.n_point
+        n_true_dof = length(unique(index_map_dof2mesh))
+
+        label_edges_with_no_partner = setdiff(sort(unique(mesh.edge_marker[mesh.edge_marker.!=0])), 
+                                                    sort(unique(periodicityInfo.edge_marker_pair[:])))
+        label_edges_with_partner = sort(unique(periodicityInfo.edge_marker_pair[:]))
+
+
+
+        #++++++++++++++++++++++++++++++++++++++++++++++++++
+        THINK ABOUT WHAT IS A BOUNDARY EDGE ETC...
+        #++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+        points_with_no_partner = unique(cat(1, [unique(vec(mesh.edge[:,mesh.edge_marker.==label])) for label in label_edges_with_no_partner]...))
+        points_with_partner = unique(cat(1, [unique(vec(mesh.edge[:,mesh.edge_marker.==label]))  for label in label_edges_with_partner]...))
+
+
+
+        ind_node_boundary = setdiff(points_with_no_partner, points_with_partner)
+        ind_node_interior = setdiff(1:n_node, ind_node_boundary)
+
+
+
+
+
+
+
+        ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker[i]]) for marker in problem.index_dirichlet_edge]...)))
+        ind_node_neumann  = setdiff(ind_node_non_dirichlet, ind_node_interior)
+
+        n_node_boundary = sum(mesh.point_marker.~=0)
+        n_node_interior = sum(mesh.point_marker.==0)
+        n_node_dirichlet = length(ind_node_dirichlet)
+        n_node_neumann = n_node_boundary - n_node_dirichlet
+        n_node_per_edge = 2
+        n_node_per_elem = 3
+
+
+        # Node infos
+        n_node = mesh.n_point
+        n_node_boundary = 0
+        n_node_interior = mesh.n_point
+        n_node_dirichlet = 0
+        n_node_neumann = 0
+        n_node_per_edge = 2
+        n_node_per_elem = 3
+        
+        ind_node_boundary = []
+        ind_node_interior = collect(1:mesh.n_point)
+        ind_node_dirichlet  = []
+
+        n_node_boundary = sum(mesh.point_marker.!=0)
+        
+        ind_node_non_dirichlet = setdiff(1:n_true_dof, ind_node_dirichlet)
+        
+        ind_node_neumann = []
+        # ----------------------------------------
+        
+        
+        # ----------------------------------------
+        # Edge infos
+        n_edge = mesh.n_edge
+        n_edge_boundary = 0
+        n_edge_interior = mesh.n_edge
+        #n_edge_dirichlet = []
+        #n_edge_neumann = []
+        n_edge_per_elem = 3
+        
+        ind_edge_boundary  = []
+        ind_edge_interior = collect(1:mesh.n_edge)
+        #ind_edge_dirichlet = []
+        #ind_edge_neumann = []
+        # ----------------------------------------
+        
+        
+        # ----------------------------------------
+        # Element infos
+        n_elem = mesh.n_cell
+        n_elem_boundary = 0
+        n_elem_interior = mesh.n_cell
+        
+        ind_elem_boundary = []
+        ind_elem_interior = collect(1:mesh.n_cell)
+        # ----------------------------------------
+        
+        
+        # ----------------------------------------
+        # Topology info
+        is_periodic = true
+
+        n_true_dof = n_true_dof
+        # ----------------------------------------
+
+        ind_cell = index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]
+        ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
+        ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
+        ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+        
+        T_ref2cell = zeros(2, 3, mesh.n_cell)
+        T_cell2ref = zeros(2, 3, mesh.n_cell)
+        for i=1:n_elem
+            # Extended transformation matrices for mapping from and to the
+            # reference cell K = [(0,0), (1,0), (0,1)]
+            T_ref2cell[:,:,i] = [   mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,1],:]   ]
+            T_cell2ref[:,:,i] = (eye(2)/T_ref2cell[:,1:2,i]) * [   eye(2)  mesh.point[mesh.cell[i,1],:]   ]
+        end
+
+        # ----------------------------------------------------------------------------------------------------------------------------------------
+            
+    elseif n_order==2
+        error("Order 2 DoF not implemented yet (periodic setting).")
+    end # end if order
+    
+    return Dof_Pk_periodic{FEM_order}(n_order,
+                                    FEM_info,
+                                    n_node,
+                                    n_node_boundary,
+                                    n_node_interior,
+                                    n_node_dirichlet,
+                                    n_node_neumann,
+                                    n_node_per_edge,
+                                    n_node_per_elem,
+                                    ind_node_boundary,
+                                    ind_node_interior,
+                                    ind_node_dirichlet,
+                                    ind_node_non_dirichlet,
+                                    ind_node_neumann,
+                                    n_edge,
+                                    n_edge_boundary,
+                                    n_edge_interior,
+                                    #n_edge_dirichlet,
+                                    #n_edge_neumann,
+                                    n_edge_per_elem,
+                                    ind_edge_boundary,
+                                    ind_edge_interior,
+                                    #ind_edge_dirichlet,
+                                    #ind_edge_neumann,
+                                    n_elem,
+                                    n_elem_boundary,
+                                    n_elem_interior,
+                                    ind_elem_boundary,
+                                    ind_elem_interior,
+                                    is_periodic,
+                                    n_true_dof,
+                                    map_vec_ind_mesh2dof,
+                                    ind,
+                                    ind_test,
+                                    ind_lin,
+                                    T_ref2cell,
+                                    T_cell2ref)
+end # end constructor
 
 
 
@@ -275,9 +332,10 @@ end # end function
 
 
 # ----------------------------------------
-function identify_points(mesh :: Mesh.TriangleMesh.TriMesh,
-                            edge_marker_pair :: Array{Int64,2},
-                            edge_trafo :: Array{Function,1})
+function identify_points(mesh :: Mesh.TriangleMesh.TriMesh, periodicityInfo :: PeriodicityInfo)
+
+    edge_marker_pair = periodicityInfo.edge_marker_pair
+    edge_trafo =  periodicityInfo.f_edge_to_edge
 
     length(edge_trafo)!=size(edge_marker_pair,1) ? 
         error("Number of Matched edge pairs must coincide with transformations.") :

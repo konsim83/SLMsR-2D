@@ -1,8 +1,8 @@
-type Dof_Pk{FEM_order} <: AbstractDof
+struct Dof_Pk{FEM_order} <: AbstractDof
     
     # ----------------------------------------
     # General infos
-    FEM_order :: Int64
+    n_order :: Int64
     FEM_info :: String
     # ----------------------------------------
 
@@ -30,14 +30,14 @@ type Dof_Pk{FEM_order} <: AbstractDof
     n_edge :: Int64
     n_edge_boundary :: Int64
     n_edge_interior :: Int64
-    #n_edge_dirichlet :: Int64
-    #n_edge_neumann :: Int64
+    n_edge_dirichlet :: Int64
+    n_edge_neumann :: Int64
     n_edge_per_elem :: Int64
 
     ind_edge_boundary :: Array{Int64,1}
     ind_edge_interior :: Array{Int64,1}
-    #ind_edge_dirichlet :: Array{Int64,1}
-    #ind_edge_neumann :: Array{Int64,1}
+    ind_edge_dirichlet :: Array{Int64,1}
+    ind_edge_neumann :: Array{Int64,1}
     # ----------------------------------------
 
     # ----------------------------------------
@@ -65,93 +65,139 @@ type Dof_Pk{FEM_order} <: AbstractDof
     T_ref2cell :: Array{Float64,3}
     T_cell2ref :: Array{Float64,3}
 
-    function Dof_Pk{FEM_order}(mesh :: Mesh.TriangleMesh.TriMesh) where {FEM_order}
-        
-        this = new()
-            
-        # ----------------------------------------
-        this.FEM_order = FEM_order 
-        this.FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(FEM_order)."
-        # ----------------------------------------
-
-        if FEM_order==1
-            # ----------------------------------------------------------------------------------------------------------------------------------------
-            # ----------------------------------------
-            # Node infos
-            this.n_node = mesh.n_point
-            this.n_node_boundary = sum(mesh.point_marker.==1)
-            this.n_node_interior = sum(mesh.point_marker.==0)
-            this.n_node_dirichlet = this.n_node_boundary
-            this.n_node_neumann = 0
-            this.n_node_per_edge = 2
-            this.n_node_per_elem = 3
-            
-            this.ind_node_boundary = find(mesh.point_marker.==1)
-            this.ind_node_interior = find(mesh.point_marker.==0)
-            this.ind_node_dirichlet  = find(mesh.point_marker.==1)
-            this.ind_node_non_dirichlet = setdiff(1:this.n_node, this.ind_node_dirichlet)
-            this.ind_node_neumann  = []
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            # Edge infos
-            this.n_edge = mesh.n_edge
-            this.n_edge_boundary = sum(mesh.edge_marker.==1)
-            this.n_edge_interior = sum(mesh.edge_marker.==0)
-            #this.n_edge_dirichlet = []
-            #this.n_edge_neumann = []
-            this.n_edge_per_elem = 3
-            
-            this.ind_edge_boundary = find(mesh.edge_marker.==1)
-            this.ind_edge_interior = find(mesh.edge_marker.==0)
-            #this.ind_edge_dirichlet = []
-            #this.ind_edge_neumann = []
-            # ----------------------------------------
-            
-            
-            # ----------------------------------------
-            # Element infos
-            this.n_elem = mesh.n_cell
-            this.n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,2).!=0)
-            this.n_elem_interior = sum(sum(mesh.cell_neighbor.==0,2).==0)
-            
-            this.ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,2).!=0)
-            this.ind_elem_interior = find(sum(mesh.cell_neighbor.==0,2).==0)
-            # ----------------------------------------
-
-            
-            # ----------------------------------------
-            # Topology info
-            this.is_periodic = false
-            this.n_true_dof = mesh.n_point
-
-            # No nodes need to be identified with each other
-            this.map_vec_ind_mesh2dof = collect(1:this.n_node)
-            # ----------------------------------------
-
-            ind_cell = Mesh.get_cell(mesh, 1:mesh.n_cell)
-            this.ind = vec(ind_cell[:,[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3]]')
-            this.ind_test = vec(transpose(repmat(ind_cell, 1, size(ind_cell,2))))
-            this.ind_lin = sub2ind((this.n_true_dof,this.n_true_dof), this.ind_test, this.ind)
-
-            this.T_ref2cell = zeros(2, 3, mesh.n_cell)
-            this.T_cell2ref = zeros(2, 3, mesh.n_cell)
-            for i=1:this.n_elem
-                # Extended transformation matrices for mapping from an to the reference cell K = [(0,0), (1,0), (0,1)]
-                this.T_ref2cell[:,:,i] = [   mesh.point[mesh.cell[i,2],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,3],:]-mesh.point[mesh.cell[i,1],:]   mesh.point[mesh.cell[i,1],:]   ]
-                this.T_cell2ref[:,:,i] = (eye(2)/this.T_ref2cell[:,1:2,i]) * [   eye(2)  mesh.point[mesh.cell[i,1],:]   ]
-            end
-
-            # ----------------------------------------------------------------------------------------------------------------------------------------
-
-        elseif FEM_order==2
-            error("Order 2 DoF not implemented yet.")
-        end # end if order
-        
-        return this
-    end # end constructor
 end # end type
+
+
+
+function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
+                problem :: Problem.AbstractProblem,
+                n_order :: Int)
+    
+    FEM_info = "DoF object for ---   non-periodic   --- Pk-Lagrange FEM of order $(n_order)."
+    
+
+    if n_order==1
+        # ----------------------------------------------------------------------------------------------------------------------------------------
+        # ----------------------------------------
+        # Node infos
+        n_node = mesh.n_point
+
+        ind_node_boundary = find(mesh.point_marker.~=0)
+        ind_node_interior = find(mesh.point_marker.==0)
+        ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker[i]]) for marker in problem.index_dirichlet_edge]...)))
+        ind_node_non_dirichlet = setdiff(1:n_node, ind_node_dirichlet)
+        ind_node_neumann  = setdiff(ind_node_non_dirichlet, ind_node_interior)
+
+        n_node_boundary = sum(mesh.point_marker.~=0)
+        n_node_interior = sum(mesh.point_marker.==0)
+        n_node_dirichlet = length(ind_node_dirichlet)
+        n_node_neumann = n_node_boundary - n_node_dirichlet
+        n_node_per_edge = 2
+        n_node_per_elem = 3
+        # ----------------------------------------
+        
+        
+        # ----------------------------------------
+        # Edge infos
+        n_edge = mesh.n_edge
+
+        ind_edge_boundary = find(mesh.edge_marker.~=0)
+        ind_edge_interior = find(mesh.edge_marker.==0)
+        ind_edge_dirichlet = sort(cat(1, [find(m.edge_marker.==marker[i]) for marker in problem.index_dirichlet_edge]...))
+        ind_edge_neumann = sort(cat(1, [find(m.edge_marker.==marker[i]) for marker in problem.index_neumann_edge]...))
+
+        
+        n_edge_boundary = length(ind_edge_boundary)
+        n_edge_interior = length(ind_edge_interior)
+        n_edge_dirichlet = length(ind_edge_dirichlet)
+        n_edge_neumann = length(ind_edge_neumann)
+        n_edge_per_elem = 3
+        # ----------------------------------------
+        
+        
+        # ----------------------------------------
+        # Element infos
+        n_elem = mesh.n_cell
+        
+        ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,1).~=0)
+        ind_elem_interior = find(sum(mesh.cell_neighbor.==0,1).==0)
+
+        n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,1).~=0)
+        n_elem_interior = sum(sum(mesh.cell_neighbor.==0,1).==0)
+        # ----------------------------------------
+
+        
+        # ----------------------------------------
+        # Topology info
+        is_periodic = false
+        n_true_dof = mesh.n_point
+
+        # No nodes need to be identified with each other
+        map_vec_ind_mesh2dof = collect(1:n_node)
+        # ----------------------------------------
+
+        ind_cell = Mesh.get_cell(mesh, 1:mesh.n_cell)
+        ind = vec(ind_cell[[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3],:])
+        ind_test = vec(ind_cell[[1;2;3;1;2;3;1;2;3],:])
+        ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+
+        T_ref2cell = [zeros(2, 3) for i=1:mesh.n_cell]
+        T_cell2ref = [zeros(2, 3) for i=1:mesh.n_cell]
+        for i=1:n_elem
+            # Extended transformation matrices for mapping from an to the
+            # reference cell K = [(0,0), (1,0), (0,1)]
+            P = Mesh.get_point(mesh, Mesh.get_cell(mesh,[i]))
+
+            T_ref2cell[i] = [P[:,2]-P[:,1]  P[:,3]-P[:,1] P[:,1]]
+            T_cell2ref[i] = (eye(2)/T_ref2cell[i][:,1:2]) * [   eye(2)  mesh.point[:,mesh.cell[1,i]]   ]
+        end
+
+        # ----------------------------------------------------------------------------------------------------------------------------------------
+
+    elseif n_order==2
+        error("Order 2 DoF not implemented yet.")
+    elseif n_order==3
+        error("Order 3 DoF not implemented yet.")
+    end # end if order
+
+    return Dof_Pk{FEM_order}(n_order,
+                            FEM_info,
+                            n_node,
+                            n_node_boundary,
+                            n_node_interior,
+                            n_node_dirichlet,
+                            n_node_neumann,
+                            n_node_per_edge,
+                            n_node_per_elem,
+                            ind_node_boundary,
+                            ind_node_interior,
+                            ind_node_dirichlet,
+                            ind_node_non_dirichlet,
+                            ind_node_neumann,
+                            n_edge,
+                            n_edge_boundary,
+                            n_edge_interior,
+                            #n_edge_dirichlet,
+                            #n_edge_neumann,
+                            n_edge_per_elem,
+                            ind_edge_boundary,
+                            ind_edge_interior,
+                            #ind_edge_dirichlet,
+                            #ind_edge_neumann,
+                            n_elem,
+                            n_elem_boundary,
+                            n_elem_interior,
+                            ind_elem_boundary,
+                            ind_elem_interior,
+                            is_periodic,
+                            n_true_dof,
+                            map_vec_ind_mesh2dof,
+                            ind,
+                            ind_test,
+                            ind_lin,
+                            T_ref2cell,
+                            T_cell2ref)
+end
 
 
 
@@ -160,14 +206,15 @@ end # end type
 # -------------------------------------------------------------------------------------------
 
 # ----------------------------------------
+"""
+    map_ind_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+
+    Map a vector in terms of degrees of freedom to a vector on the actual
+    mesh. This is only interesting for back mapping. Here the mapping is
+    trivial.
+    
+"""
 function map_ind_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
-    """
-
-    Map a vector in terms of degrees of freedom to a vector on the
-    actual mesh. This is only interesting for back mapping. Here
-    the mapping is trivial
-
-    """
 
     return vec_dof
 end
@@ -175,14 +222,15 @@ end
 
 
 # ----------------------------------------
+"""
+    map_ind_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+
+    Map a vector in terms of degrees of freedom to a vector on the actual
+    mesh. This is only interesting for back mapping. Here the mapping is
+    trivial.
+
+"""
 function map_ind_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
-    """
-
-    Map a vector in terms of degrees of freedom to a vector on the
-    actual mesh. This is only interesting for back mapping. Here
-    the mapping is trivial
-
-    """
 
     return vec_mesh
 end

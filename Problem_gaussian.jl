@@ -5,6 +5,9 @@ struct Gaussian <: AbstractPhysicalProblem
     
     T :: Float64
     
+    index_dirichlet_edge :: Array{Int}
+    index_neumann_edge :: Array{Int}
+
     covariance_mat :: Array{Float64,2}
     covariance_mat_det :: Float64
     covariance_mat_inv :: Array{Float64,2}
@@ -13,35 +16,41 @@ struct Gaussian <: AbstractPhysicalProblem
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
     
-    function Gaussian(T :: Float64)
-        
-        info_prob = "Evolution of symmetric Gaussian."
-        type_info = "ADE"
-
-        T = T
-
-        lambda_1 = 0.05
-        lambda_2 = 0.05
-
-        alpha = 0*pi/8
-        rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
-        
-        covariance_mat = rot * diagm([lambda_1 ; lambda_2]) * rot'
-        covariance_mat_det = det(covariance_mat)
-        covariance_mat_inv = covariance_mat \ eye(2)
-        expectation = [1/2 ; 1/2]
-
-        is_transient_diffusion = false
-        is_transient_velocity = false
-        
-        return new(info_prob, type_info, T, 
-                    covariance_mat, covariance_mat_det, covariance_mat_inv, 
-                    expectation, 
-                    is_transient_diffusion, 
-                    is_transient_velocity)
-    end # end constructor
 end # end type
 
+
+function Gaussian(T :: Float64)
+        
+    info_prob = "Evolution of symmetric Gaussian."
+    type_info = "ADE"
+
+    T = T
+
+    index_dirichlet_edge = Array{Int}(0)
+    index_neumann_edge = Array{Int}(0)
+
+    lambda_1 = 0.05
+    lambda_2 = 0.05
+
+    alpha = 0*pi/8
+    rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
+    
+    covariance_mat = rot * diagm([lambda_1 ; lambda_2]) * rot'
+    covariance_mat_det = det(covariance_mat)
+    covariance_mat_inv = covariance_mat \ eye(2)
+    expectation = [1/2 ; 1/2]
+
+    is_transient_diffusion = false
+    is_transient_velocity = false
+    
+    return new(info_prob, type_info, 
+                T, 
+                index_dirichlet_edge, index_neumann_edge,
+                covariance_mat, covariance_mat_det, covariance_mat_inv, 
+                expectation, 
+                is_transient_diffusion, 
+                is_transient_velocity)
+end # end constructor
 
 
 # --------------------------------------------------------------
