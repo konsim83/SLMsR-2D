@@ -62,8 +62,8 @@ struct Dof_Pk{FEM_order} <: AbstractDof
     ind_test :: Array{Int64,1}
     ind_lin :: Array{Int64,1}
 
-    T_ref2cell :: Array{Float64,3}
-    T_cell2ref :: Array{Float64,3}
+    T_ref2cell :: Array{Array{Float64,2},1}
+    T_cell2ref :: Array{Array{Float64,2},1}
 
 end # end type
 
@@ -77,18 +77,19 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
     
 
     if n_order==1
-        # ----------------------------------------------------------------------------------------------------------------------------------------
+        # -------------------------------------------------------------------------------------------------
+        
         # ----------------------------------------
         # Node infos
         n_node = mesh.n_point
 
-        ind_node_boundary = find(mesh.point_marker.~=0)
+        ind_node_boundary = find(mesh.point_marker.!=0)
         ind_node_interior = find(mesh.point_marker.==0)
         ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker[i]]) for marker in problem.index_dirichlet_edge]...)))
         ind_node_non_dirichlet = setdiff(1:n_node, ind_node_dirichlet)
         ind_node_neumann  = setdiff(ind_node_non_dirichlet, ind_node_interior)
 
-        n_node_boundary = sum(mesh.point_marker.~=0)
+        n_node_boundary = sum(mesh.point_marker.!=0)
         n_node_interior = sum(mesh.point_marker.==0)
         n_node_dirichlet = length(ind_node_dirichlet)
         n_node_neumann = n_node_boundary - n_node_dirichlet
@@ -101,7 +102,7 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Edge infos
         n_edge = mesh.n_edge
 
-        ind_edge_boundary = find(mesh.edge_marker.~=0)
+        ind_edge_boundary = find(mesh.edge_marker.!=0)
         ind_edge_interior = find(mesh.edge_marker.==0)
         ind_edge_dirichlet = sort(cat(1, [find(m.edge_marker.==marker[i]) for marker in problem.index_dirichlet_edge]...))
         ind_edge_neumann = sort(cat(1, [find(m.edge_marker.==marker[i]) for marker in problem.index_neumann_edge]...))
@@ -119,10 +120,10 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Element infos
         n_elem = mesh.n_cell
         
-        ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,1).~=0)
+        ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,1).!=0)
         ind_elem_interior = find(sum(mesh.cell_neighbor.==0,1).==0)
 
-        n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,1).~=0)
+        n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,1).!=0)
         n_elem_interior = sum(sum(mesh.cell_neighbor.==0,1).==0)
         # ----------------------------------------
 
@@ -136,6 +137,9 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         map_vec_ind_mesh2dof = collect(1:n_node)
         # ----------------------------------------
 
+
+        # ----------------------------------------
+        # Used for building the system matrices
         ind_cell = Mesh.get_cell(mesh, 1:mesh.n_cell)
         ind = vec(ind_cell[[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3],:])
         ind_test = vec(ind_cell[[1;2;3;1;2;3;1;2;3],:])
@@ -151,13 +155,19 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
             T_ref2cell[i] = [P[:,2]-P[:,1]  P[:,3]-P[:,1] P[:,1]]
             T_cell2ref[i] = (eye(2)/T_ref2cell[i][:,1:2]) * [   eye(2)  mesh.point[:,mesh.cell[1,i]]   ]
         end
-
-        # ----------------------------------------------------------------------------------------------------------------------------------------
+        # ----------------------------------------
+        # -------------------------------------------------------------------------------------------------
 
     elseif n_order==2
+        # -------------------------------------------------------------------------------------------------
         error("Order 2 DoF not implemented yet.")
+        # -------------------------------------------------------------------------------------------------
+    
     elseif n_order==3
+        # -------------------------------------------------------------------------------------------------
         error("Order 3 DoF not implemented yet.")
+        # -------------------------------------------------------------------------------------------------
+
     end # end if order
 
     return Dof_Pk{FEM_order}(n_order,
@@ -177,13 +187,13 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
                             n_edge,
                             n_edge_boundary,
                             n_edge_interior,
-                            #n_edge_dirichlet,
-                            #n_edge_neumann,
+                            n_edge_dirichlet,
+                            n_edge_neumann,
                             n_edge_per_elem,
                             ind_edge_boundary,
                             ind_edge_interior,
-                            #ind_edge_dirichlet,
-                            #ind_edge_neumann,
+                            ind_edge_dirichlet,
+                            ind_edge_neumann,
                             n_elem,
                             n_elem_boundary,
                             n_elem_interior,
@@ -207,14 +217,26 @@ end
 
 # ----------------------------------------
 """
-    map_ind_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+    map_ind_dof2mesh(dof :: Dof_Pk{1}, ind_dof :: Array{Int})
 
-    Map a vector in terms of degrees of freedom to a vector on the actual
-    mesh. This is only interesting for back mapping. Here the mapping is
-    trivial.
+    Map indices in the actual mesh to indices in terms of degrees of freedom.
     
 """
-function map_ind_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+function map_ind_dof2mesh(dof :: Dof_Pk{1}, ind_dof :: Array{Int})
+
+    return ind_dof
+end
+
+
+"""
+    map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+
+    Map a vector in terms of the actual mesh to a vector in terms of degrees
+    of freedom.
+    
+    
+"""
+function map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
 
     return vec_dof
 end
@@ -223,14 +245,26 @@ end
 
 # ----------------------------------------
 """
-    map_ind_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+    map_ind_mesh2dof(dof :: Dof_Pk{1}, ind_mesh :: Array{Int})
 
-    Map a vector in terms of degrees of freedom to a vector on the actual
-    mesh. This is only interesting for back mapping. Here the mapping is
-    trivial.
+    Map indices in terms of degrees of freedom to indices on the actual
+    mesh.
 
 """
-function map_ind_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+function map_ind_mesh2dof(dof :: Dof_Pk{1}, ind_mesh :: Array{Int})
+
+    return ind_mesh
+end
+
+
+"""
+    map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+
+    Map a vector in terms of degrees of freedom to a vector on the actual
+    mesh.
+
+"""
+function map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
 
     return vec_mesh
 end

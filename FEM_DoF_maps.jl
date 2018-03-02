@@ -1,3 +1,7 @@
+# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+
+
 function map_ref_point(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
 
     P = [x  ones(size(x,1))] * dof.T_ref2cell[:,:,ind_c]'
@@ -27,6 +31,7 @@ end
 
 
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 
 function map_ref_point_grad(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Array{Int64,1})
@@ -54,6 +59,8 @@ end
 
 
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+
 
 function map_ref_point_grad_inv(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
     ind_c = vec(collect(ind_c))
@@ -95,6 +102,8 @@ end
 
 
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+
 
 function map_ref_point_grad_det(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
     
@@ -108,6 +117,7 @@ function map_ref_point_grad_det(dof :: AbstractDof, x :: Array{Float64,2}, ind_c
     
     return P_det
 end
+
 
 function map_ref_point_grad_det(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Array{Int64,1})
     
@@ -132,5 +142,5 @@ function map_ref_point_grad_det(dof :: AbstractDof, x :: Array{Float64,2}, ind_c
     return map_ref_point_grad_det(dof, x, ind_c)
 end
 
-
+# --------------------------------------------------------------------------
 # --------------------------------------------------------------------------

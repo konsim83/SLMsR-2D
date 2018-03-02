@@ -15,7 +15,7 @@ function plot_mesh(m :: Mesh.TriangleMesh.TriMesh;
     ax[:set_aspect]("equal")
     
     # Connectivity list -1 for Python
-    tri = ax[:triplot](m.point[:,1], m.point[:,2], m.cell-1 )
+    tri = ax[:triplot](m.point[1,:], m.point[2,:], m.cell'-1 )
     setp(tri,   linestyle = linestyle,
                 linewidth = linewidth,
                 marker = marker,
@@ -44,16 +44,16 @@ function plot_mesh(m :: Mesh.TriangleMesh.TriMesh, idx :: Array{Int,1};
     ax[:set_aspect]("equal")
     
     # Connectivity list -1 for Python
-    tri = ax[:triplot](m.point[:,1], m.point[:,2], m.cell-1 )
+    tri = ax[:triplot](m.point[1,:], m.point[2,:], m.cell'-1 )
     setp(tri,   linestyle = linestyle,
                 linewidth = linewidth,
                 marker = marker,
                 color = color)
 
-    scatter(m.point[:,1], m.point[:,2], s=markersize, color="green")
+    scatter(m.point[1,:], m.point[2,:], s=markersize, color="green")
 
     for i=1:m.n_point
-        ax[:text](m.point[i,1]+offset, m.point[i,2]+offset, string(idx[i]), fontsize=20, color=color_text)
+        ax[:text](m.point[1,i]+offset, m.point[2,i]+offset, string(idx[i]), fontsize=20, color=color_text)
     end
 
     
@@ -72,7 +72,7 @@ function plot_mesh_collection(M :: Mesh.TriMesh_collection, ind_c = 1:M.mesh.n_c
     ax[:set_aspect]("equal")
     
     # Connectivity list -1 for Python
-    tri = ax[:triplot](M.mesh.point[:,1], M.mesh.point[:,2], M.mesh.cell - 1 )
+    tri = ax[:triplot](M.mesh.point[1,:], M.mesh.point[2,:], M.mesh.cell' - 1 )
     setp(tri, linestyle = "-",
          marker = "None",
          linewidth = 3,
@@ -80,7 +80,7 @@ function plot_mesh_collection(M :: Mesh.TriMesh_collection, ind_c = 1:M.mesh.n_c
 
     for i in ind_c
         # Connectivity list -1 for Python
-        tri = ax[:triplot](M.mesh_f[i].point[:,1], M.mesh_f[i].point[:,2], M.mesh_f[i].cell - 1 )
+        tri = ax[:triplot](M.mesh_f[i].point[1,:], M.mesh_f[i].point[2,:], M.mesh_f[i].cell' - 1 )
         setp(tri, linestyle = "--",
              marker = "None",
              linewidth = 0.7,

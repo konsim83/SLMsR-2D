@@ -5,8 +5,8 @@ struct Gaussian <: AbstractPhysicalProblem
     
     T :: Float64
     
-    index_dirichlet_edge :: Array{Int}
-    index_neumann_edge :: Array{Int}
+    marker_dirichlet_edge :: Array{Int}
+    marker_neumann_edge :: Array{Int}
 
     covariance_mat :: Array{Float64,2}
     covariance_mat_det :: Float64
@@ -26,8 +26,8 @@ function Gaussian(T :: Float64)
 
     T = T
 
-    index_dirichlet_edge = Array{Int}(0)
-    index_neumann_edge = Array{Int}(0)
+    marker_dirichlet_edge = [1]#Array{Int}(0)
+    marker_neumann_edge = [3]#Array{Int}(0)
 
     lambda_1 = 0.05
     lambda_2 = 0.05
@@ -43,13 +43,13 @@ function Gaussian(T :: Float64)
     is_transient_diffusion = false
     is_transient_velocity = false
     
-    return new(info_prob, type_info, 
-                T, 
-                index_dirichlet_edge, index_neumann_edge,
-                covariance_mat, covariance_mat_det, covariance_mat_inv, 
-                expectation, 
-                is_transient_diffusion, 
-                is_transient_velocity)
+    return Gaussian(info_prob, type_info, 
+                    T, 
+                    marker_dirichlet_edge, marker_neumann_edge,
+                    covariance_mat, covariance_mat_det, covariance_mat_inv, 
+                    expectation, 
+                    is_transient_diffusion, 
+                    is_transient_velocity)
 end # end constructor
 
 

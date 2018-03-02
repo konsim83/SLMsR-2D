@@ -11,9 +11,8 @@ struct Triangle <: PolygonDomain
     
     function Triangle(point :: Array{Float64,2})
         
-        segment  = [1 2;
-                    2 3 ;
-                    3 1]
+        segment  = [1 2 3 ;
+                    2 3 1]
         
         segment_marker = [1 ; 2 ; 3]
 
@@ -33,15 +32,11 @@ struct UnitSquare <: PolygonDomain
 
         size(segment_marker)!=(4,1) ? error("Segment marker list must be a 4-Vector.") :
         
-        point = [0.0 0.0 ;
-                 1.0 0.0 ;
-                 1.0 1.0 ;
-                 0.0 1.0]
+        point = [0.0 1.0 1.0 0.0 ; 
+                0.0 0.0 1.0 1.0]
         
-        segment  = [1 2;
-                    2 3 ;
-                    3 4 ;
-                    4 1]
+        segment  = [1 2 3 4;
+                    2 3 4 1]
         
         return new(point, segment, segment_marker)        
     end # end constructor    
@@ -50,7 +45,7 @@ end # end type
 
 
 #------------------------------------------------------------
-type UnitSimplex <: PolygonDomain
+struct UnitSimplex <: PolygonDomain
 
     point :: Array{Float64, 2}
     segment :: Array{Int64, 2}
@@ -58,13 +53,11 @@ type UnitSimplex <: PolygonDomain
     
     function UnitSimplex()
 
-        point = [0.0 0.0 ;
-                 1.0 0.0 ;
-                 0.0 1.0]
+        point = [0.0 1.0 0.0 ; 
+                0.0 0.0 1.0]
         
-        segment  = [1 2;
-                    2 3 ;
-                    3 1]
+        segment  = [1 2 3 ;
+                    2 3 1]
         
         segment_marker = [1 ; 2 ; 3]
 
@@ -81,7 +74,8 @@ end # end type
 function compute_P1_basis_coeff(tri :: Triangle)
     
     # columns are coefficients
-    coeff = [tri.point ones(3)] \ eye(3)
+    coeff = [ tri.point ; 
+                    ones(1,3) ] \ eye(3)
     
     return coeff
 end
