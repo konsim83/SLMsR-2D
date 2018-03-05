@@ -184,7 +184,7 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
 
     end # end if order
     
-    return Dof_Pk_periodic{FEM_order}(n_order,
+    return Dof_Pk_periodic{n_order}(n_order,
                                         FEM_info,
                                         n_node,
                                         n_node_boundary,
@@ -212,6 +212,7 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
                                         n_elem_boundary,
                                         n_elem_interior,
                                         ind_elem_boundary,
+                                        ind_elem_interior,
                                         is_periodic,
                                         n_true_dof,
                                         index_map_dof2mesh,
@@ -231,12 +232,12 @@ end # end constructor
 
 # ----------------------------------------
 """
-    map_ind_dof2mesh(dof :: Dof_Pk{1}, ind_dof :: Array{Int})
+    map_ind_dof2mesh(dof :: Dof_Pk_periodic{1}, ind_dof :: Array{Int})
 
     Map indices in the actual mesh to indices in terms of degrees of freedom.
     
 """
-function map_ind_dof2mesh(dof :: Dof_Pk{1}, ind_dof :: Array{Int})
+function map_ind_dof2mesh(dof :: Dof_Pk_periodic{1}, ind_dof :: Array{Int})
 
     ind_mesh = [find(index_map_dof2mesh.==ind) for ind in ind_dof]
 
@@ -245,14 +246,14 @@ end
 
 
 """
-    map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+    map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64})
 
     Map a vector in terms of the actual mesh to a vector in terms of degrees
     of freedom.
     
     
 """
-function map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+function map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64})
 
     # expand a dof-vector into a mesh-vector (only periodic boundaries)
     vec_mesh = vec_dof[:,dof.index_map_dof2mesh]
@@ -264,13 +265,13 @@ end
 
 # ----------------------------------------
 """
-    map_ind_mesh2dof(dof :: Dof_Pk{1}, ind_mesh :: Array{Int})
+    map_ind_mesh2dof(dof :: Dof_Pk_periodic{1}, ind_mesh :: Array{Int})
 
     Map indices in terms of degrees of freedom to indices on the actual
     mesh.
 
 """
-function map_ind_mesh2dof(dof :: Dof_Pk{1}, ind_mesh :: Array{Int})
+function map_ind_mesh2dof(dof :: Dof_Pk_periodic{1}, ind_mesh :: Array{Int})
 
     ind_dof = dof.index_map_dof2mesh[ind_mesh]
 
@@ -279,13 +280,13 @@ end
 
 
 """
-    map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+    map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64})
 
     Map a vector in terms of degrees of freedom to a vector on the actual
     mesh.
 
 """
-function map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+function map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64})
 
     # reduce a mesh-vector to a dof-vector (only periodic boundaries)
     vec_dof = vec_mesh[:,dof.index_map_mesh2dof]

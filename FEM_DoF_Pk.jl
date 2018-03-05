@@ -85,7 +85,7 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
 
         ind_node_boundary = find(mesh.point_marker.!=0)
         ind_node_interior = find(mesh.point_marker.==0)
-        ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker[i]]) for marker in problem.index_dirichlet_edge]...)))
+        ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_dirichlet_edge]...)))
         ind_node_non_dirichlet = setdiff(1:n_node, ind_node_dirichlet)
         ind_node_neumann  = setdiff(ind_node_non_dirichlet, ind_node_interior)
 
@@ -104,8 +104,8 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
 
         ind_edge_boundary = find(mesh.edge_marker.!=0)
         ind_edge_interior = find(mesh.edge_marker.==0)
-        ind_edge_dirichlet = sort(cat(1, [find(m.edge_marker.==marker[i]) for marker in problem.index_dirichlet_edge]...))
-        ind_edge_neumann = sort(cat(1, [find(m.edge_marker.==marker[i]) for marker in problem.index_neumann_edge]...))
+        ind_edge_dirichlet = sort(cat(1, [find(mesh.edge_marker.==marker) for marker in problem.marker_dirichlet_edge]...))
+        ind_edge_neumann = sort(cat(1, [find(mesh.edge_marker.==marker) for marker in problem.marker_neumann_edge]...))
 
         
         n_edge_boundary = length(ind_edge_boundary)
@@ -170,7 +170,7 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
 
     end # end if order
 
-    return Dof_Pk{FEM_order}(n_order,
+    return Dof_Pk{n_order}(n_order,
                             FEM_info,
                             n_node,
                             n_node_boundary,

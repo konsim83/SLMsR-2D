@@ -70,7 +70,7 @@ end # end function
 
 
 # ---------------------------------------------
-function eval(ref_el :: RefEl_Pk{1}, p :: Array{Float64})
+function shapeFun(ref_el :: RefEl_Pk{1}, p :: Array{Float64})
 
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
 
@@ -80,11 +80,11 @@ function eval(ref_el :: RefEl_Pk{1}, p :: Array{Float64})
 end
 
 
-function eval_grad(ref_el :: RefEl_Pk{1}, p :: Array{Float64})
+function shapeFun_grad(ref_el :: RefEl_Pk{1}, p :: Array{Float64})
     
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
 
-    value = reshape([[ref_el.coeff[i,1:2]] for j=1:size(p,2) for i=1:ref_el.n_node], ref_el.n_node, size(p,2))
+    value = reshape([ref_el.coeff[i,1:2] for j=1:size(p,2) for i=1:ref_el.n_node], ref_el.n_node, size(p,2))
     
     return value
 end
@@ -92,7 +92,7 @@ end
 
 
 # ---------------------------------------------
-function eval(ref_el :: RefEl_Pk{2}, p :: Array{Float64})
+function shapeFun(ref_el :: RefEl_Pk{2}, p :: Array{Float64})
     
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
 
@@ -102,7 +102,7 @@ function eval(ref_el :: RefEl_Pk{2}, p :: Array{Float64})
 end
 
 
-function eval_grad(ref_el :: RefEl_Pk{2}, p :: Array{Float64})
+function shapeFun_grad(ref_el :: RefEl_Pk{2}, p :: Array{Float64})
 
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
 
@@ -117,7 +117,7 @@ end
 
 
 # ---------------------------------------------
-function eval(ref_el :: RefEl_Pk{3}, p :: Array{Float64})
+function shapeFun(ref_el :: RefEl_Pk{3}, p :: Array{Float64})
     
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
 
@@ -130,7 +130,7 @@ function eval(ref_el :: RefEl_Pk{3}, p :: Array{Float64})
 end
 
 
-function eval_grad(ref_el :: RefEl_Pk{3}, p :: Array{Float64})
+function shapeFun_grad(ref_el :: RefEl_Pk{3}, p :: Array{Float64})
 
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
     

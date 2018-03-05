@@ -65,36 +65,23 @@ end # end constructor
 """
 function diffusion(problem :: Gaussian, t :: Float64, x :: Array{Float64,2})
     
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
+    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
         
-    out = Array{Float64}(size(x,1), 2, 2)
-
-    
-    out[:,1,1] = 0.01
-    out[:,2,1] = 0.0
-    out[:,1,2] = 0.0
-    out[:,2,2] = 0.01
+    out = [[0.01 0.0 ; 0.0 0.01] for i=1:size(x,2)]
     
     return out
 end
 
 
 """
-    diffusion(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+    diffusion(problem :: Gaussian,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
-    
-
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
+function diffusion(problem :: Gaussian,  t :: Float64, x :: Array{Array{Float64,2},1})
         
-    out = Array{Float64}(size(x,1), 2, 2, size(x,3))
-
-    for i=1:size(x,3)
-        out[:,:,:,i] = diffusion(problem, t, x[:,:,i])
-    end
+    out = [diffusion(problem, t, y) for y in x]
     
     return out
     
@@ -114,25 +101,26 @@ end
 """
 function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,2})
 
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
+    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+    out = [[1.0,1.0] for i=1:size(x,2)]
     
-    return zeros(size(x))
+    return out
 end
 
 
 """
-    velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+    velocity(problem :: Gaussian,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Float64,3})
+function velocity(problem :: Gaussian,  t :: Float64, x :: Array{Array{Float64,2},1})
 
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2.") :
+    out = [velocity(problem, t, y) for y in x]
 
-    return zeros(size(x))
-    
+    return out
 end
 
 
@@ -164,15 +152,15 @@ function u_init(problem :: Gaussian, x :: Array{Float64,2})
     return out
 end
 
-function u_init(problem :: Gaussian, x :: Array{Float64,3})
+# function u_init(problem :: Gaussian, x :: Array{Float64,3})
                 
-    size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
+#     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
 
-    out = Array{Float64, 3}(size(x,1), 1, size(x,3))
+#     out = Array{Float64, 3}(size(x,1), 1, size(x,3))
 
-    for i=1:size(x,3)
-        out[:,1,i] = u_init(problem, x[:,:,i])
-    end
+#     for i=1:size(x,3)
+#         out[:,1,i] = u_init(problem, x[:,:,i])
+#     end
     
-    return out
-end
+#     return out
+# end
