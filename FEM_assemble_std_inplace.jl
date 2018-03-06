@@ -10,26 +10,21 @@
 function assemble_mass!(M  :: SparseMatrixCSC{Float64,Int64},
                         mesh :: Mesh.TriangleMesh.TriMesh,
                         dof :: FEM.AbstractDof,
-                        ref_el :: FEM.RefEl_Pk,
+                        ref_el :: FEM.RefEl_Pk{N},
                         quad :: Quad.AbstractQuad,
-                        par :: Parameter.AbstractParameter,
-                        problem :: Problem.AbstractProblem)
-    
-    """
+                        problem :: Problem.AbstractProblem) where N
 
-    
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
-    """   
-    weight_elem = diagm(quad.weight) * FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
-        
-    Phi = FEM.eval(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point)
+    Phi = FEM.shapeFun(ref_el, quad.point)
+    Phi_test = FEM.shapeFun(ref_el, quad.point) * diagm(quad.weight)
     
-    m_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    m_loc = Array{Float64,2}(ref_el.n_basis, ref_el.n_basis)
 
+    Nsquare = ref_el.n_basis^2
     for k = 1:mesh.n_cell
-        m_loc[:,:] = Phi_test * diagm(view(weight_elem,:,k)) * Phi'
-        for l in 1:9
+        m_loc[:,:] = Phi_test * weight_elem[k] * Phi'
+        for l in 1:Nsquare
             M[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += m_loc[l]
         end
     end
@@ -48,52 +43,38 @@ end
 function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
                              mesh :: Mesh.TriangleMesh.TriMesh,
                              dof :: FEM.AbstractDof,
-                             ref_el :: FEM.RefEl_Pk,
+                             ref_el :: FEM.RefEl_Pk{N},
                              quad :: Quad.AbstractQuad,
                              par :: Parameter.AbstractParameter,
                              problem :: Problem.AbstractProblem,
-                             k_time :: Int64)
+                             k_time :: Int64) where N
     
-    """
-
-    
-
-    """
-    time = k_time * par.dt
-
-    weight_elem = diagm(quad.weight) * FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
-    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem);
-
-    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
-    velocity = Problem.velocity(problem, time, x)
+    time_idx = k_time * par.dt 
         
-    DPhi = FEM.eval_grad(ref_el, quad.point)
-    Phi_test = FEM.eval(ref_el, quad.point) 
-    
-    
-    a_loc = zeros(ref_el.n_node,ref_el.n_node)
-    
-    for k = 1:mesh.n_cell       
-        DPhi_mod = modify_ansatzfunction_v_inplace(velocity[:,:,k], DF[:,:,:,k], DPhi)
-        a_loc[:,:] = Phi_test * diagm(weight_elem[:,k]) * DPhi_mod'
-        for l in 1:9
-            A[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += a_loc[l]
+    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
+    velocity = Problem.velocity(problem, time_idx, x)
+
+    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem)
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
+
+    DPhi = FEM.shapeFun_grad(ref_el, quad.point)
+    Phi_test = FEM.shapeFun(ref_el, quad.point)
+
+    for k = 1:mesh.n_cell
+        for j=1:quad.n_point
+            DtVel = weight_elem[k] * quad.weight[j] * DF[k] * velocity[k][j]
+            l = 0
+            for i2=1:ref_el.n_basis
+                for i1=1:ref_el.n_basis
+                    l += 1
+                    A[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] += Phi_test[i1,j]  * dot(DtVel,DPhi[i2,j])
+                end
+            end
         end
     end
+
     
     return nothing
-end
-
-
-function modify_ansatzfunction_v_inplace(v :: Array{Float64,2}, DF :: Array{Float64,3}, DPhi :: Array{Float64,3})
-
-    DPhi_mod = Array{Float64,2}(size(DPhi,1), size(DPhi,2))
-
-    for i=1:size(DPhi,2)
-        DPhi_mod[:,i] = DPhi[:,i,:] * DF[i,:,:] * v[i,:]
-    end
-    
-    return DPhi_mod
 end
 # -----------------------------
 # -----------------------------
@@ -103,46 +84,41 @@ end
 # -----------------------------
 # -------   Diffusion   -------
 # -----------------------------
-
 function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
                              mesh :: Mesh.TriangleMesh.TriMesh,
                              dof :: FEM.AbstractDof,
-                             ref_el :: FEM.RefEl_Pk,
+                             ref_el :: FEM.RefEl_Pk{N},
                              quad :: Quad.AbstractQuad,
                              par :: Parameter.AbstractParameter,
                              problem :: Problem.AbstractProblem,
-                             k_time :: Int64)
-
-    n = ref_el.n_node
-
-    time = k_time * par.dt
+                             k_time :: Int64) where N
     
-    # fixed quantities for mesh
-    weight_elem = diagm(quad.weight) * FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
-    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem)
-
-    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
-    diffusion = Problem.diffusion(problem, time, x)
-
-    DPhi = FEM.eval_grad(ref_el, quad.point)
-    DPhi_test = FEM.eval_grad(ref_el, quad.point)
-    
-    d_loc = zeros(n,n)
-
-    for ll in 1:mesh.n_cell
-        for kk in 1:length(quad.weight)
-            tmp = view(DPhi_test,:,kk,:) * view(DF,kk,:,:,ll)
-            d_loc += (tmp) * (weight_elem[kk,ll]) *  (tmp * view(diffusion,kk,:,:,ll))'
-        end
+    time_idx = k_time * par.dt 
         
-        for l in 1:9
-            D[dof.ind_test[9*(ll-1)+l],dof.ind[9*(ll-1)+l]] -= d_loc[l]
+    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
+    diffusion = Problem.diffusion(problem, time_idx, x)
+
+    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem);
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
+
+    DPhi = FEM.shapeFun_grad(ref_el, quad.point)
+    DPhi_test = FEM.shapeFun_grad(ref_el, quad.point)
+
+    for k = 1:mesh.n_cell
+        for j=1:quad.n_point
+            DtDiffD = weight_elem[k] * quad.weight[j] * DF[k]*diffusion[k][j]*DF[k]'
+            l = 0
+            for i2=1:ref_el.n_basis
+                for i1=1:ref_el.n_basis
+                    l += 1
+                    D[dof.ind_test[9*(k-1)+l],dof.ind[9*(k-1)+l]] -= dot( DPhi_test[i1,j] , DtDiffD*DPhi[i2,j])
+                end
+            end
         end
-        d_loc .= 0
     end
+
     
     return nothing
 end
-
 # -----------------------------
 # -----------------------------

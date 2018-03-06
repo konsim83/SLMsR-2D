@@ -1,4 +1,5 @@
 # ----------------------------------
+# Step for a physical problem.
 function make_step!(solution :: FEM.AbstractSolution,
                     time_int :: ImplEuler,
                     mesh :: Mesh.TriangleMesh.TriMesh,
@@ -34,7 +35,7 @@ function make_step!(solution :: FEM.AbstractSolution,
     
     # Solve the system and map to mesh variables
     time_int.system_data.u_temp[dof.ind_node_non_dirichlet] = time_int.system_data.system_matrix \ time_int.system_data.system_rhs
-    solution.u[:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp)
+    solution.u[:,k_time+1] = FEM.map_vec_dof2mesh(dof, time_int.system_data.u_temp)
     
     #solution.u[dof.ind_node_non_dirichlet,k_time+1] = FEM.map_ind_dof2mesh( dof,  )
     #solution.u[dof.ind_node_dirichlet,k_time+1] = solution.u[dof.ind_node_dirichlet, k_time]    
@@ -44,6 +45,7 @@ end
 
 
 # ----------------------------------
+# Step for a basis problem.
 function make_step!(solution :: FEM.AbstractSolution,
                     time_int :: ImplEuler,
                     mesh :: Mesh.TriangleMesh.TriMesh,
@@ -81,9 +83,9 @@ function make_step!(solution :: FEM.AbstractSolution,
     
     # Solve the system and map to mesh variables
     time_int.system_data.u_temp[dof.ind_node_non_dirichlet,:] = time_int.system_data.system_matrix \ time_int.system_data.system_rhs
-    solution.phi_1[ind_cell][:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp[:,1])
-    solution.phi_2[ind_cell][:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp[:,2])
-    solution.phi_3[ind_cell][:,k_time+1] = FEM.map_ind_dof2mesh(dof, time_int.system_data.u_temp[:,3])    
+    solution.phi_1[ind_cell][:,k_time+1] = FEM.map_vec_dof2mesh(dof, time_int.system_data.u_temp[:,1])
+    solution.phi_2[ind_cell][:,k_time+1] = FEM.map_vec_dof2mesh(dof, time_int.system_data.u_temp[:,2])
+    solution.phi_3[ind_cell][:,k_time+1] = FEM.map_vec_dof2mesh(dof, time_int.system_data.u_temp[:,3])    
     
     #solution.u[dof.ind_node_non_dirichlet,k_time+1] = FEM.map_ind_dof2mesh( dof,  )
     #solution.u[dof.ind_node_dirichlet,k_time+1] = solution.u[dof.ind_node_dirichlet, k_time]    

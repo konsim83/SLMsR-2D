@@ -4,7 +4,9 @@ struct Quad_simplex <: AbstractQuad
 
     weight :: Array{Float64, 1}
     point:: Array{Float64, 2}
-    
+
+	n_point :: Int
+
 end # end immutable type
 
 
@@ -12,7 +14,7 @@ function Quad_simplex(number :: Int64)
         
         if number==1
             weight = [0.5]
-		    point = [1/3  1/3]
+		    point = [1/3  1/3]'
 		    order = 1
             
         elseif number==2
@@ -60,5 +62,5 @@ function Quad_simplex(number :: Int64)
             error("Quadrature rule not implemented")
         end # end if
 
-        return Quad_simplex(order, weight, point)
+        return Quad_simplex(order, weight, point, length(weight))
     end # end constructor

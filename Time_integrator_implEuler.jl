@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 # -------   Implicit Euler   -------
-type ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTime_integrator
+struct ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTime_integrator
 
     system_data :: T
     

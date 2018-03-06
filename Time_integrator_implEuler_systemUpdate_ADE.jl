@@ -96,7 +96,7 @@ function update_system!(solution :: FEM.AbstractSolution,
     system_data.system_matrix = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] )
     
     if dof.is_periodic
-        system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * (FEM.map_ind_mesh2dof(dof, solution.u[:,k_time])[dof.ind_node_non_dirichlet])
+        system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * (FEM.map_vec_mesh2dof(dof, solution.u[:,k_time])[dof.ind_node_non_dirichlet])
     else
         
         system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,:]
