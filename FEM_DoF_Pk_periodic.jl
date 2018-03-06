@@ -246,17 +246,34 @@ end
 
 
 """
-    map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64})
+    map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,1})
 
     Map a vector in terms of the actual mesh to a vector in terms of degrees
     of freedom.
     
     
 """
-function map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64})
+function map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,1})
 
     # expand a dof-vector into a mesh-vector (only periodic boundaries)
-    vec_mesh = vec_dof[:,dof.index_map_dof2mesh]
+    vec_mesh = vec_dof[dof.index_map_dof2mesh]
+
+    return vec_mesh
+end
+
+
+"""
+    map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,2})
+
+    Map a vector in terms of the actual mesh to a vector in terms of degrees
+    of freedom.
+    
+    
+"""
+function map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,2})
+
+    # expand a dof-vector into a mesh-vector (only periodic boundaries)
+    vec_mesh = vec_dof[dof.index_map_dof2mesh,:]
 
     return vec_mesh
 end
@@ -280,16 +297,32 @@ end
 
 
 """
-    map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64})
+    map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,1})
 
     Map a vector in terms of degrees of freedom to a vector on the actual
     mesh.
 
 """
-function map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64})
+function map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,1})
 
     # reduce a mesh-vector to a dof-vector (only periodic boundaries)
-    vec_dof = vec_mesh[:,dof.index_map_mesh2dof]
+    vec_dof = vec_mesh[dof.index_map_mesh2dof]
+
+    return vec_dof
+end
+
+
+"""
+    map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,2})
+
+    Map a vector in terms of degrees of freedom to a vector on the actual
+    mesh.
+
+"""
+function map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,2})
+
+    # reduce a mesh-vector to a dof-vector (only periodic boundaries)
+    vec_dof = vec_mesh[dof.index_map_mesh2dof,:]
 
     return vec_dof
 end
@@ -362,7 +395,6 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh, periodicityInfo :: M
         pair = edge_marker_pair[i,:]
 
         point_ind_on_edge1 = sort(unique(vec(mesh.edge[:,mesh.edge_marker.==pair[1]])))
-        # display(point_ind_on_edge1)
         point_ind_on_edge2 = sort(unique(vec(mesh.edge[:,mesh.edge_marker.==pair[2]])))
 
         f = edge_trafo[i]

@@ -25,12 +25,12 @@ post_process = true
 # -------   Problem Parameters   -------
 T_max = 0.5
 
-# problem = Problem.Gaussian(T_max)
+problem = Problem.Gaussian(T_max)
 
-problem = Problem.Gaussian_1(T_max)
+# problem = Problem.Gaussian_1(T_max)
 
-# problem = Problem.Gaussian_2(T_max, 1)
-# problem = Problem.Gaussian_2a(T_max, 1)
+# problem = Problem.Gaussian(T_max, 1)
+# problem = Problem.Gaussiana(T_max, 1)
 
 # ---------------------------------------------------------------------------
 
@@ -110,21 +110,21 @@ end
 
 
 # ---------------------------------------------------------------------------
-# if post_process
-#         solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_high)
-#         solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_high)
+if post_process
+        solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_high)
+        solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_high)
 
-#         # err_low_2 = PostProcess.error_L2(solution_FEM_high, solution_FEM_low_mapped)[:]
-#         # err_ms_2 = PostProcess.error_L2(solution_FEM_high, solution_ms_mapped)[:]
-#         # Vis.writeSolution_all(solution_FEM_high, mesh_FEM_high, "Gaussian_2-FEM-high---classic")
-#         # Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_high, "Gaussian_2-FEM-low-mapped---classic")
-#         # Vis.writeSolution_all(solution_ms_mapped, mesh_FEM_high, "Gaussian_2-MsFEM-mapped---classic")
+        # err_low_2 = PostProcess.error_L2(solution_FEM_high, solution_FEM_low_mapped)[:]
+        # err_ms_2 = PostProcess.error_L2(solution_FEM_high, solution_ms_mapped)[:]
+        # Vis.writeSolution_all(solution_FEM_high, mesh_FEM_high, "Gaussian-FEM-high---classic")
+        # Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_high, "Gaussian-FEM-low-mapped---classic")
+        # Vis.writeSolution_all(solution_ms_mapped, mesh_FEM_high, "Gaussian-MsFEM-mapped---classic")
 
-#         err_low_2a = PostProcess.error_L2(solution_FEM_high, solution_FEM_low_mapped)[:]
-#         err_ms_2a = PostProcess.error_L2(solution_FEM_high, solution_ms_mapped)[:]
-#         Vis.writeSolution_all(solution_FEM_high, mesh_FEM_high, "Gaussian_2-FEM-high---stream")
-#         Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_high, "Gaussian_2-FEM-low-mapped---stream")
-#         Vis.writeSolution_all(solution_ms_mapped, mesh_FEM_high, "Gaussian_2-MsFEM-mapped---stream")
+        err_low_2a = PostProcess.error_L2(solution_FEM_high, solution_FEM_low_mapped)[:]
+        err_ms_2a = PostProcess.error_L2(solution_FEM_high, solution_ms_mapped)[:]
+        Vis.writeSolution_all(solution_FEM_high, mesh_FEM_high, "Gaussian-FEM-high---stream")
+        Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_high, "Gaussian-FEM-low-mapped---stream")
+        Vis.writeSolution_all(solution_ms_mapped, mesh_FEM_high, "Gaussian-MsFEM-mapped---stream")
 
-# end
-# ---------------------------------------------------------------------------
+end
+---------------------------------------------------------------------------

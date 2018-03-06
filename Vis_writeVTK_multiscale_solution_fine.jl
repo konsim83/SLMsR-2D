@@ -4,11 +4,11 @@ function writeSolution_at_timestep(solution :: FEM.Solution_MsFEM, mesh_collecti
     D = unify_data(mesh_collection, solution, k_time)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(P)
+    points = P
 
     cells = MeshCell[]
     for i=1:size(C,1)
-        temp = MeshCell(cell_type, C[i,:])
+        temp = MeshCell(cell_type, C[:,i])
         cells = push!(cells, temp)
     end
     
@@ -30,11 +30,11 @@ function writeSolution_all(solution :: FEM.Solution_MsFEM, mesh_collection :: Me
     P, C = unify_meshes(mesh_collection, solution)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(P)
+    points = P
 
     cells = MeshCell[]
-    for i=1:size(C,1)
-        temp = MeshCell(cell_type, C[i,:])
+    for i=1:size(C,2)
+        temp = MeshCell(cell_type, C[:,i])
         cells = push!(cells, temp)
     end
 
@@ -42,6 +42,7 @@ function writeSolution_all(solution :: FEM.Solution_MsFEM, mesh_collection :: Me
     p = Progress(N, 0.01, "Writing progress ...", 10)
     for k_time in 1:size(solution.u,2)
         vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,0)), points, cells)
+        
         vtk_point_data(vtkfile, convert(Array{Float32}, unify_data(mesh_collection, solution, k_time)), "point data")
     
         outfiles = vtk_save(vtkfile)
@@ -85,7 +86,7 @@ end
 function gather_data(mesh_collection :: Mesh.TriMesh_collection, solution :: FEM.Solution_MsFEM, ind_cell, k_time)
 
     mesh = mesh_collection.mesh_f[ind_cell]
-    cell_coarse = mesh_collection.mesh.cell[ind_cell,:]
+    cell_coarse = mesh_collection.mesh.cell[:,ind_cell]
     
     phi1 = solution.phi_1[ind_cell][:,k_time]
     phi2 = solution.phi_2[ind_cell][:,k_time]
@@ -102,8 +103,8 @@ end
 # -------   Add two meshes   -------
 function add_meshes(p1 :: Array{Float64,2}, c1 :: Array{Int64,2}, mesh2 :: Mesh.TriangleMesh.TriMesh)
     
-    P = vcat(p1, mesh2.point)
-    C = vcat(c1, mesh2.cell+size(p1,1))
+    P = hcat(p1, mesh2.point)
+    C = hcat(c1, mesh2.cell+size(p1,2))
     
     return P, C
 end

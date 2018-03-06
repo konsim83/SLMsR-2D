@@ -5,8 +5,8 @@ struct BasisFun <: AbstractBasisProblem
     
     T :: Float64
 
-    index_dirichlet_edge :: Array{Int}
-    index_neumann_edge :: Array{Int}
+    marker_dirichlet_edge :: Array{Int}
+    marker_neumann_edge :: Array{Int}
 
     coeff :: Array{Float64,2}
 
@@ -22,8 +22,8 @@ struct BasisFun <: AbstractBasisProblem
 
         T = problem.T
 
-        index_dirichlet_edge = [1 ; 2 ; 3]
-        index_neumann_edge = Array{Int}(0)
+        marker_dirichlet_edge = [1 ; 2 ; 3]
+        marker_neumann_edge = Array{Int}(0)
 
         coeff = Geometry.compute_P1_basis_coeff(tri)
 
@@ -34,7 +34,7 @@ struct BasisFun <: AbstractBasisProblem
         
         return new(info_prob, type_info, 
                     T,
-                    index_dirichlet_edge, index_neumann_edge, 
+                    marker_dirichlet_edge, marker_neumann_edge, 
                     coeff, 
                     is_transient_diffusion, is_transient_velocity,
                     problem_parent)
@@ -59,30 +59,50 @@ function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Float64})
 end
 
 
-# --------------------------------------------------------------------
-
 """
-    velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64})
+    diffusion(problem :: BasisFun, t :: Float64, x :: Array{Array{Float64,2},1})
 
     Delegate function calls to the original abstract problem.
 
 """
-function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64})
+function diffusion(problem :: BasisFun, t :: Float64, x :: Array{Array{Float64,2},1})
+    
+    return diffusion(problem.problem_parent, t, x)
+end
+# --------------------------------------------------------------------
+
+"""
+    velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
+
+    Delegate function calls to the original abstract problem.
+
+"""
+function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
 
     return velocity(problem.problem_parent, t, x)
 end
 
 
+"""
+    velocity(problem :: BasisFun,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    Delegate function calls to the original abstract problem.
+
+"""
+function velocity(problem :: BasisFun,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    return velocity(problem.problem_parent, t, x)
+end
 # --------------------------------------------------------------------
 
 
-function u_init(problem :: BasisFun, x :: Array{Float64})
+function u_init(problem :: BasisFun, x :: Array{Float64,2})
                 
     size(x,1)!=2 ? error("Input points must be of size 2-by-n.") :
     
     out = problem.coeff * [x ; ones(1,size(x,2))]
     
-    return out
+    return out'
 end
 
 function u_init(problem :: BasisFun, x :: Array{Array{Float64},1})

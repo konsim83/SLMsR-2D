@@ -33,7 +33,7 @@ function Evaluate_MsFEM(sol :: FEM.Solution_MsFEM, mesh_collection :: Mesh.TriMe
 	local_function = Array{Function,1}(mesh.n_cell)
 
 	for i in 1:mesh.n_cell
-		data[i] = sol.u[mesh.cell[i,:],:]
+		data[i] = sol.u[mesh.cell[:,i],:]
 		
 		local_function[i] = function(bary :: Array{Float64,1})
 			length(bary)!=3 ? error("Barycentirc coordinates vector must be of length 3.") :
@@ -47,12 +47,12 @@ function Evaluate_MsFEM(sol :: FEM.Solution_MsFEM, mesh_collection :: Mesh.TriMe
 	local_function_f = [Array{Function,1}(mesh_collection.n_elem_f[i]) for i in 1:mesh.n_cell]
 
 	for i in 1:mesh.n_cell
-		coarse_weight = sol.u[mesh.cell[i,:],:]
+		coarse_weight = sol.u[mesh.cell[:,i],:]
 		mesh_f = mesh_collection.mesh_f[i]
 		for j in 1:mesh_f.n_cell			
-			data_f[i][j] = ( coarse_weight[[1;1;1],:] .* sol.phi_1[i][mesh_f.cell[j,:],:]
-							+ coarse_weight[[2;2;2],:] .* sol.phi_2[i][mesh_f.cell[j,:],:]
-							+ coarse_weight[[3;3;3],:] .* sol.phi_3[i][mesh_f.cell[j,:],:] )
+			data_f[i][j] = ( coarse_weight[[1;1;1],:] .* sol.phi_1[i][mesh_f.cell[:,j],:]
+							+ coarse_weight[[2;2;2],:] .* sol.phi_2[i][mesh_f.cell[:,j],:]
+							+ coarse_weight[[3;3;3],:] .* sol.phi_3[i][mesh_f.cell[:,j],:] )
 
 			local_function_f[i][j] = function(bary :: Array{Float64,1})
 				length(bary)!=3 ? error("Barycentirc coordinates vector must be of length 3.") :

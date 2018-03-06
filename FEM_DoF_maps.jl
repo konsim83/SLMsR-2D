@@ -19,7 +19,7 @@ end
 
 function map_ref_point(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
 
-    return map_ref_point(dof, x, [ind_c])
+    return map_ref_point(dof, x, [ind_c])[1]
 end
 
 
@@ -48,7 +48,7 @@ end
 
 function map_ref_point_grad(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
 
-    return map_ref_point_grad(dof, x, [ind_c])
+    return map_ref_point_grad(dof, x, [ind_c])[1]
 end
 
 
@@ -77,7 +77,7 @@ end
 
 function map_ref_point_grad_inv(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
 
-    return map_ref_point_grad_inv(dof, x, [ind_c])
+    return map_ref_point_grad_inv(dof, x, [ind_c])[1]
 end
 
 
@@ -103,7 +103,7 @@ end
 
 function map_ref_point_grad_det(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: Int64)
     
-    return map_ref_point_grad_det(dof, x, [ind_c])
+    return map_ref_point_grad_det(dof, x, [ind_c])[1]
 end
 
 

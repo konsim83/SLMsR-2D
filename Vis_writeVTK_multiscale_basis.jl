@@ -5,11 +5,11 @@ function writeBasis_at_timestep(solution :: FEM.Solution_MsFEM,
                                 filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(mesh_collection.mesh_f[ind_cell].point)
+    points = mesh_collection.mesh_f[ind_cell].point
 
     cells = MeshCell[]
     for i=1:mesh_collection.mesh_f[ind_cell].n_cell
-        temp = MeshCell(cell_type, mesh_collection.mesh_f[ind_cell].cell[i,:])
+        temp = MeshCell(cell_type, mesh_collection.mesh_f[ind_cell].cell[:,i])
         cells = push!(cells, temp)
     end
     
@@ -34,11 +34,11 @@ function writeBasis_all_steps(solution :: FEM.Solution_MsFEM,
                               filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(mesh_collection.mesh_f[ind_cell].point)
+    points = mesh_collection.mesh_f[ind_cell].point
 
     cells = MeshCell[]
     for i=1:mesh_collection.mesh_f[ind_cell].n_cell
-        temp = MeshCell(cell_type, mesh_collection.mesh_f[ind_cell].cell[i,:])
+        temp = MeshCell(cell_type, mesh_collection.mesh_f[ind_cell].cell[:,i])
         cells = push!(cells, temp)
     end
 
@@ -73,11 +73,11 @@ function writeBasis_all(solution :: FEM.Solution_MsFEM,
     
     for ind_cell = 1:mesh_collection.mesh.n_cell
         cell_type = VTKCellTypes.VTK_TRIANGLE
-        points = transpose(mesh_collection.mesh_f[ind_cell].point)
+        points = mesh_collection.mesh_f[ind_cell].point
 
         cells = MeshCell[]
         for i=1:mesh_collection.mesh_f[ind_cell].n_cell
-            temp = MeshCell(cell_type, mesh_collection.mesh_f[ind_cell].cell[i,:])
+            temp = MeshCell(cell_type, mesh_collection.mesh_f[ind_cell].cell[:,i])
             cells = push!(cells, temp)
         end
         

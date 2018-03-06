@@ -1,11 +1,11 @@
 function writeSolution_at_timestep(solution :: FEM.Solution_MsFEM, mesh :: Mesh.TriangleMesh.TriMesh, k_time :: Int64, filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(mesh.point)
+    points = mesh.point
 
     cells = MeshCell[]
     for i=1:mesh.n_cell
-        temp = MeshCell(cell_type, mesh.cell[i,:])
+        temp = MeshCell(cell_type, mesh.cell[:,i])
         cells = push!(cells, temp)
     end
     
@@ -25,11 +25,11 @@ end
 function writeSolution_all(solution :: FEM.Solution_MsFEM, mesh :: Mesh.TriangleMesh.TriMesh, filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
-    points = transpose(mesh.point)
+    points = mesh.point
 
     cells = MeshCell[]
     for i=1:mesh.n_cell
-        temp = MeshCell(cell_type, mesh.cell[i,:])
+        temp = MeshCell(cell_type, mesh.cell[:,i])
         cells = push!(cells, temp)
     end
 

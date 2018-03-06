@@ -12,14 +12,8 @@ function assemble_mass!(M :: SparseMatrixCSC{Float64,Int64},
                         par :: Parameter.Parameter_MsFEM,
                         problem :: Problem.AbstractPhysicalProblem,
                         k_time :: Int64)
-    
-    """
 
-    
-
-    """
-    
-    m_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    m_loc = Array{Float64,2}(ref_el.n_basis, ref_el.n_basis)
     
     for k = 1:mesh.n_cell
         Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]
@@ -47,14 +41,8 @@ function assemble_mass_t!(Mt  :: SparseMatrixCSC{Float64,Int64},
                           par :: Parameter.Parameter_MsFEM,
                           problem :: Problem.AbstractPhysicalProblem,
                           k_time :: Int64)
-    
-    """
 
-    
-
-    """
-    
-    mt_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    mt_loc = Array{Float64,2}(ref_el.n_basis, ref_el.n_basis)
     
     for k = 1:mesh.n_cell
         Phi_t = [solution.phi_1_t[k][:,k_time] solution.phi_2_t[k][:,k_time] solution.phi_3_t[k][:,k_time]]
@@ -83,13 +71,7 @@ function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
                              problem :: Problem.AbstractPhysicalProblem,
                              k_time :: Int64)
 
-    """
-
-    
-
-    """
-    
-    a_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    a_loc = Array{Float64,2}(ref_el.n_basis, ref_el.n_basis)
     
     for k = 1:mesh.n_cell
         Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]
@@ -118,13 +100,7 @@ function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
                              problem :: Problem.AbstractPhysicalProblem,
                              k_time :: Int64)
     
-    """
-
-    
-
-    """
-    
-    d_loc = Array{Float64,2}(ref_el.n_node, ref_el.n_node)
+    d_loc = Array{Float64,2}(ref_el.n_basis, ref_el.n_basis)
     
     for k = 1:mesh.n_cell
         Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]

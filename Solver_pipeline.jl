@@ -15,9 +15,9 @@ function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
 
     2. Set up system that can make a step from k to k+1
 
-    3. Call the actual time stepper. Note that the type system_data
-    must be created accoring to the type of time_stepper (it is
-    contained in it as a subtype).
+    3. Call the actual time stepper. Note that the type system_data must be
+    created according to the type of time_stepper (it is contained in it as a
+    subtype).
 
     """
 
@@ -84,9 +84,9 @@ function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
 
     2. Set up system that can make a step from k to k+1
 
-    3. Call the actual time stepper. Note that the type system_data
-    must be created accoring to the type of time_stepper (it is
-    contained in it as a subtype).
+    3. Call the actual time stepper. Note that the type system_data must be
+    created according to the type of time_stepper (it is contained in it as a
+    subtype).
 
     """
 
@@ -154,9 +154,9 @@ function solve_problem!(mesh_collection :: Mesh.TriMesh_collection,
 
     2. Set up system that can make a step from k to k+1
 
-    3. Call the actual time stepper. Note that the type system_data
-    must be created accoring to the type of time_stepper (it is
-    contained in it as a subtype).
+    3. Call the actual time stepper. Note that the type system_data must be
+    created according to the type of time_stepper (it is contained in it as a
+    subtype).
 
     """
 

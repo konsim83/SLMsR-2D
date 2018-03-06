@@ -229,14 +229,28 @@ end
 
 
 """
-    map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+    map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64,1})
 
     Map a vector in terms of the actual mesh to a vector in terms of degrees
     of freedom.
     
     
 """
-function map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64})
+function map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64,1})
+
+    return vec_dof
+end
+
+
+"""
+    map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64,2})
+
+    Map a vector in terms of the actual mesh to a vector in terms of degrees
+    of freedom.
+    
+    
+"""
+function map_vec_dof2mesh(dof :: Dof_Pk{1}, vec_dof :: Array{Float64,2})
 
     return vec_dof
 end
@@ -258,13 +272,26 @@ end
 
 
 """
-    map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+    map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64,1})
 
     Map a vector in terms of degrees of freedom to a vector on the actual
     mesh.
 
 """
-function map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64})
+function map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64,1})
+
+    return vec_mesh
+end
+
+
+"""
+    map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64,2})
+
+    Map a vector in terms of degrees of freedom to a vector on the actual
+    mesh.
+
+"""
+function map_vec_mesh2dof(dof :: Dof_Pk{1}, vec_mesh :: Array{Float64,2})
 
     return vec_mesh
 end

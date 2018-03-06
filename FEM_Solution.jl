@@ -15,6 +15,10 @@ struct Solution_FEM <: AbstractSolution
 end # end type
 
 
+# --------------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
 """
     Solution_FEM(u_in :: Array{Array{Array{Float64,1},1},1},
                         n_node :: Int64)

@@ -24,7 +24,6 @@ function update_system!(solution :: FEM.AbstractSolution,
     #                        dof,
     #                        ref_el,
     #                        quad,
-    #                        par,
     #                        problem)
     # end
 
@@ -58,16 +57,15 @@ function update_system!(solution :: FEM.AbstractSolution,
     
     # ----   This is the slow version   ---
     if k_time==1
-    system_data.mass = FEM.assemble_mass(mesh,
+    system_data.mass[:,:] = FEM.assemble_mass(mesh,
                                          dof,
                                          ref_el,
                                          quad,
-                                         par,
                                          problem)
     end
     
     if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
-    system_data.advection = FEM.assemble_advection(mesh,
+    system_data.advection[:,:] = FEM.assemble_advection(mesh,
                                                    dof,
                                                    ref_el,
                                                    quad,
@@ -77,7 +75,7 @@ function update_system!(solution :: FEM.AbstractSolution,
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
-    system_data.diffusion = FEM.assemble_diffusion(mesh,
+    system_data.diffusion[:,:] = FEM.assemble_diffusion(mesh,
                                                    dof,
                                                    ref_el,
                                                    quad,
@@ -93,17 +91,16 @@ function update_system!(solution :: FEM.AbstractSolution,
         error("Neumann boundary integral not implemented yet.")
     end
 
-    system_data.system_matrix = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] )
+    system_data.system_matrix[:,:] = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[system_data.ind_node_non_dirichlet,system_data.ind_node_non_dirichlet] )
     
     if dof.is_periodic
-        system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * (FEM.map_vec_mesh2dof(dof, solution.u[:,k_time])[dof.ind_node_non_dirichlet])
+        system_data.system_rhs[:] = system_data.mass[system_data.ind_node_non_dirichlet,system_data.ind_node_non_dirichlet] * (FEM.map_vec_mesh2dof(dof, solution.u[:,k_time])[system_data.ind_node_non_dirichlet])
     else
         
-        system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,:]
+        system_data.system_rhs[:] = (   (system_data.mass[system_data.ind_node_non_dirichlet,:]
                                       * solution.u[:,k_time] -
-
-                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
-                                      * solution.u[dof.ind_node_dirichlet,k_time]) )
+                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[system_data.ind_node_non_dirichlet,system_data.ind_node_dirichlet]
+                                      * solution.u[system_data.ind_node_dirichlet,k_time]) )
     end
     
 end
@@ -131,19 +128,18 @@ function update_system!(solution :: FEM.AbstractSolution,
     
     # ----   This is the fast version   ---
     if k_time==1
-        system_data.mass = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+        system_data.mass[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
         FEM.assemble_mass!(system_data.mass,
                            mesh,
                            dof,
                            ref_el,
                            quad,
-                           par,
                            problem)
         solution.mass[ind_cell][:,:] = copy(system_data.mass)
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
-        system_data.advection = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+        system_data.advection[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
         FEM.assemble_advection!(system_data.advection,
                                 mesh,
                                 dof,
@@ -156,7 +152,7 @@ function update_system!(solution :: FEM.AbstractSolution,
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
-        system_data.diffusion = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+        system_data.diffusion[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
         FEM.assemble_diffusion!(system_data.diffusion,
                                 mesh,
                                 dof,
@@ -178,7 +174,6 @@ function update_system!(solution :: FEM.AbstractSolution,
                                          dof,
                                          ref_el,
                                          quad,
-                                         par,
                                          problem)
     end
     
@@ -203,25 +198,24 @@ function update_system!(solution :: FEM.AbstractSolution,
     end
     # ----   This is the slow version   ---
     =#
-
     
     if dof.n_node_neumann > 0
         error("Neumann boundary integral not implemented yet.")
     end
 
-    system_data.system_matrix = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] )
+    system_data.system_matrix[:,:] = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[system_data.ind_node_non_dirichlet,system_data.ind_node_non_dirichlet] )
     
     if dof.is_periodic
-        system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] *
-            (FEM.map_ind_mesh2dof(dof, solution.phi[ind_cell][:,k_time])[dof.ind_node_non_dirichlet])
+        system_data.system_rhs[:,:] = system_data.mass[system_data.ind_node_non_dirichlet,system_data.ind_node_non_dirichlet] *
+            (FEM.map_ind_mesh2dof(dof, solution.phi[ind_cell][:,k_time])[system_data.ind_node_non_dirichlet])
     else
 
         phi_tmp =  [solution.phi_1[ind_cell][:,k_time] solution.phi_2[ind_cell][:,k_time] solution.phi_3[ind_cell][:,k_time]]
-        system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,:]
+        system_data.system_rhs[:,:] = (   (system_data.mass[system_data.ind_node_non_dirichlet,:]
                                       * phi_tmp -
 
-                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
-                                      * phi_tmp[dof.ind_node_dirichlet,:]) )
+                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[system_data.ind_node_non_dirichlet,system_data.ind_node_dirichlet]
+                                      * phi_tmp[system_data.ind_node_dirichlet,:]) )
     end
     
 end
@@ -259,7 +253,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
     end
     
     # ----   This is the fast version   ---
-    system_data.mass = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+    system_data.mass[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
     FEM.assemble_mass!(system_data.mass,
                        solution.mass,
                        solution,
@@ -270,7 +264,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
                        problem,
                        k_time+1)
 
-    system_data.advection = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+    system_data.advection[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
     FEM.assemble_advection!(system_data.advection,
                             solution.advection[:,k_adv],
                             solution,
@@ -293,7 +287,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
                          problem,
                          k_time+1)
 
-    system_data.diffusion = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+    system_data.diffusion[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
     FEM.assemble_diffusion!(system_data.diffusion,
                             solution.diffusion[:,k_diff],
                             solution,
@@ -309,17 +303,17 @@ function update_system!(solution :: FEM.Solution_MsFEM,
         error("Neumann boundary integral not implemented yet.")
     end
 
-    system_data.system_matrix = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] )
+    system_data.system_matrix[:,:] = ( (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[system_data.ind_node_non_dirichlet,system_data.ind_node_non_dirichlet] )
     
     if dof.is_periodic
-        system_data.system_rhs = system_data.mass[dof.ind_node_non_dirichlet,dof.ind_node_non_dirichlet] * (FEM.map_ind_mesh2dof(dof, solution.u[:,k_time])[dof.ind_node_non_dirichlet])
+        system_data.system_rhs[:] = system_data.mass[system_data.ind_node_non_dirichlet,system_data.ind_node_non_dirichlet] * (FEM.map_vec_mesh2dof(dof, solution.u[:,k_time])[system_data.ind_node_non_dirichlet])
     else
         
-        system_data.system_rhs = (   (system_data.mass[dof.ind_node_non_dirichlet,:]
+        system_data.system_rhs[:] = (   (system_data.mass[system_data.ind_node_non_dirichlet,:]
                                       * solution.u[:,k_time] -
 
-                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[dof.ind_node_non_dirichlet,dof.ind_node_dirichlet]
-                                      * solution.u[dof.ind_node_dirichlet,k_time]) )
+                                      (system_data.mass - par.dt*(system_data.diffusion-system_data.advection))[system_data.ind_node_non_dirichlet,system_data.ind_node_dirichlet]
+                                      * solution.u[system_data.ind_node_dirichlet,k_time]) )
     end
     
 end

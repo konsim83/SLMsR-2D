@@ -29,7 +29,7 @@ function Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: TriangleMesh.TriMesh)
 	local_function = Array{Function,1}(mesh.n_cell)
 
 	for i in 1:mesh.n_cell
-		data[i] = sol.u[mesh.cell[i,:],:]
+		data[i] = sol.u[mesh.cell[:,i],:]
 		
 		local_function[i] = function(bary :: Array{Float64,1})
 			length(bary)!=3 ? error("Barycentirc coordinates vector must be of length 3.") :

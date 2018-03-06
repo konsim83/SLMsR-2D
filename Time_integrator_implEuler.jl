@@ -4,7 +4,9 @@ struct ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTime_integrator
 
     system_data :: T
     
-    function ImplEuler{T}(dof :: FEM.AbstractDof, mesh :: Mesh.TriangleMesh.TriMesh, problem :: Problem.AbstractProblem) where {T <: AbstractSystem_data_implEuler}
+    function ImplEuler{T}(dof :: FEM.AbstractDof, 
+                            mesh :: Mesh.TriangleMesh.TriMesh,
+                            problem :: Problem.AbstractProblem) where {T <: AbstractSystem_data_implEuler}
         
 	# Reserve Memory for System data only
         if problem.type_info=="ADE"

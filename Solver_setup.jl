@@ -1,4 +1,4 @@
-function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T) where {T<:Problem.AbstractProblem}
+function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T) where {T<:Problem.AbstractPhysicalProblem}
 
     # Build mesh of unit square (0,1)x(0,1)
     mesh = Mesh.mesh_unit_square(par.n_edge_per_seg)
@@ -7,19 +7,20 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
 
         # Subdividing edges messes up boundary markers. We need to correct
         # that.
-        ind_point_boundary = sort(unique(mesh.edge[mesh.edge_marker.!=0,:]'))
+        ind_point_boundary = sort(unique(mesh.edge[:,mesh.edge_marker.!=0]))
         mesh.point_marker[:] = zeros(Int, size(mesh.point_marker))
         mesh.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
     end
 
     # Set up reference element
-    ref_el = FEM.RefEl_Pk{par.n_order_FEM}()
+    ref_el = FEM.RefEl_Pk(par.n_order_FEM)
 
     # Set up quadrature rule
     quad = Quad.Quad_simplex(par.n_order_quad)
 
     # Set up degrees of freedom handler
-    dof = FEM.Dof_Pk_periodic_square{ref_el.n_order}(mesh)
+    periodicityInfo = Mesh.DoublePeriodicUnitSquare()
+    dof = FEM.Dof_Pk_periodic(mesh, problem, periodicityInfo, ref_el.n_order)
 
     # Set up solution structure
     solution = FEM.Solution_FEM(dof, par)
@@ -57,7 +58,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
 
         # Subdividing edges messes up boundary markers. We need to correct
         # that.
-        ind_point_boundary = sort(unique(m_simplex.edge[m_simplex.edge_marker.!=0,:]'))
+        ind_point_boundary = sort(unique(m_simplex.edge[:,m_simplex.edge_marker.!=0]))
         m_simplex.point_marker[:] = zeros(Int, size(m_simplex.point_marker))
         m_simplex.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
     end
@@ -67,14 +68,22 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     
 
     # Set up reference element
-    ref_el = FEM.RefEl_Pk{1}()
-    ref_el_f = FEM.RefEl_Pk{par.n_order_FEM_f}()
+    ref_el = FEM.RefEl_Pk(1)
+    ref_el_f = FEM.RefEl_Pk(par.n_order_FEM_f)
 
     # Set up quadrature rule
     quad_f = Quad.Quad_simplex(par.n_order_quad_f)
 
     # Set up degrees of freedom handler
-    dof_collection = FEM.Dof_collection{ref_el_f.n_order}(mesh_collection)
+    periodicityInfo = Mesh.DoublePeriodicUnitSquare()
+    dof = FEM.Dof_Pk_periodic(mesh_collection.mesh, problem, periodicityInfo, 1)
+    problem_f = Array{Problem.AbstractBasisProblem,1}(mesh_collection.mesh.n_cell)
+    for i_cell in 1:mesh_collection.mesh.n_cell
+        # Set up local problem by geometry
+        tri = Geometry.Triangle(FEM.map_ref_point(dof, ref_el.node, i_cell))
+        problem_f[i_cell] = Problem.BasisFun(problem, tri)
+    end
+    dof_collection = FEM.Dof_collection(mesh_collection, dof, problem_f, ref_el_f.n_order)
 
     # Set up solution structure
     solution = FEM.Solution_MsFEM(dof_collection, par)
@@ -83,15 +92,11 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # Solve the local problems
-    for i_cell in 1:mesh_collection.mesh.n_cell
-        # Set up local problem by geometry
-        tri = Geometry.Triangle(FEM.map_ref_point(dof_collection.dof, ref_el.node, i_cell))
-        problem_f = Problem.BasisFun(problem, tri)
-        
+    for i_cell in 1:mesh_collection.mesh.n_cell        
         # Set up time integrator
         time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof_collection.dof_f[i_cell],
                                                                                             mesh_collection.mesh_f[i_cell],
-                                                                                            problem_f)
+                                                                                            problem_f[i_cell])
         # Call actual solver. Pass solution data by reference.  Solves
         # the i-th cell problem.
         solve_problem_local!(mesh_collection.mesh_f[i_cell],
@@ -100,7 +105,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
                              quad_f,
                              time_stepper,
                              par,
-                             problem_f,
+                             problem_f[i_cell],
                              solution,
                              i_cell,
                              mesh_collection.mesh.n_cell)
@@ -121,7 +126,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
                                                                                         mesh_collection.mesh,
                                                                                         problem)
 
-    try
+    # try
         # Call actual solver. Pass solution data by reference.       
         solve_problem!(mesh_collection,
                        ref_el,
@@ -131,9 +136,9 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
                        par,
                        problem,
                        solution)
-    catch
-        warn("Problem computing the Muliscale solution.")
-    end
+    # catch
+    #     warn("Problem computing the Muliscale solution.")
+    # end
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     
