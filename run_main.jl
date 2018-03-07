@@ -15,7 +15,7 @@ end
 
 
 compute_low = true
-compute_high = true
+compute_ref = true
 compute_ms = true
 
 post_process = true
@@ -25,12 +25,13 @@ post_process = true
 # -------   Problem Parameters   -------
 T_max = 0.5
 
+
 problem = Problem.Gaussian(T_max)
 
-# problem = Problem.Gaussian_1(T_max)
+problem = Problem.Gaussian_1(T_max, 20)
 
-# problem = Problem.Gaussian(T_max, 1)
-# problem = Problem.Gaussiana(T_max, 1)
+problem = Problem.Gaussian_2(T_max, 1)
+problem = Problem.Gaussian_2a(T_max, 1)
 
 # ---------------------------------------------------------------------------
 
@@ -45,7 +46,7 @@ n_edge_per_seg_f = 0
 
 # -------   FEM parameters   -------
 n_order_FEM = 1
-n_order_quad = 2
+n_order_quad = 3
 
 n_order_FEM_f = 1
 n_order_quad_f = n_order_quad
@@ -75,9 +76,9 @@ if compute_low
         @time solution_FEM_low, mesh_FEM_low = Solver.solve_FEM_periodic_square(par_FEM_low, problem)
 end
 
-if compute_high
+if compute_ref
         # -------   Build parameter structure   -------
-        par_FEM_high = Parameter.Parameter_FEM(problem.T,
+        par_FEM_ref = Parameter.Parameter_FEM(problem.T,
                                                  dt,
                                                  n_edge_per_seg,
                                                  n_refinement,
@@ -86,7 +87,7 @@ if compute_high
                                                  time_step_method)
 
         # -------   Call the solver   -------
-        @time solution_FEM_high, mesh_FEM_high = Solver.solve_FEM_periodic_square(par_FEM_high, problem)
+        @time solution_FEM_ref, mesh_FEM_ref = Solver.solve_FEM_periodic_square(par_FEM_ref, problem)
 end
 
 
@@ -111,20 +112,22 @@ end
 
 # ---------------------------------------------------------------------------
 if post_process
-        solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_high)
-        solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_high)
+        solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_ref)
+        solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_ref)
 
-        # err_low_2 = PostProcess.error_L2(solution_FEM_high, solution_FEM_low_mapped)[:]
-        # err_ms_2 = PostProcess.error_L2(solution_FEM_high, solution_ms_mapped)[:]
-        # Vis.writeSolution_all(solution_FEM_high, mesh_FEM_high, "Gaussian-FEM-high---classic")
-        # Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_high, "Gaussian-FEM-low-mapped---classic")
-        # Vis.writeSolution_all(solution_ms_mapped, mesh_FEM_high, "Gaussian-MsFEM-mapped---classic")
+        err_low = PostProcess.error_L2(solution_FEM_ref,
+                                        solution_FEM_low_mapped)[:]
+        err_ms = PostProcess.error_L2(solution_FEM_ref,
+                                        solution_ms_mapped)[:]
 
-        err_low_2a = PostProcess.error_L2(solution_FEM_high, solution_FEM_low_mapped)[:]
-        err_ms_2a = PostProcess.error_L2(solution_FEM_high, solution_ms_mapped)[:]
-        Vis.writeSolution_all(solution_FEM_high, mesh_FEM_high, "Gaussian-FEM-high---stream")
-        Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_high, "Gaussian-FEM-low-mapped---stream")
-        Vis.writeSolution_all(solution_ms_mapped, mesh_FEM_high, "Gaussian-MsFEM-mapped---stream")
-
+        Vis.writeSolution_all(solution_FEM_ref, 
+                                mesh_FEM_ref,
+                                problem.file_name * "-FEM-ref")
+        Vis.writeSolution_all(solution_FEM_low_mapped, 
+                                mesh_FEM_ref, 
+                                problem.file_name * "-FEM-low-mapped")
+        Vis.writeSolution_all(solution_ms_mapped, 
+                                mesh_FEM_ref, 
+                                problem.file_name * "-MsFEM-mapped")
 end
----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ struct Gaussian <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
+    file_name :: String
     
     T :: Float64
     
@@ -23,6 +24,7 @@ function Gaussian(T :: Float64)
         
     info_prob = "Evolution of symmetric Gaussian."
     type_info = "ADE"
+    file_name = "Gaussian_HeatEqn"
 
     T = T
 
@@ -43,7 +45,7 @@ function Gaussian(T :: Float64)
     is_transient_diffusion = false
     is_transient_velocity = false
     
-    return Gaussian(info_prob, type_info, 
+    return Gaussian(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
@@ -138,16 +140,3 @@ function u_init(problem :: Gaussian, x :: Array{Float64})
     
     return vec(out)
 end
-
-# function u_init(problem :: Gaussian, x :: Array{Float64,3})
-                
-#     size(x,2)!=2 ? error(" List of vectors x must be of size nx2 or nx2xn_cell.") :
-
-#     out = Array{Float64, 3}(size(x,1), 1, size(x,3))
-
-#     for i=1:size(x,3)
-#         out[:,1,i] = u_init(problem, x[:,:,i])
-#     end
-    
-#     return out
-# end
