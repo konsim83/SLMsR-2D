@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 # -------   Implicit Euler   -------
-struct ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTime_integrator
+struct ImplEuler{T <: AbstractSystem_data_implEuler} <: AbstractTimeIntegrator
 
     system_data :: T
     
@@ -24,12 +24,12 @@ end
 
 
 # -------   System data   -------
-include("Time_integrator_implEuler_systemData_ADE.jl")
+include("TimeIntegrator_implEuler_systemData_ADE.jl")
 
 
 # -------   Step function   -------
-include("Time_integrator_implEuler_systemStep.jl")
+include("TimeIntegrator_implEuler_systemStep.jl")
 
 
 # -------   System update   -------
-include("Time_integrator_implEuler_systemUpdate_ADE.jl")
+include("TimeIntegrator_implEuler_systemUpdate_ADE.jl")

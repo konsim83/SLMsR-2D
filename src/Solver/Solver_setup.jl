@@ -26,7 +26,7 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
     solution = FEM.Solution_FEM(dof, par)
 
     # Set up time integrator
-    time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof, mesh, problem)
+    time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof, mesh, problem)
     # +++++++++++++++++++
 
     # Call actual solver. Pass solution data by reference.       
@@ -94,7 +94,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     # Solve the local problems
     for i_cell in 1:mesh_collection.mesh.n_cell        
         # Set up time integrator
-        time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof_collection.dof_f[i_cell],
+        time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof_f[i_cell],
                                                                                             mesh_collection.mesh_f[i_cell],
                                                                                             problem_f[i_cell])
         # Call actual solver. Pass solution data by reference.  Solves
@@ -122,7 +122,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # Set up time integrator
-    time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof_collection.dof,
+    time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof,
                                                                                         mesh_collection.mesh,
                                                                                         problem)
 
@@ -165,7 +165,7 @@ end
 #     solution = FEM.Solution_FEM(dof, par)
 
 #     # Set up time integrator
-#     time_stepper = Time_integrator.ImplEuler{Time_integrator.System_data_implEuler_ADE}(dof, mesh, problem)
+#     time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof, mesh, problem)
 #     # +++++++++++++++++++
 
 #     # Call actual solver. Pass solution data by reference.       

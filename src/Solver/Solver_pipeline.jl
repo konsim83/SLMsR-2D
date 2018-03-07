@@ -2,7 +2,7 @@ function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
                         ref_el :: FEM.AbstractRefEl,
                         dof :: FEM.AbstractDof,
                         quad :: Quad.AbstractQuad,
-                        time_stepper :: Time_integrator.AbstractTime_integrator,
+                        time_stepper :: TimeIntegrator.AbstractTimeIntegrator,
                         par :: Parameter.AbstractParameter,
                         problem :: Problem.AbstractProblem,
                         solution :: FEM.Solution_FEM)
@@ -45,7 +45,7 @@ function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
 
     # Make step from k_time to k_time+1
     for k_time=1:par.n_steps
-        Time_integrator.make_step!(solution,
+        TimeIntegrator.make_step!(solution,
                                    time_stepper,
                                    mesh,
                                    dof,
@@ -70,7 +70,7 @@ function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
                               ref_el :: FEM.AbstractRefEl,
                               dof :: FEM.AbstractDof,
                               quad :: Quad.AbstractQuad,
-                              time_stepper :: Time_integrator.AbstractTime_integrator,
+                              time_stepper :: TimeIntegrator.AbstractTimeIntegrator,
                               par :: Parameter.Parameter_MsFEM,
                               problem :: Problem.AbstractBasisProblem,
                               solution :: FEM.AbstractSolution,
@@ -115,7 +115,7 @@ function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
 
     # Make step from k_time to k_time+1
     for k_time=1:par.n_steps
-        Time_integrator.make_step!(solution,
+        TimeIntegrator.make_step!(solution,
                                    time_stepper,
                                    mesh,
                                    dof,
@@ -141,7 +141,7 @@ function solve_problem!(mesh_collection :: Mesh.TriMesh_collection,
                         ref_el :: FEM.AbstractRefEl,
                         dof :: FEM.AbstractDof,
                         quad :: Quad.AbstractQuad,
-                        time_stepper :: Time_integrator.AbstractTime_integrator,
+                        time_stepper :: TimeIntegrator.AbstractTimeIntegrator,
                         par :: Parameter.Parameter_MsFEM,
                         problem :: Problem.AbstractProblem,
                         solution :: FEM.Solution_MsFEM)
@@ -188,7 +188,7 @@ function solve_problem!(mesh_collection :: Mesh.TriMesh_collection,
 
     # Make step from k_time to k_time+1
     for k_time=1:par.n_steps
-        Time_integrator.make_step!(solution,
+        TimeIntegrator.make_step!(solution,
                                    time_stepper,
                                    mesh_collection.mesh,
                                    dof,

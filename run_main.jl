@@ -1,16 +1,12 @@
-if true
-        include("Parameter.jl")
-        include("Geometry.jl")
-        include("Problem.jl")
-        include("Quad.jl")
-        include("Mesh.jl")
-        include("FiniteDiff.jl")
-        include("FEM.jl")
-        include("Time_integrator.jl")
-        include("Solver.jl")
-        include("PostProcess.jl")
-        include("Vis.jl")
+if false
+        include("reload_modules.jl")
 end
+
+
+# ---------------------------------------------------------------------------
+
+import Parameter, Problem, FEM, Solver, PostProcess, Vis
+
 # ---------------------------------------------------------------------------
 
 
