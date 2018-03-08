@@ -1,17 +1,17 @@
 # --------------------------------------------------
 # --------------------------------------------------
 
-path = pwd()
-println("Adding to LOAD_PATH:   $path")
-push!(LOAD_PATH, pwd())
+# path = pwd()
+# println("Adding to LOAD_PATH:   $path")
+# push!(LOAD_PATH, pwd())
 
-for (root, dirs, files) in walkdir(pwd()*"/src")
-    for dir in dirs
-    	path = joinpath(root, dir)
-    	println("Adding to LOAD_PATH:   $path")
-        push!(LOAD_PATH, path)
-    end
-end
+# for (root, dirs, files) in walkdir(pwd()*"/src")
+#     for dir in dirs
+#     	path = joinpath(root, dir)
+#     	println("Adding to LOAD_PATH:   $path")
+#         push!(LOAD_PATH, path)
+#     end
+# end
 
 # --------------------------------------------------
 # --------------------------------------------------
