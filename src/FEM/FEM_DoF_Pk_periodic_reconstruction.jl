@@ -1,4 +1,4 @@
-struct Dof_Pk_periodic{FEM_order} <: AbstractDof
+struct Dof_Pk_periodic_reconstrcution{FEM_order} <: AbstractDof
     
     # ----------------------------------------
     # General infos
@@ -70,12 +70,12 @@ end # end type
 
 
 
-function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
-                            problem :: Problem.AbstractProblem,
-                            periodicityInfo :: Mesh.PeriodicityInfo,
-                            n_order :: Int)
+function Dof_Pk_periodic_reconstrcution(mesh :: Mesh.TriangleMesh.TriMesh,
+                                        problem :: Problem.AbstractProblem,
+                                        periodicityInfo :: Mesh.PeriodicityInfo,
+                                        n_order :: Int)
     
-    FEM_info = "DoF object for ---   periodic  --- Pk-Lagrange FEM of order $(n_order)."
+    FEM_info = "DoF object for ---   periodic  --- Pk-Lagrange PU-FEM reconstruction of order $(n_order)."
     # ----------------------------------------
 
     if n_order==1
@@ -84,6 +84,7 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
         # ----------------------------------------
         # Translation between topology and geometry
         index_map_dof2mesh = identify_points(mesh, periodicityInfo)
+        index_map_dof2mesh = [index_map_dof2mesh ; index_map_dof2mesh+maximum(index_map_dof2mesh)]
         index_map_mesh2dof = indexin(unique(index_map_dof2mesh), index_map_dof2mesh)
         # ----------------------------------------
 
@@ -152,11 +153,13 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
         n_true_dof = length(unique(index_map_dof2mesh))
         # ----------------------------------------
 
+
         # ----------------------------------------
         # Used for building the system matrices
-        ind_cell = index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]
-        ind = vec(ind_cell[[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3],:])
-        ind_test = vec(ind_cell[[1;2;3;1;2;3;1;2;3],:])
+        M = [Mesh.get_cell(mesh, 1:mesh.n_cell) ; Mesh.get_cell(mesh, 1:mesh.n_cell)+mesh.n_point]
+        ind_cell = index_map_dof2mesh[M]
+        ind = vec(ind_cell[[ones(6) ; 2*ones(6) ; 3*ones(6) ; 4*ones(6) ; 5*ones(6) ; 6*ones(6)],:])
+        ind_test = vec(ind_cell[[collect(1:6) ; collect(1:6) ; collect(1:6) ; collect(1:6) ; collect(1:6) ; collect(1:6)],:])
         ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
         
         T_ref2cell = [zeros(2, 3) for i=1:mesh.n_cell]
@@ -184,7 +187,7 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
 
     end # end if order
     
-    return Dof_Pk_periodic{n_order}(n_order,
+    return Dof_Pk_periodic_reconstrcution{n_order}(n_order,
                                         FEM_info,
                                         n_node,
                                         n_node_boundary,
@@ -227,18 +230,19 @@ end # end constructor
 
 
 # -------------------------------------------------------------------------------------------------------
-# -----------------------------   Functions on Dof_Pk_periodic   -----------------------------
+# -----------------------------   Functions on Dof_Pk_periodic_reconstrcution   -----------------------------
 # -------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------
 """
-    map_ind_dof2mesh(dof :: Dof_Pk_periodic{1}, ind_dof :: Array{Int})
+    map_ind_dof2mesh(dof :: Dof_Pk_periodic_reconstrcution{1}, ind_dof :: Array{Int})
 
     Map indices in the actual mesh to indices in terms of degrees of freedom.
     
 """
-function map_ind_dof2mesh(dof :: Dof_Pk_periodic{1}, ind_dof :: Array{Int})
+function map_ind_dof2mesh(dof :: Dof_Pk_periodic_reconstrcution{1}, ind_dof :: Array{Int})
 
+    ind_dof[ind_dof.>dof.n_node] = ind_dof[ind_dof.>dof.n_node] - dof.n_node
     ind_mesh = [find(index_map_dof2mesh.==ind) for ind in ind_dof]
 
     return ind_mesh
@@ -246,14 +250,14 @@ end
 
 
 """
-    map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,1})
+    map_vec_dof2mesh(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_dof :: Array{Float64,1})
 
     Map a vector in terms of the actual mesh to a vector in terms of degrees
     of freedom.
     
     
 """
-function map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,1})
+function map_vec_dof2mesh(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_dof :: Array{Float64,1})
 
     # expand a dof-vector into a mesh-vector (only periodic boundaries)
     vec_mesh = vec_dof[dof.index_map_dof2mesh]
@@ -263,14 +267,14 @@ end
 
 
 """
-    map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,2})
+    map_vec_dof2mesh(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_dof :: Array{Float64,2})
 
     Map a vector in terms of the actual mesh to a vector in terms of degrees
     of freedom.
     
     
 """
-function map_vec_dof2mesh(dof :: Dof_Pk_periodic{1}, vec_dof :: Array{Float64,2})
+function map_vec_dof2mesh(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_dof :: Array{Float64,2})
 
     # expand a dof-vector into a mesh-vector (only periodic boundaries)
     vec_mesh = vec_dof[dof.index_map_dof2mesh,:]
@@ -282,28 +286,29 @@ end
 
 # ----------------------------------------
 """
-    map_ind_mesh2dof(dof :: Dof_Pk_periodic{1}, ind_mesh :: Array{Int})
+    map_ind_mesh2dof(dof :: Dof_Pk_periodic_reconstrcution{1}, ind_mesh :: Array{Int})
 
     Map indices in terms of degrees of freedom to indices on the actual
     mesh.
 
 """
-function map_ind_mesh2dof(dof :: Dof_Pk_periodic{1}, ind_mesh :: Array{Int})
+function map_ind_mesh2dof(dof :: Dof_Pk_periodic_reconstrcution{1}, ind_mesh :: Array{Int})
 
-    ind_dof = dof.index_map_dof2mesh[ind_mesh]
+    ind = [ind_mesh ind_mesh+dof.n_node]
+    ind_dof = dof.index_map_dof2mesh[ind]
 
     return ind_dof
 end
 
 
 """
-    map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,1})
+    map_vec_mesh2dof(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_mesh :: Array{Float64,1})
 
     Map a vector in terms of degrees of freedom to a vector on the actual
     mesh.
 
 """
-function map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,1})
+function map_vec_mesh2dof(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_mesh :: Array{Float64,1})
 
     # reduce a mesh-vector to a dof-vector (only periodic boundaries)
     vec_dof = vec_mesh[dof.index_map_mesh2dof]
@@ -313,13 +318,13 @@ end
 
 
 """
-    map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,2})
+    map_vec_mesh2dof(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_mesh :: Array{Float64,2})
 
     Map a vector in terms of degrees of freedom to a vector on the actual
     mesh.
 
 """
-function map_vec_mesh2dof(dof :: Dof_Pk_periodic{1}, vec_mesh :: Array{Float64,2})
+function map_vec_mesh2dof(dof :: Dof_Pk_periodic_reconstrcution{1}, vec_mesh :: Array{Float64,2})
 
     # reduce a mesh-vector to a dof-vector (only periodic boundaries)
     vec_dof = vec_mesh[dof.index_map_mesh2dof,:]
@@ -330,7 +335,7 @@ end
 
 
 # ----------------------------------------
-function get_dof_elem(dof :: Dof_Pk_periodic{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: Array{Int64,1})
+function get_dof_elem(dof :: Dof_Pk_periodic_reconstrcution{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: Array{Int64,1})
     
     # Put a filter before mesh indices to translate to dof
     # indices
@@ -338,7 +343,7 @@ function get_dof_elem(dof :: Dof_Pk_periodic{1}, mesh :: Mesh.TriangleMesh.TriMe
     return map_ind_mesh2dof(dof, Mesh.get_cell(mesh, ind_c))
 end # end function
 
-function get_dof_elem(dof :: Dof_Pk_periodic{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: UnitRange{Int64})
+function get_dof_elem(dof :: Dof_Pk_periodic_reconstrcution{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_c :: UnitRange{Int64})
     
     # Put a filter before mesh indices to translate to dof
     # indices
@@ -349,7 +354,7 @@ end # end function
 
 
 # ----------------------------------------
-function get_dof_edge(dof :: Dof_Pk_periodic{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: Array{Int64,1})    
+function get_dof_edge(dof :: Dof_Pk_periodic_reconstrcution{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: Array{Int64,1})    
     
     # Put a filter before mesh indices to translate to dof
     # indices
@@ -357,7 +362,7 @@ function get_dof_edge(dof :: Dof_Pk_periodic{1}, mesh :: Mesh.TriangleMesh.TriMe
     return map_ind_mesh2dof(dof, Mesh.get_edge(mesh, ind_e))
 end # end function
 
-function get_dof_edge(dof :: Dof_Pk_periodic{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: UnitRange{Int64})
+function get_dof_edge(dof :: Dof_Pk_periodic_reconstrcution{1}, mesh :: Mesh.TriangleMesh.TriMesh, ind_e :: UnitRange{Int64})
     
     # Put a filter before mesh indices to translate to dof
     # indices

@@ -24,6 +24,7 @@ end
 function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriangleMesh.TriMesh, problem :: Problem.AbstractPhysicalProblem)
 
     # ------------------------------
+    # Map pure mesh indices to dof indices
     ind_node_non_dirichlet = unique(FEM.map_ind_mesh2dof(dof, dof.ind_node_non_dirichlet))
     ind_node_dirichlet = unique(FEM.map_ind_mesh2dof(dof, dof.ind_node_dirichlet))
     # ------------------------------

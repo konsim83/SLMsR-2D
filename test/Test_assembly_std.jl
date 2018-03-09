@@ -1,7 +1,7 @@
 @testset "FEM - Assembly Procedures - std" begin
 	    
        par_global = Parameter.Parameter_FEM(1.0, 1/500, 2, 0, 1, 3, 1)
-       m = Mesh.mesh_unit_square(500)
+       m = Mesh.mesh_unit_square(5)
        r = FEM.RefEl_Pk(1)
        p = Problem.Gaussian(1.0)
        per = Mesh.DoublePeriodicUnitSquare()
@@ -28,7 +28,7 @@ end
 @testset "FEM - Assembly Procedures - std (in place)" begin
            
        par_global = Parameter.Parameter_FEM(1.0, 1/500, 2, 0, 1, 3, 1)
-       m = Mesh.mesh_unit_square(500)
+       m = Mesh.mesh_unit_square(5)
        r = FEM.RefEl_Pk(1)
        p = Problem.Gaussian(1.0)
        per = Mesh.DoublePeriodicUnitSquare()
