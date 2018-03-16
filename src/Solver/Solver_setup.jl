@@ -193,7 +193,49 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     solution = FEM.Solution_MsFEM_reconstruction(dof_collection, par)
 
 
-    ### CALL THE SOLVER PIPELINE ###
+    # ----------------------------------------------------------------
+    # ----------------------------------------------------------------
+    # Setup initial data for basis functions
+    for ind_cell in 1:mesh_collection.mesh.n_cell
+        u_init_tmp = Problem.u_init(problem_f[ind_cell], mesh_collection.mesh_f[ind_cell].point)
+        solution.phi[1][ind_cell][:,1] = u_init_tmp[:,1] / 2
+        solution.phi[2][ind_cell][:,1] = u_init_tmp[:,2] / 2
+        solution.phi[3][ind_cell][:,1] = u_init_tmp[:,3] / 2
+
+        solution.phi[4][ind_cell][:,1] = u_init_tmp[:,1] / 2
+        solution.phi[5][ind_cell][:,1] = u_init_tmp[:,2] / 2
+        solution.phi[6][ind_cell][:,1] = u_init_tmp[:,3] / 2
+    end
+
+    # Setup initial data
+    solution.u[1:mesh.n_point,1] = Problem.u_init(problem, mesh_collection.mesh.point) / 2
+    solution.u[mesh.n_point+1:end,1] = Problem.u_init(problem, mesh_collection.mesh.point) / 2
+
+    # Reconstruct the basis at time step k_time+1
+    N = par.n_steps
+    p = Progress(N, 0.01, "Progress of time stepping...", 10)
+    for k_time=1:par.n_steps
+        Reconstruction.SemiLagrange(solution, 
+                                    mesh_collection,
+                                    dof_collection, 
+                                    par,
+                                    problem_f)
+
+        TimeIntegrator.make_step!(solution,
+                                   time_stepper,
+                                   mesh,
+                                   dof,
+                                   ref_el,
+                                   quad,
+                                   par,
+                                   problem,
+                                   k_time,
+                                   ind_cell)
+        next!(p)
+    end # end for
+    # ----------------------------------------------------------------
+    # ----------------------------------------------------------------
+
 
 
 

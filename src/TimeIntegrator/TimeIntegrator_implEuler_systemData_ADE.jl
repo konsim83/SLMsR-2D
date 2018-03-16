@@ -21,7 +21,10 @@ struct System_data_implEuler_ADE <: AbstractSystem_data_implEuler
 end
 
 
-function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriangleMesh.TriMesh, problem :: Problem.AbstractPhysicalProblem)
+# Constructor for physical problem
+function System_data_implEuler_ADE(dof :: FEM.AbstractDof,
+                                    mesh :: Mesh.TriangleMesh.TriMesh,
+                                    problem :: Problem.AbstractPhysicalProblem)
 
     # ------------------------------
     # Map pure mesh indices to dof indices
@@ -53,7 +56,10 @@ function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.Triangle
 end
 
 
-function System_data_implEuler_ADE(dof :: FEM.AbstractDof, mesh :: Mesh.TriangleMesh.TriMesh, problem :: Problem.AbstractBasisProblem)
+# Constructor for basis problem
+function System_data_implEuler_ADE(dof :: FEM.AbstractDof, 
+                                    mesh :: Mesh.TriangleMesh.TriMesh, 
+                                    problem :: Problem.AbstractBasisProblem)
     
     # ------------------------------
     ind_node_non_dirichlet = unique(FEM.map_ind_mesh2dof(dof, dof.ind_node_non_dirichlet))

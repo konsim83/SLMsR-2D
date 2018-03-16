@@ -57,31 +57,31 @@ function update_system!(solution :: FEM.AbstractSolution,
     
     # ----   This is the slow version   ---
     if k_time==1
-    system_data.mass[:,:] = FEM.assemble_mass(mesh,
-                                         dof,
-                                         ref_el,
-                                         quad,
-                                         problem)
+        system_data.mass[:,:] = FEM.assemble_mass(mesh,
+                                             dof,
+                                             ref_el,
+                                             quad,
+                                             problem)
     end
     
     if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
-    system_data.advection[:,:] = FEM.assemble_advection(mesh,
-                                                   dof,
-                                                   ref_el,
-                                                   quad,
-                                                   par,
-                                                   problem,
-                                                   k_time+1)
+        system_data.advection[:,:] = FEM.assemble_advection(mesh,
+                                                       dof,
+                                                       ref_el,
+                                                       quad,
+                                                       par,
+                                                       problem,
+                                                       k_time+1)
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
-    system_data.diffusion[:,:] = FEM.assemble_diffusion(mesh,
-                                                   dof,
-                                                   ref_el,
-                                                   quad,
-                                                   par,
-                                                   problem,
-                                                   k_time+1)
+        system_data.diffusion[:,:] = FEM.assemble_diffusion(mesh,
+                                                       dof,
+                                                       ref_el,
+                                                       quad,
+                                                       par,
+                                                       problem,
+                                                       k_time+1)
     end
     # ----   This is the slow version   ---
     
