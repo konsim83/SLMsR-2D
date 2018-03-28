@@ -1,10 +1,13 @@
 module FEM
 
-using Mesh, Parameter, Problem, Quad
+import Mesh, Parameter, Problem, Quad
 
 
 abstract type AbstractRefEl end
+
 abstract type AbstractDof end
+abstract type AbstractDofCollection end
+
 abstract type AbstractSolution end
 
 

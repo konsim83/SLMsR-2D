@@ -1,6 +1,10 @@
 module Reconstruction
 
-import DifferentialEquations, Parameter, ProgressMeter, Problem, FEM
+import Mesh, Parameter, Problem, FEM
+
+import DifferentialEquations
+
+using ProgressMeter
 
 
 # ---------------------

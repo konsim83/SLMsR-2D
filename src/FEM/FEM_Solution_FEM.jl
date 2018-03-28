@@ -21,7 +21,7 @@ end # end type
 
 # Outer constructor
 function Solution_FEM(dof :: AbstractDof,
-                          par :: Parameter_FEM)
+                          par :: Parameter.Parameter_FEM)
 
     # Reserve memory for the solution
     u = Array{Float64,2}(dof.n_node, par.n_steps+1)

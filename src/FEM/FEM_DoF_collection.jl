@@ -1,4 +1,4 @@
-struct Dof_collection{FEM_order_f}
+struct Dof_collection{FEM_order_f} <: AbstractDofCollection
 
     dof :: AbstractDof
     dof_f :: Array{AbstractDof,1}

@@ -1,10 +1,10 @@
 module PostProcess
 
-using Mesh, FEM, ProgressMeter
+import Mesh, FEM
+
+using ProgressMeter
 
 import TriangleMesh
-
-export find_cell
 
 # --------------------------------------------
 include("PostProcess_find_cell.jl")

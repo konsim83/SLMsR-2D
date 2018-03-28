@@ -180,7 +180,7 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
 
     # Set up degrees of freedom handler
     periodicityInfo = Mesh.DoublePeriodicUnitSquare()
-    dof = FEM.Dof_Pk_periodic_reconstruction(mesh_collection.mesh, problem, periodicityInfo, 1)
+    dof = FEM.Dof_Pk_periodic(mesh_collection.mesh, problem, periodicityInfo, 1)
     problem_f = Array{Problem.AbstractBasisProblem,1}(mesh_collection.mesh.n_cell)
     for i_cell in 1:mesh_collection.mesh.n_cell
         # Set up local problem by geometry
@@ -190,7 +190,7 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     dof_collection = FEM.Dof_collection(mesh_collection, dof, problem_f, ref_el_f.n_order)
 
     # Set up solution structure
-    solution = FEM.Solution_MsFEM_reconstruction(dof_collection, par)
+    solution = FEM.Solution_MsFEM(dof_collection, par)
 
 
     # ----------------------------------------------------------------
@@ -198,29 +198,29 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     # Setup initial data for basis functions
     for ind_cell in 1:mesh_collection.mesh.n_cell
         u_init_tmp = Problem.u_init(problem_f[ind_cell], mesh_collection.mesh_f[ind_cell].point)
-        solution.phi[1][ind_cell][:,1] = u_init_tmp[:,1] / 2
-        solution.phi[2][ind_cell][:,1] = u_init_tmp[:,2] / 2
-        solution.phi[3][ind_cell][:,1] = u_init_tmp[:,3] / 2
-
-        solution.phi[4][ind_cell][:,1] = u_init_tmp[:,1] / 2
-        solution.phi[5][ind_cell][:,1] = u_init_tmp[:,2] / 2
-        solution.phi[6][ind_cell][:,1] = u_init_tmp[:,3] / 2
+        solution.phi_1[ind_cell][:,1] = u_init_tmp[:,1]
+        solution.phi_2[ind_cell][:,1] = u_init_tmp[:,2]
+        solution.phi_3[ind_cell][:,1] = u_init_tmp[:,3]
     end
 
     # Setup initial data
-    solution.u[1:mesh.n_point,1] = Problem.u_init(problem, mesh_collection.mesh.point) / 2
-    solution.u[mesh.n_point+1:end,1] = Problem.u_init(problem, mesh_collection.mesh.point) / 2
+    solution.u[1:mesh_collection.mesh.n_point,1] = Problem.u_init(problem, mesh_collection.mesh.point)
 
     # Reconstruct the basis at time step k_time+1
     N = par.n_steps
     p = Progress(N, 0.01, "Progress of time stepping...", 10)
     for k_time=1:par.n_steps
-        Reconstruction.SemiLagrange(solution, 
-                                    mesh_collection,
-                                    dof_collection, 
-                                    par,
-                                    problem_f)
+        # Time at index k
+        Time = (k_time-1)*par.dt
 
+        Reconstruction.SemiLagrange_L2_opt(solution, 
+                                            mesh_collection,
+                                            dof_collection,
+                                            par,
+                                            problem,
+                                            problem_f,
+                                            Time + par.dt, k_time + 1)
+        error("Now integrate in time...")
         TimeIntegrator.make_step!(solution,
                                    time_stepper,
                                    mesh,
@@ -235,95 +235,6 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     end # end for
     # ----------------------------------------------------------------
     # ----------------------------------------------------------------
-
-
-
-
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # Solve the local problems
-    # for i_cell in 1:mesh_collection.mesh.n_cell        
-        # Set up time integrator
-        # time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof_f[i_cell],
-        #                                                                                     mesh_collection.mesh_f[i_cell],
-        #                                                                                     problem_f[i_cell])
-        # # Call actual solver. Pass solution data by reference.  Solves
-        # # the i-th cell problem.
-        # solve_problem_local!(mesh_collection.mesh_f[i_cell],
-        #                      ref_el_f,
-        #                      dof_collection.dof_f[i_cell],
-        #                      quad_f,
-        #                      time_stepper,
-        #                      par,
-        #                      problem_f[i_cell],
-        #                      solution,
-        #                      i_cell,
-        #                      mesh_collection.mesh.n_cell)
-
-        # # Compute time derivative of basis functions via finite differencing
-        # FiniteDiff.central!(solution.phi_1_t[i_cell], solution.phi_1[i_cell], par.dt)
-        # FiniteDiff.central!(solution.phi_2_t[i_cell], solution.phi_2[i_cell], par.dt)
-        # FiniteDiff.central!(solution.phi_3_t[i_cell], solution.phi_3[i_cell], par.dt)
-    # end
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # Set up time integrator
-    # time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof,
-    #                                                                                     mesh_collection.mesh,
-    #                                                                                     problem)
-
-    # try
-        # Call actual solver. Pass solution data by reference.       
-        # solve_problem!(mesh_collection,
-        #                ref_el,
-        #                dof_collection.dof,
-        #                quad_f,
-        #                time_stepper,
-        #                par,
-        #                problem,
-        #                solution)
-    # catch
-    #     warn("Problem computing the Muliscale solution.")
-    # end
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     
     return solution, mesh_collection
 end
-# function solve_FEM_simplex(par :: Parameter.Parameter_FEM, problem :: T) where {T<:Problem.AbstractProblem}
-
-#     # Build mesh of unit square (0,1)x(0,1)
-#     mesh = Mesh.mesh_unit_simplex_uniform_edges(par.n_edge_per_seg)
-
-#     # Set up reference element
-#     ref_el = FEM.RefEl_Pk{par.n_order_FEM}()
-
-#     # Set up quadrature rule
-#     quad = Quad.Quad_simplex(par.n_order_quad)
-
-#     # Set up degrees of freedom handler
-#     dof = FEM.Dof_Pk{ref_el.n_order}(mesh);
-
-#     # Set up solution structure
-#     solution = FEM.Solution_FEM(dof, par)
-
-#     # Set up time integrator
-#     time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof, mesh, problem)
-#     # +++++++++++++++++++
-
-#     # Call actual solver. Pass solution data by reference.       
-#     solve_problem!(mesh,
-#                    ref_el,
-#                    dof,
-#                    quad,
-#                    time_stepper,
-#                    par,
-#                    problem,
-#                    solution)
-    
-#     return solution, mesh
-# end

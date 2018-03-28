@@ -24,7 +24,7 @@ struct Solution_MsFEM <: AbstractSolution
     diffusion :: Array{SparseMatrixCSC{Float64,Int64},2}
     
     function Solution_MsFEM(dof :: Dof_collection,
-                            par :: Parameter_MsFEM)
+                            par :: Parameter.Parameter_MsFEM)
         
         # Reserve memory for the solution
         u = Array{Float64, 2}(dof.dof.n_node, par.n_steps+1)

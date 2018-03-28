@@ -1,7 +1,8 @@
 module Solver
 
-using FEM, Mesh, Parameter, Problem, Quad, TimeIntegrator, ProgressMeter, Geometry, FiniteDiff
+import FEM, Mesh, Parameter, Problem, Quad, TimeIntegrator, Geometry, FiniteDiff, Reconstruction
 
+using ProgressMeter
 
 # -------   Core routines for workflow   -------
 include("Solver_setup.jl")

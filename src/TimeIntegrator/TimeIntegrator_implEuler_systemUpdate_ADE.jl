@@ -11,7 +11,7 @@ function update_system!(solution :: FEM.AbstractSolution,
 
     """
 
-    Update the system at time index k_time+1 because we need
+    Update the system at time index (k_time+1)*par.dt because we need
     information at the next time step.
 
     """    
@@ -36,7 +36,7 @@ function update_system!(solution :: FEM.AbstractSolution,
     #                             quad,
     #                             par,
     #                             problem,
-    #                             k_time+1)
+    #                             ((k_time+1)*par.dt)*par.dt)
     # end
 
     # if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
@@ -48,7 +48,7 @@ function update_system!(solution :: FEM.AbstractSolution,
     #                             quad,
     #                             par,
     #                             problem,
-    #                             k_time+1)
+    #                             ((k_time+1)*par.dt)*par.dt)
     # end
     # ----   This is the fast version   ---
     
@@ -71,7 +71,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                        quad,
                                                        par,
                                                        problem,
-                                                       k_time+1)
+                                                       (k_time+1)*par.dt)
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
@@ -81,7 +81,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                        quad,
                                                        par,
                                                        problem,
-                                                       k_time+1)
+                                                       (k_time+1)*par.dt)
     end
     # ----   This is the slow version   ---
     
@@ -121,7 +121,7 @@ function update_system!(solution :: FEM.AbstractSolution,
 
     """
 
-    Update the system at time index k_time+1 because we need
+    Update the system at time index (k_time+1)*par.dt because we need
     information at the next time step.
 
     """
@@ -147,8 +147,8 @@ function update_system!(solution :: FEM.AbstractSolution,
                                 quad,
                                 par,
                                 problem,
-                                k_time+1)
-        solution.advection[ind_cell, k_time+1][:,:] = copy(system_data.advection)
+                                (k_time+1)*par.dt)
+        solution.advection[ind_cell, (k_time+1)*par.dt][:,:] = copy(system_data.advection)
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
@@ -160,8 +160,8 @@ function update_system!(solution :: FEM.AbstractSolution,
                                 quad,
                                 par,
                                 problem,
-                                k_time+1)
-        solution.diffusion[ind_cell, k_time+1][:,:] = copy(system_data.diffusion)
+                                (k_time+1)*par.dt)
+        solution.diffusion[ind_cell, (k_time+1)*par.dt][:,:] = copy(system_data.diffusion)
     end
     # ----   This is the fast version   ---
     
@@ -184,7 +184,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                    quad,
                                                    par,
                                                    problem,
-                                                   k_time+1)
+                                                   (k_time+1)*par.dt)
     end
 
     if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
@@ -194,7 +194,7 @@ function update_system!(solution :: FEM.AbstractSolution,
                                                    quad,
                                                    par,
                                                    problem,
-                                                   k_time+1)
+                                                   (k_time+1)*par.dt)
     end
     # ----   This is the slow version   ---
     =#
@@ -235,7 +235,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
 
     """
 
-    Update the system at time index k_time+1 because we need
+    Update the system at time index (k_time+1)*par.dt because we need
     information at the next time step.
 
     """
@@ -262,7 +262,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
                        ref_el,
                        par,
                        problem,
-                       k_time+1)
+                       (k_time+1)*par.dt)
 
     system_data.advection[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
     FEM.assemble_advection!(system_data.advection,
@@ -273,7 +273,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
                             ref_el,
                             par,
                             problem,
-                            k_time+1)
+                            (k_time+1)*par.dt)
 
     # This line simply adds the derivative of the mass matrix term to
     # the advection matrix. This is done in place.
@@ -285,7 +285,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
                          ref_el,
                          par,
                          problem,
-                         k_time+1)
+                         (k_time+1)*par.dt)
 
     system_data.diffusion[:,:] = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
     FEM.assemble_diffusion!(system_data.diffusion,
@@ -296,7 +296,7 @@ function update_system!(solution :: FEM.Solution_MsFEM,
                             ref_el,
                             par,
                             problem,
-                            k_time+1)
+                            (k_time+1)*par.dt)
     # ----   This is the fast version   ---
     
     if dof.n_node_neumann > 0
