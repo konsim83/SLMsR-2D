@@ -11,10 +11,6 @@ struct ImplEulerData <: AbstractSystemData
     system_matrix :: SparseMatrixCSC{Float64,Int64}
     system_rhs :: Array{Float64}
 
-    # Holds solution of system in dof-indices. Note that Dirichlet
-    # nodes can occur with periodic boundaries.
-    u_temp :: Array{Float64}
-
     # Contais topological indices of Dirichlet and non-Dirichlet nodes.
     ind_node_non_dirichlet :: Array{Int,1}
     ind_node_dirichlet :: Array{Int,1}

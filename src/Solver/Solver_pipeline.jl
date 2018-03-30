@@ -52,7 +52,7 @@ function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
                                        quad,
                                        par,
                                        problem,
-                                       Time)
+                                       Time+par.dt)
         end
 
         if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
@@ -62,7 +62,7 @@ function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
                                        quad,
                                        par,
                                        problem,
-                                       Time)
+                                       Time+par.dt)
         end
 
         
@@ -71,7 +71,7 @@ function solve_problem!(mesh :: Mesh.TriangleMesh.TriMesh,
         TimeIntegrator.updateSystem(timeStepper.systemData, M, D-A, f, par.dt)
 
         # Make a single time step
-        TimeIntegrator.make_step!(timeStepper, view(solution.u, :, k_time+1), solution.u[:,k_time])
+        TimeIntegrator.makeStep!(timeStepper, view(solution.u, :, k_time+1), solution.u[:,k_time], par.dt)
 
         next!(p)
     end # end for
@@ -131,31 +131,31 @@ function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
           # Zero forcing
           f = zeros(size(D,1),3)
 
-          M = FEM.assemble_mass(mesh,
-                                 dof,
-                                 ref_el,
-                                 quad,
-                                 problem)
+          solution.mass[ind_cell] = FEM.assemble_mass(mesh,
+                                             dof,
+                                             ref_el,
+                                             quad,
+                                             problem)
         end
         
         if (k_time==1) || (k_time>=1 && problem.is_transient_velocity)
-          A = FEM.assemble_advection(mesh,
-                                       dof,
-                                       ref_el,
-                                       quad,
-                                       par,
-                                       problem,
-                                       Time)
+          solution.advection[ind_cell,k_time+1] = FEM.assemble_advection(mesh,
+                                                       dof,
+                                                       ref_el,
+                                                       quad,
+                                                       par,
+                                                       problem,
+                                                       Time+par.dt)
         end
 
         if (k_time==1) || (k_time>=1 && problem.is_transient_diffusion)
-          D = FEM.assemble_diffusion(mesh,
-                                       dof,
-                                       ref_el,
-                                       quad,
-                                       par,
-                                       problem,
-                                       Time)
+          solution.diffusion[ind_cell,k_time+1] = FEM.assemble_diffusion(mesh,
+                                                       dof,
+                                                       ref_el,
+                                                       quad,
+                                                       par,
+                                                       problem,
+                                                       Time+par.dt)
         end
 
         
@@ -164,7 +164,8 @@ function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
         TimeIntegrator.updateSystem(timeStepper.systemData, M, D-A, f, par.dt)
 
         # Make a single time step
-        TimeIntegrator.make_step!(timeStepper, view(solution.u, :, k_time+1), solution.u[:,k_time])
+        error("How to pass the basis?")
+        TimeIntegrator.makeStep!(timeStepper, view(solution.u, :, k_time+1), solution.u[:,k_time], par.dt)
 
         next!(p)
     end # end for
@@ -173,18 +174,6 @@ function solve_problem_local!(mesh :: Mesh.TriangleMesh.TriMesh,
 
     return nothing
 end
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # -------------------------------------------------------------------------------------------
@@ -198,20 +187,6 @@ function solve_problem!(mesh_collection :: Mesh.TriMesh_collection,
                         par :: Parameter.Parameter_MsFEM,
                         problem :: Problem.AbstractProblem,
                         solution :: FEM.Solution_MsFEM)
-
-    """
-
-    This is the actual solution routine. The pipeline is
-
-    1. Set up initial data
-
-    2. Set up system that can make a step from k to k+1
-
-    3. Call the actual time stepper. Note that the type system_data must be
-    created according to the type of time_stepper (it is contained in it as a
-    subtype).
-
-    """
 
     println("\n\n--------------------------------------------------------------")
 
@@ -230,26 +205,84 @@ function solve_problem!(mesh_collection :: Mesh.TriMesh_collection,
     println("\t number of time steps:   $(par.n_steps)")
     println("\t Number of active dofs:   $(dof.n_true_dof - dof.n_node_dirichlet)")
     println("\t Number of constraint dofs:   $(dof.n_node_dirichlet)")
-
-    
-    
-    N = par.n_steps
-    p = Progress(N, 0.01, "Progress of time stepping...", 10)
     
     # Setup initial data
     solution.u[:,1] = Problem.u_init(problem, mesh_collection.mesh.point)
 
     # Make step from k_time to k_time+1
-    for k_time=1:par.n_steps
-        TimeIntegrator.make_step!(solution,
-                                   time_stepper,
-                                   mesh_collection.mesh,
-                                   dof,
-                                   ref_el,
-                                   quad,
-                                   par,
-                                   problem,
-                                   k_time)
+    N = par.n_steps
+    p = Progress(N, 0.01, "Progress of time stepping...", 10)
+    for k_time in 1:par.n_steps
+        # Current time index
+        Time = k_time*par.dt
+
+        if problem.is_transient_velocity
+            k_adv = k_time + 1
+        else
+            k_adv = 2
+        end
+
+        if problem.is_transient_diffusion
+            k_diff = k_time + 1
+        else
+            k_diff = 2
+        end
+    
+        error("Change to explicit non-inplace assembly.")
+
+        M = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+        FEM.assemble_mass!(M,
+                           solution.mass,
+                           solution,
+                           mesh,
+                           dof,
+                           ref_el,
+                           par,
+                           problem,
+                           k_time+1)
+
+        A = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+        FEM.assemble_advection!(A,
+                                solution.advection[:,k_adv],
+                                solution,
+                                mesh,
+                                dof,
+                                ref_el,
+                                par,
+                                problem,
+                                k_time+1)
+
+        # This line simply adds the derivative of the mass matrix term to
+        # the advection matrix. This is done in place.
+        FEM.assemble_mass_t!(A,
+                             solution.mass,
+                             solution,
+                             mesh,
+                             dof,
+                             ref_el,
+                             par,
+                             problem,
+                             k_time+1)
+
+        D = sparse(dof.ind_test, dof.ind, zeros(Float64, length(dof.ind)), dof.n_true_dof, dof.n_true_dof)
+        FEM.assemble_diffusion!(D,
+                                solution.diffusion[:,k_diff],
+                                solution,
+                                mesh,
+                                dof,
+                                ref_el,
+                                par,
+                                problem,
+                                k_time+1)
+        # Zero forcing
+        f = zeros(size(D,1))
+
+        # Set the system matrices 
+        TimeIntegrator.updateSystem(timeStepper.systemData, M, D-A, f, par.dt)
+
+        # Make a single time step
+        TimeIntegrator.makeStep!(timeStepper, view(solution.u, :, k_time+1), solution.u[:,k_time], par.dt)
+
         next!(p)
     end # end for
     println("..... done.")

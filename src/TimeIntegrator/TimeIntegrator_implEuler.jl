@@ -3,7 +3,6 @@
 struct ImplEuler <: AbstractTimeIntegrator
 
     systemData :: ImplEulerData
-    dt :: Float64
     
 end
 # ------------------------------------------------------------------------------
@@ -20,12 +19,12 @@ end
 
 
 # -------   System data   -------
-include("TimeIntegrator_implEuler_systemData_ADE.jl")
+include("TimeIntegrator_implEuler_systemData.jl")
+
+
+# -------   System data   -------
+include("TimeIntegrator_implEuler_systemUpdate.jl")
 
 
 # -------   Step function   -------
 include("TimeIntegrator_implEuler_systemStep.jl")
-
-
-# # -------   System update   -------
-# include("TimeIntegrator_implEuler_systemUpdate_ADE.jl")

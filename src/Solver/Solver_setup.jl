@@ -125,20 +125,15 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     timeStepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof,
                                                                                         mesh_collection.mesh,
                                                                                         problem)
-
-    # try
-        # Call actual solver. Pass solution data by reference.       
-        solve_problem!(mesh_collection,
-                       ref_el,
-                       dof_collection.dof,
-                       quad_f,
-                       timeStepper,
-                       par,
-                       problem,
-                       solution)
-    # catch
-    #     warn("Problem computing the Muliscale solution.")
-    # end
+ 
+    solve_problem!(mesh_collection,
+                   ref_el,
+                   dof_collection.dof,
+                   quad_f,
+                   timeStepper,
+                   par,
+                   problem,
+                   solution)
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     
