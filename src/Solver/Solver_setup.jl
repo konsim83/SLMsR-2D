@@ -26,7 +26,7 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
     solution = FEM.Solution_FEM(dof, par)
 
     # Set up time integrator
-    time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof, mesh, problem)
+    timeStepper = TimeIntegrator.ImplEuler(dof, mesh, problem)
     # +++++++++++++++++++
 
     # Call actual solver. Pass solution data by reference.       
@@ -34,7 +34,7 @@ function solve_FEM_periodic_square(par :: Parameter.Parameter_FEM, problem :: T)
                    ref_el,
                    dof,
                    quad,
-                   time_stepper,
+                   timeStepper,
                    par,
                    problem,
                    solution)
@@ -94,16 +94,16 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     # Solve the local problems
     for i_cell in 1:mesh_collection.mesh.n_cell        
         # Set up time integrator
-        time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof_f[i_cell],
-                                                                                            mesh_collection.mesh_f[i_cell],
-                                                                                            problem_f[i_cell])
+        timeStepper = TimeIntegrator.ImplEuler(dof_collection.dof_f[i_cell],
+                                                mesh_collection.mesh_f[i_cell],
+                                                problem_f[i_cell])
         # Call actual solver. Pass solution data by reference.  Solves
         # the i-th cell problem.
         solve_problem_local!(mesh_collection.mesh_f[i_cell],
                              ref_el_f,
                              dof_collection.dof_f[i_cell],
                              quad_f,
-                             time_stepper,
+                             timeStepper,
                              par,
                              problem_f[i_cell],
                              solution,
@@ -122,7 +122,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------------------------------------------------------------------------------
     # Set up time integrator
-    time_stepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof,
+    timeStepper = TimeIntegrator.ImplEuler{TimeIntegrator.System_data_implEuler_ADE}(dof_collection.dof,
                                                                                         mesh_collection.mesh,
                                                                                         problem)
 
@@ -132,7 +132,7 @@ function solve_MsFEM_periodic_square(par :: Parameter.Parameter_MsFEM, problem :
                        ref_el,
                        dof_collection.dof,
                        quad_f,
-                       time_stepper,
+                       timeStepper,
                        par,
                        problem,
                        solution)
@@ -222,7 +222,7 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
                                             Time + par.dt, k_time + 1)
         error("Now integrate in time...")
         TimeIntegrator.make_step!(solution,
-                                   time_stepper,
+                                   timeStepper,
                                    mesh,
                                    dof,
                                    ref_el,
