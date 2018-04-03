@@ -9,7 +9,6 @@ function assemble_mass!(M :: SparseMatrixCSC{Float64,Int64},
                         mesh :: Mesh.TriangleMesh.TriMesh,
                         dof :: FEM.AbstractDof,
                         ref_el :: FEM.RefEl_Pk{1},
-                        par :: Parameter.Parameter_MsFEM,
                         problem :: Problem.AbstractPhysicalProblem,
                         k_time :: Int64)
 
@@ -38,7 +37,6 @@ function assemble_mass_t!(Mt  :: SparseMatrixCSC{Float64,Int64},
                           mesh :: Mesh.TriangleMesh.TriMesh,
                           dof :: FEM.AbstractDof,
                           ref_el :: FEM.RefEl_Pk{1},
-                          par :: Parameter.Parameter_MsFEM,
                           problem :: Problem.AbstractPhysicalProblem,
                           k_time :: Int64)
 
@@ -67,7 +65,6 @@ function assemble_advection!(A  :: SparseMatrixCSC{Float64,Int64},
                              mesh :: Mesh.TriangleMesh.TriMesh,
                              dof :: FEM.AbstractDof,
                              ref_el :: FEM.RefEl_Pk{1},
-                             par :: Parameter.Parameter_MsFEM,
                              problem :: Problem.AbstractPhysicalProblem,
                              k_time :: Int64)
 
@@ -96,7 +93,6 @@ function assemble_diffusion!(D  :: SparseMatrixCSC{Float64,Int64},
                              mesh :: Mesh.TriangleMesh.TriMesh,
                              dof :: FEM.AbstractDof,
                              ref_el :: FEM.RefEl_Pk{1},
-                             par :: Parameter.Parameter_MsFEM,
                              problem :: Problem.AbstractPhysicalProblem,
                              k_time :: Int64)
     

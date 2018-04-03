@@ -1,6 +1,9 @@
 # ----------------------------------
 # Step for a physical problem.
-function makeStep!(timeInt :: ImplEuler, uNew :: Array{Float64}, uOld :: Array{Float64})
+function makeStep!(timeInt :: ImplEuler, 
+					dof :: FEM.AbstractDof,
+					uNew :: T, 
+					uOld :: Array{Float64}) where {T <: ArrayViewUnion}
 
     innd = timeInt.systemData.ind_node_non_dirichlet
 
@@ -8,7 +11,7 @@ function makeStep!(timeInt :: ImplEuler, uNew :: Array{Float64}, uOld :: Array{F
     uNewDof = FEM.map_vec_mesh2dof(dof, uOld)
 
     # Solve the system and map to mesh variables
-    uNewDof[innd,:] = timeInt.system_data.system_matrix \ timeInt.system_data.system_rhs
+    uNewDof[innd,:] = timeInt.systemData.system_matrix \ timeInt.systemData.system_rhs
     uNew[:,:] = FEM.map_vec_dof2mesh(dof, uNewDof)
     
     return nothing

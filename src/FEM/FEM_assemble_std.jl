@@ -49,7 +49,6 @@ function assemble_advection(mesh :: Mesh.TriangleMesh.TriMesh,
                             dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
                             quad :: Quad.AbstractQuad,
-                            par :: Parameter.Parameter_FEM,
                             problem :: Problem.AbstractProblem,
                             time_idx :: Float64)
     
@@ -105,7 +104,6 @@ function assemble_diffusion(mesh :: Mesh.TriangleMesh.TriMesh,
                             dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
                             quad :: Quad.AbstractQuad,
-                            par :: Parameter.Parameter_FEM,
                             problem :: Problem.AbstractProblem,
                             time_idx :: Float64)
     
@@ -163,7 +161,6 @@ function assemble_reaction(mesh :: Mesh.TriangleMesh.TriMesh,
                             dof :: FEM.AbstractDof,
                             ref_el :: FEM.RefEl_Pk,
                             quad :: Quad.AbstractQuad,
-                            par :: Parameter.Parameter_FEM,
                             problem :: Problem.AbstractProblem,
                             time_idx :: Float64)
     

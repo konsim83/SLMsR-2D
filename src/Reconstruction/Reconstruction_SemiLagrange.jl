@@ -38,7 +38,7 @@ function SemiLagrange_L2_opt(solution :: FEM.Solution_MsFEM,
         for j=2:(n_steps_back+1)
 
         	p_old = point_orig_all[j-1][:,ind]
-			p_next = = point_orig_all[j][:,ind]
+			p_next = point_orig_all[j][:,ind]
 
             # Create mesh of next time step
             mesh_old = Mesh.TriangeMesh.TriMesh(mesh_local, p_old, "Old mesh...")

@@ -68,7 +68,7 @@ function ImplEulerData(dof :: FEM.AbstractDof,
     rhs = zeros(dof.n_true_dof,3)
     # ------------------------------
 
-    system_matrix = mass[ind_node_non_dirichlet,ind_node_non_dirichlet]
+    system_matrix = M[ind_node_non_dirichlet,ind_node_non_dirichlet]
     system_rhs = rhs[ind_node_non_dirichlet,:]
    
     return ImplEulerData(M, A, rhs,

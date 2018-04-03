@@ -34,7 +34,7 @@ problem = Problem.Gaussian_R_1(T_max, 20)
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
 n_edge_per_seg = 5
-n_refinement = 2
+n_refinement = 3
 n_edge_per_seg_f = 0
 
 
@@ -142,8 +142,6 @@ if post_process
                                 problem.file_name * "-MsFEM-mapped")
 end
 # ---------------------------------------------------------------------------
-
-
 
 
 
