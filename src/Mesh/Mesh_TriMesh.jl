@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------------------------
 # -------------------   Additional constructor for TriangleMesh.TriMesh   -------------------
 # ---------------------------------------------------------------------------------------------
-function TriangleMesh.TriMesh(mesh :: TriangleMesh.TriMesh, point :: Array{Float64,2}, mesh_info :: String)
+function TriMesh(mesh :: TriangleMesh.TriMesh, point :: Array{Float64,2}, mesh_info :: String)
 
     voronoi = TriangleMesh.VoronoiDiagram("No Voronoi diagram", 
                                             0, Array{Float64,2}(2,0),

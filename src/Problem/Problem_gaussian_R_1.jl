@@ -17,6 +17,8 @@ struct Gaussian_R_1 <: AbstractPhysicalProblem
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
+    conservative :: Bool
+
     k :: Int
     
 end # end type
@@ -47,6 +49,8 @@ function Gaussian_R_1(T :: Float64, k :: Int)
     is_transient_diffusion = false
     is_transient_velocity = false
     
+    conservative = false
+
     return Gaussian_R_1(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
@@ -54,6 +58,7 @@ function Gaussian_R_1(T :: Float64, k :: Int)
                     expectation, 
                     is_transient_diffusion, 
                     is_transient_velocity,
+                    conservative,
                     k)
 end # end constructor
 

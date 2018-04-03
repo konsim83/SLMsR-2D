@@ -21,7 +21,7 @@ mutable struct TriMesh_collection
 
             point_mapped = T_ref2cell * [mesh_simplex.point ; ones(1,size(mesh_simplex.point,2))]
 
-            this.mesh_f[i] = TriangleMesh.TriMesh(mesh_simplex, point_mapped, string("Mapped ", mesh_simplex.mesh_info))
+            this.mesh_f[i] = TriMesh(mesh_simplex, point_mapped, string("Mapped ", mesh_simplex.mesh_info))
             this.n_elem_f[i] = this.mesh_f[i].n_cell
         end
 

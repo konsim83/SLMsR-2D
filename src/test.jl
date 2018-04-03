@@ -33,8 +33,8 @@ problem = Problem.Gaussian_R_1(T_max, 20)
 
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
-n_edge_per_seg = 5
-n_refinement = 3
+n_edge_per_seg = 4
+n_refinement = 2
 n_edge_per_seg_f = 0
 
 
@@ -201,11 +201,16 @@ solution = FEM.Solution_MsFEM(dof_collection, par)
 # ----------------------------------------------------------------
 # ----------------------------------------------------------------
 # Setup initial data for basis functions
+timeStepper_local = Array{TimeIntegrator.ImplEuler,1}(mesh_collection.mesh.n_cell)
 for ind_cell in 1:mesh_collection.mesh.n_cell
 u_init_tmp = Problem.u_init(problem_f[ind_cell], mesh_collection.mesh_f[ind_cell].point)
 solution.phi_1[ind_cell][:,1] = u_init_tmp[:,1]
 solution.phi_2[ind_cell][:,1] = u_init_tmp[:,2]
 solution.phi_3[ind_cell][:,1] = u_init_tmp[:,3]
+
+timeStepper_local[ind_cell] = TimeIntegrator.ImplEuler(dof_collection.dof_f[ind_cell],
+                                                        mesh_collection.mesh_f[ind_cell],
+                                                        problem_f[ind_cell])
 end
 
 # Setup initial data
@@ -219,10 +224,25 @@ for k_time=1:1#par.n_steps
         Time = (k_time-1)*par.dt
 
         point = Reconstruction.SemiLagrange_L2_opt(solution, 
-                                            mesh_collection,
-                                            dof_collection,
-                                            par,
-                                            problem,
-                                            problem_f,
-                                            Time + par.dt, k_time + 1)
+                                                timeStepper_local,
+                                                mesh_collection,
+                                                dof_collection,
+                                                ref_el_f,
+                                                quad_f,
+                                                par,
+                                                problem,
+                                                problem_f,
+                                                Time + par.dt, k_time + 1)
+
+        error("Now integrate in time...")
+        TimeIntegrator.make_step!(solution,
+                                   timeStepper,
+                                   mesh,
+                                   dof,
+                                   ref_el,
+                                   quad,
+                                   par,
+                                   problem,
+                                   k_time,
+                                   ind_cell)
 end

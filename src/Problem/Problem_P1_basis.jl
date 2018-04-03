@@ -13,6 +13,8 @@ struct BasisFun <: AbstractBasisProblem
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
+    conservative :: Bool
+
     problem_parent :: AbstractProblem
     
     function BasisFun(problem :: AbstractProblem, tri :: Geometry.Triangle)
@@ -31,12 +33,14 @@ struct BasisFun <: AbstractBasisProblem
         is_transient_velocity = problem.is_transient_velocity
 
         problem_parent = problem
+
+        conservative = problem.conservative
         
         return new(info_prob, type_info, 
                     T,
                     marker_dirichlet_edge, marker_neumann_edge, 
                     coeff, 
-                    is_transient_diffusion, is_transient_velocity,
+                    is_transient_diffusion, is_transient_velocity, conservative,
                     problem_parent)
     end # end constructor
 end # end type

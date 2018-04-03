@@ -77,16 +77,32 @@ function assemble_elem_a(mesh :: Mesh.TriangleMesh.TriMesh,
     DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem)
     weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
-    DPhi = FEM.shapeFun_grad(ref_el, quad.point)
-    Phi_test = FEM.shapeFun(ref_el, quad.point)
+    if problem.conservative
+        error("Not finished yet.")
+        DPhi_test = FEM.shapeFun_grad(ref_el, quad.point)
+        Phi = FEM.shapeFun(ref_el, quad.point)
 
-    for k = 1:mesh.n_cell
-        for j=1:quad.n_point
-            DtVel = weight_elem[k] * quad.weight[j] * DF[k] * velocity[k][j]
-            for i2=1:ref_el.n_basis
-                for i1=1:ref_el.n_basis
-                    # a[i1,i2,k] += weight_elem[k] * quad.weight[j] * Phi_test[i1,j]  * dot(velocity[k][j],DF[k]'*DPhi[i2,j])
-                    a[i1,i2,k] += Phi_test[i1,j]  * dot(DtVel,DPhi[i2,j])
+        for k = 1:mesh.n_cell
+            for j=1:quad.n_point
+                DtVel = weight_elem[k] * quad.weight[j] * DF[k] * velocity[k][j]
+                for i2=1:ref_el.n_basis
+                    for i1=1:ref_el.n_basis
+                        a[i1,i2,k] -= dot(DtVel,DPhi_test[i1,j])  * Phi[i2,j]
+                    end
+                end
+            end
+        end
+    else
+        DPhi = FEM.shapeFun_grad(ref_el, quad.point)
+        Phi_test = FEM.shapeFun(ref_el, quad.point)
+
+        for k = 1:mesh.n_cell
+            for j=1:quad.n_point
+                DtVel = weight_elem[k] * quad.weight[j] * DF[k] * velocity[k][j]
+                for i2=1:ref_el.n_basis
+                    for i1=1:ref_el.n_basis
+                        a[i1,i2,k] += Phi_test[i1,j]  * dot(DtVel,DPhi[i2,j])
+                    end
                 end
             end
         end
@@ -183,28 +199,29 @@ function assemble_elem_r(mesh :: Mesh.TriangleMesh.TriMesh,
     n = ref_el.n_basis
     r = zeros(n, n, mesh.n_cell)
     
-    x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
-    velocity = Problem.velocity(problem, time_idx, x)
+    if problem.conservative
+        x = FEM.map_ref_point(dof, quad.point, 1:dof.n_elem)
+        velocity = Problem.velocity(problem, time_idx, x)
 
-    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem)
-    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
+        DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem)
+        weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
-    DPhi = FEM.shapeFun_grad(ref_el, quad.point)
-    Phi_test = FEM.shapeFun(ref_el, quad.point)
-
-    for k = 1:mesh.n_cell
-        for j=1:quad.n_point
-            DtVel = weight_elem[k] * quad.weight[j] * DF[k] * velocity[k][j]
-            for i2=1:ref_el.n_basis
-                for i1=1:ref_el.n_basis
-                    # r[i1,i2,k] += weight_elem[k] * quad.weight[j] * Phi_test[i1,j]  * dot(velocity[k][j],DF[k]'*DPhi[i2,j])
-                    r[i1,i2,k] += Phi_test[i1,j]  * dot(DtVel,DPhi[i2,j])
+        DPhi = FEM.shapeFun_grad(ref_el, quad.point)
+        Phi = FEM.shapeFun(ref_el, quad.point)
+    
+        for k = 1:mesh.n_cell
+            for j=1:quad.n_point
+                DtVel = weight_elem[k] * quad.weight[j] * DF[k] * velocity[k][j]
+                for i2=1:ref_el.n_basis
+                    for i1=1:ref_el.n_basis
+                        r[i1,i2,k] -= Phi[i1,j]  * dot(DtVel,DPhi[i2,j]) + dot(DtVel,DPhi[i1,j])  * Phi[i2,j]
+                    end
                 end
             end
         end
     end
 
-    return a
+    return r
 end # end function
 
 # -----------------------------

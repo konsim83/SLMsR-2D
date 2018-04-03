@@ -16,6 +16,8 @@ struct Gaussian <: AbstractPhysicalProblem
 
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
+
+    conservative :: Bool
     
 end # end type
 
@@ -44,6 +46,8 @@ function Gaussian(T :: Float64)
 
     is_transient_diffusion = false
     is_transient_velocity = false
+
+    conservative = false
     
     return Gaussian(info_prob, type_info, file_name,
                     T, 
@@ -51,7 +55,8 @@ function Gaussian(T :: Float64)
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
                     expectation, 
                     is_transient_diffusion, 
-                    is_transient_velocity)
+                    is_transient_velocity,
+                    conservative)
 end # end constructor
 
 

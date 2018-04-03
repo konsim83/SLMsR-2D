@@ -45,26 +45,35 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     # ----------------------------------------------------------------
     # ----------------------------------------------------------------
     # Setup initial data for basis functions
+    timeStepper_local = Array{TimeIntegrator.ImplEuler,1}(mesh_collection.mesh.n_cell)
     for ind_cell in 1:mesh_collection.mesh.n_cell
         u_init_tmp = Problem.u_init(problem_f[ind_cell], mesh_collection.mesh_f[ind_cell].point)
         solution.phi_1[ind_cell][:,1] = u_init_tmp[:,1]
         solution.phi_2[ind_cell][:,1] = u_init_tmp[:,2]
         solution.phi_3[ind_cell][:,1] = u_init_tmp[:,3]
+
+        timeStepper_local[ind_cell] = TimeIntegrator.ImplEuler(dof_collection.dof_f[ind_cell],
+                                                                    mesh_collection.mesh_f[ind_cell],
+                                                                    problem_f[ind_cell])
     end
 
     # Setup initial data
     solution.u[1:mesh_collection.mesh.n_point,1] = Problem.u_init(problem, mesh_collection.mesh.point)
-
-    # Reconstruct the basis at time step k_time+1
+    
     N = par.n_steps
     p = Progress(N, 0.01, "Progress of time stepping...", 10)
     for k_time=1:par.n_steps
         # Time at index k
         Time = (k_time-1)*par.dt
 
+        # Reconstruct the basis at time step k_time+1
         Reconstruction.SemiLagrange_L2_opt(solution, 
+                                            timeStepper_local,
                                             mesh_collection,
                                             dof_collection,
+                                            ref_el_f,
+                                            quad_f,
+                                            timeStepper_local,
                                             par,
                                             problem,
                                             problem_f,
