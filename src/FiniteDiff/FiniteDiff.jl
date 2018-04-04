@@ -10,4 +10,13 @@ function central!(phi_t :: Array{Float64,2},
     
 end
 
+
+function backward_single(phi :: Array{Float64,2},
+                  			dt :: Float64)
+    
+    phi_t = (phi[:,2] - phi[:,1]) / dt
+    
+    return phi_t
+end
+
 end

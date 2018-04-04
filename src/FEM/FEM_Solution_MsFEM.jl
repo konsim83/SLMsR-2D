@@ -49,9 +49,9 @@ struct Solution_MsFEM <: AbstractSolution
             phi_2[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
             phi_3[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
 
-            phi_1_t[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
-            phi_2_t[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
-            phi_3_t[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
+            phi_1_t[i] = zeros(dof.dof_f[i].n_true_dof, par.n_steps+1)
+            phi_2_t[i] = zeros(dof.dof_f[i].n_true_dof, par.n_steps+1)
+            phi_3_t[i] = zeros(dof.dof_f[i].n_true_dof, par.n_steps+1)
 
             pattern_matrix = sparse(dof.dof_f[i].ind_test, dof.dof_f[i].ind, zeros(Float64, length(dof.dof_f[i].ind)), dof.dof_f[i].n_true_dof, dof.dof_f[i].n_true_dof)
             mass[i] = copy(pattern_matrix)

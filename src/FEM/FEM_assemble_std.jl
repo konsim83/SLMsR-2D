@@ -78,7 +78,6 @@ function assemble_elem_a(mesh :: Mesh.TriangleMesh.TriMesh,
     weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
     if problem.conservative
-        error("Not finished yet.")
         DPhi_test = FEM.shapeFun_grad(ref_el, quad.point)
         Phi = FEM.shapeFun(ref_el, quad.point)
 

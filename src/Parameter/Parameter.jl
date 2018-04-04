@@ -23,6 +23,8 @@ type Parameter_FEM <: AbstractParameter
 
     time_step_method :: Int64
 
+    
+
     function Parameter_FEM(T :: Float64,
                            dt :: Float64,
                 	       n_edge_per_seg :: Int64,
@@ -71,6 +73,8 @@ type Parameter_MsFEM <: AbstractParameter
 
     time_step_method :: Int64
 
+    k :: Array{Float64,1}
+
     function Parameter_MsFEM(T :: Float64,
                              dt :: Float64,
                              n_edge_per_seg :: Int64,
@@ -78,7 +82,8 @@ type Parameter_MsFEM <: AbstractParameter
                              n_edge_per_seg_f :: Int64,
                              n_order_FEM_f :: Int64,
                              n_order_quad_f :: Int64,
-                	         time_step_method :: Int64)
+                	         time_step_method :: Int64,
+                             k :: Array{Float64,1})
         
 	this = new()
 
@@ -98,8 +103,9 @@ type Parameter_MsFEM <: AbstractParameter
     this.n_order_FEM_f = n_order_FEM_f
     this.n_order_quad_f = n_order_quad_f
 
-        
-	return this
+       this.k = k        
+	   
+       return this
     end # end constructor
 end # end type
 # --------------------------------------------------------------------------------

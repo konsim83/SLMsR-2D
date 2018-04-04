@@ -60,35 +60,59 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     # Setup initial data
     solution.u[1:mesh_collection.mesh.n_point,1] = Problem.u_init(problem, mesh_collection.mesh.point)
     
+    timeStepper = TimeIntegrator.ImplEuler(dof_collection.dof,
+                                            mesh_collection.mesh,
+                                            problem)
+
     N = par.n_steps
     p = Progress(N, 0.01, "Progress of time stepping...", 10)
     for k_time=1:par.n_steps
         # Time at index k
         Time = (k_time-1)*par.dt
 
-        # Reconstruct the basis at time step k_time+1
-        Reconstruction.SemiLagrange_L2_opt(solution, 
-                                            timeStepper_local,
-                                            mesh_collection,
-                                            dof_collection,
-                                            ref_el_f,
-                                            quad_f,
-                                            timeStepper_local,
-                                            par,
-                                            problem,
-                                            problem_f,
-                                            Time + par.dt, k_time + 1)
-        error("Now integrate in time...")
-        TimeIntegrator.make_step!(solution,
-                                   timeStepper,
-                                   mesh,
-                                   dof,
-                                   ref_el,
-                                   quad,
-                                   par,
+        Reconstruction.SemiLagrange_L2_opt!(solution, 
+                                                timeStepper_local,
+                                                mesh_collection,
+                                                dof_collection,
+                                                ref_el_f,
+                                                quad_f,
+                                                par,
+                                                problem,
+                                                problem_f,
+                                                Time + par.dt, k_time + 1)
+
+        M, Mt = FEM.assemble_mass(solution,
+                                   mesh_collection,
+                                   dof_collection,
+                                   ref_el, ref_el_f,
+                                   quad_f,
                                    problem,
-                                   k_time,
-                                   ind_cell)
+                                   k_time+1)
+
+        A = FEM.assemble_advection(solution,
+                                   mesh_collection,
+                                   dof_collection,
+                                   ref_el, ref_el_f,
+                                   quad_f,
+                                   problem,
+                                   k_time+1, Time + par.dt)
+
+        D = FEM.assemble_diffusion(solution,
+                                   mesh_collection,
+                                   dof_collection,
+                                   ref_el, ref_el_f,
+                                   quad_f,
+                                   problem,
+                                   k_time+1, Time + par.dt)
+
+        # Zero forcing
+        f = zeros(mesh_collection.mesh.n_point)
+
+        # Set the system matrices 
+        TimeIntegrator.updateSystem!(timeStepper.systemData, M, D-A-Mt, f, dof, solution.u[:,k_time], par.dt)
+
+        # Make a single time step
+        TimeIntegrator.makeStep!(timeStepper, dof, view(solution.u, :, k_time+1), solution.u[:,k_time])
         next!(p)
     end # end for
     # ----------------------------------------------------------------

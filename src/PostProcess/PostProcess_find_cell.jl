@@ -1,3 +1,19 @@
+function get_domain_points(x :: Array{Float64})
+    
+	# size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+    # a = 0-1e-12
+    # b = 1+1e-12
+
+    # map to interval [-0, 1]
+    x_unit = x .% 1
+    
+    x_unit[x_unit.<0] = 1 + x_unit[x_unit.<0]
+    
+    return x_unit
+end
+
+
 """
 	find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64,2}, warning = true :: Bool)
 
@@ -5,9 +21,11 @@
     is in.
 
 """ 
-function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64}, warning = true :: Bool)
+function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64}, warning = false :: Bool)
 
 	size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+	x = get_domain_points(x)
 
 	if warning
 		warn("Geometric predicates are not exact. The result could be an
@@ -55,9 +73,9 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 	size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
 	# Find coarse cell
-	println("Searching points in coarse mesh...")
+	# println("Searching points in coarse mesh...")
 	x_cell, x_bary = PostProcess.find_cell(mesh_collection.mesh, x)
-	println("...done.")
+	# println("...done.")
 
 	# Find fine cell
 	x_cell_f = [[Int[] for ixd_inner in 1:length(x_cell[idx])] for idx in 1:size(x,2)]
@@ -73,8 +91,8 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 		# next!(p)
 	end
 
-	N = length(x_cell)
-    p = Progress(N, 0.01, "Searching points in fine meshes...", 10)
+	# N = length(x_cell)
+ #    p = Progress(N, 0.01, "Searching points in fine meshes...", 10)
 	for idx in 1:length(x_cell)
 		y = x[:,idx]
 		for ixd_inner in 1:length(x_cell[idx])
@@ -86,7 +104,7 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 			x_bary_f[idx][ixd_inner] = x_bary_loc[1]
 		end
 
-		next!(p)
+		# next!(p)
 	end
 
 	return x_cell, x_bary, x_cell_f, x_bary_f

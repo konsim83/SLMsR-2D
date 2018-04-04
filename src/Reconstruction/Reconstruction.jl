@@ -1,6 +1,6 @@
 module Reconstruction
 
-import Mesh, Parameter, Problem, FEM, Quad, TimeIntegrator
+import Mesh, Parameter, Problem, FEM, Quad, TimeIntegrator, FiniteDiff, PostProcess
 
 import DifferentialEquations
 

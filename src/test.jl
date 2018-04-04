@@ -5,17 +5,17 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 # ---------------------------------------------------------------------------
 
 
-compute_low = false
-compute_ref = false
+compute_low = true
+compute_ref = true
 compute_ms = false
-compute_ms_reconstruction = false
+compute_ms_reconstruction = true
 
-post_process = false
+post_process = true
 
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 0.5
+T_max = 0.1
 
 
 problem = Problem.Gaussian(T_max)
@@ -34,7 +34,7 @@ problem = Problem.Gaussian_R_1(T_max, 20)
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
 n_edge_per_seg = 4
-n_refinement = 2
+n_refinement = 3
 n_edge_per_seg_f = 0
 
 
@@ -49,6 +49,9 @@ n_order_quad_f = n_order_quad
 time_step_method = 1
 
 dt = 1/500
+
+
+k = [1.0 ; 1.0 ; 1.0] * 0.001
 # ---------------------------------------------------------------------------
 
 
@@ -94,7 +97,8 @@ if compute_ms
                                                 n_edge_per_seg_f,
                                                 n_order_FEM_f,
                                                 n_order_quad_f,
-time_step_method)
+                                                time_step_method,
+                                                k)
 
 
         # -------   Call the solver   -------
@@ -111,7 +115,8 @@ if compute_ms_reconstruction
                                                 n_edge_per_seg_f,
                                                 n_order_FEM_f,
                                                 n_order_quad_f,
-                                                time_step_method)
+                                                time_step_method,
+                                                k)
 
 
         # -------   Call the solver   -------
@@ -145,7 +150,7 @@ end
 
 
 
-
+#=
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 par = Parameter.Parameter_MsFEM(problem.T,
@@ -218,12 +223,15 @@ solution.u[1:mesh_collection.mesh.n_point,1] = Problem.u_init(problem, mesh_coll
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
 
-point = []
-for k_time=1:1#par.n_steps
+timeStepper = TimeIntegrator.ImplEuler(dof_collection.dof,
+                                            mesh_collection.mesh,
+                                            problem)
+
+for k_time=1:par.n_steps
         # Time at index k
         Time = (k_time-1)*par.dt
 
-        point = Reconstruction.SemiLagrange_L2_opt(solution, 
+        Reconstruction.SemiLagrange_L2_opt!(solution, 
                                                 timeStepper_local,
                                                 mesh_collection,
                                                 dof_collection,
@@ -234,15 +242,37 @@ for k_time=1:1#par.n_steps
                                                 problem_f,
                                                 Time + par.dt, k_time + 1)
 
-        error("Now integrate in time...")
-        TimeIntegrator.make_step!(solution,
-                                   timeStepper,
-                                   mesh,
-                                   dof,
-                                   ref_el,
-                                   quad,
-                                   par,
+        M, Mt = FEM.assemble_mass(solution,
+                                   mesh_collection,
+                                   dof_collection,
+                                   ref_el, ref_el_f,
+                                   quad_f,
                                    problem,
-                                   k_time,
-                                   ind_cell)
+                                   k_time+1)
+
+        A = FEM.assemble_advection(solution,
+                                   mesh_collection,
+                                   dof_collection,
+                                   ref_el, ref_el_f,
+                                   quad_f,
+                                   problem,
+                                   k_time+1, Time + par.dt)
+
+        D = FEM.assemble_diffusion(solution,
+                                   mesh_collection,
+                                   dof_collection,
+                                   ref_el, ref_el_f,
+                                   quad_f,
+                                   problem,
+                                   k_time+1, Time + par.dt)
+
+        # Zero forcing
+        f = zeros(mesh_collection.mesh.n_point)
+
+        # Set the system matrices 
+        TimeIntegrator.updateSystem!(timeStepper.systemData, M, D-A-Mt, f, dof, solution.u[:,k_time], par.dt)
+
+        # Make a single time step
+        TimeIntegrator.makeStep!(timeStepper, dof, view(solution.u, :, k_time+1), solution.u[:,k_time])
 end
+=#
