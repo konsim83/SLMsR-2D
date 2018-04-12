@@ -7,7 +7,7 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 
 compute_low = true
 compute_ref = true
-compute_ms = false
+compute_ms = true
 compute_ms_reconstruction = true
 
 post_process = true
@@ -15,17 +15,19 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 0.1
+T_max = 0.5
 
 
-problem = Problem.Gaussian(T_max)
+# problem = Problem.Gaussian(T_max)
 
 # problem = Problem.Gaussian_1(T_max, 20)
 
 # problem = Problem.Gaussian_2(T_max, 1)
 # problem = Problem.Gaussian_2a(T_max, 1)
 
-problem = Problem.Gaussian_R_1(T_max, 20)
+# problem = Problem.Gaussian_R_1(T_max, 20)
+# problem = Problem.Gaussian_R_2(T_max, 10.0 , 20)
+problem = Problem.Gaussian_R_3(T_max, 10.0 , 20)
 
 # ---------------------------------------------------------------------------
 
@@ -34,7 +36,7 @@ problem = Problem.Gaussian_R_1(T_max, 20)
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
 n_edge_per_seg = 4
-n_refinement = 3
+n_refinement = 4
 n_edge_per_seg_f = 0
 
 
@@ -51,7 +53,7 @@ time_step_method = 1
 dt = 1/500
 
 
-k = [1.0 ; 1.0 ; 1.0] * 0.001
+k = [1.0 ; 1.0 ; 1.0] * 0.0001
 # ---------------------------------------------------------------------------
 
 
@@ -108,7 +110,7 @@ end
 
 if compute_ms_reconstruction
         # -------   Build parameter structure   -------
-        par_MsFEM = Parameter.Parameter_MsFEM(problem.T,
+        par_MsFEM_r = Parameter.Parameter_MsFEM(problem.T,
                                                 dt,
                                                 n_edge_per_seg,
                                                 n_refinement,
@@ -120,7 +122,7 @@ if compute_ms_reconstruction
 
 
         # -------   Call the solver   -------
-        @time solution_ms, mesh_collection = Solver.solve_MsFEM_periodic_square_reconstruction(par_MsFEM, problem)
+        @time solution_ms_r, mesh_collection_r = Solver.solve_MsFEM_periodic_square_reconstruction(par_MsFEM_r, problem)
 end
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
@@ -130,11 +132,14 @@ end
 if post_process
         solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_ref)
         solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_ref)
+        solution_ms_r_mapped = PostProcess.map_solution(solution_ms_r, mesh_collection_r, mesh_FEM_ref)
 
         err_low = PostProcess.error_L2(solution_FEM_ref,
                                         solution_FEM_low_mapped)[:]
         err_ms = PostProcess.error_L2(solution_FEM_ref,
                                         solution_ms_mapped)[:]
+        err_ms_r = PostProcess.error_L2(solution_FEM_ref,
+                                        solution_ms_r_mapped)[:]
 
         Vis.writeSolution_all(solution_FEM_ref, 
                                 mesh_FEM_ref,
@@ -145,6 +150,9 @@ if post_process
         Vis.writeSolution_all(solution_ms_mapped, 
                                 mesh_FEM_ref, 
                                 problem.file_name * "-MsFEM-mapped")
+        Vis.writeSolution_all(solution_ms_r_mapped, 
+                                mesh_FEM_ref, 
+                                problem.file_name * "-MsFEM_r-mapped")
 end
 # ---------------------------------------------------------------------------
 
@@ -160,7 +168,8 @@ par = Parameter.Parameter_MsFEM(problem.T,
                                 n_edge_per_seg_f,
                                 n_order_FEM_f,
                                 n_order_quad_f,
-                                time_step_method)
+                                time_step_method,
+                                k)
 
 # Build mesh of unit square (0,1)x(0,1)
 m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)
@@ -227,7 +236,7 @@ timeStepper = TimeIntegrator.ImplEuler(dof_collection.dof,
                                             mesh_collection.mesh,
                                             problem)
 
-for k_time=1:par.n_steps
+for k_time=1:1#par.n_steps
         # Time at index k
         Time = (k_time-1)*par.dt
 

@@ -2,6 +2,8 @@
 
 *~
 *.vtu
+*.pvsm
+*.png
 
 *.out
 *.aux

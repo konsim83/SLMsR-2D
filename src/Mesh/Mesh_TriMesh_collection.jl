@@ -3,7 +3,10 @@
 mutable struct TriMesh_collection
 
     mesh :: TriangleMesh.TriMesh
+    meshData :: MeshData
+
     mesh_f :: Array{TriangleMesh.TriMesh, 1}
+    meshData_f :: Array{MeshData,1}
 
     n_elem_f :: Array{Int64, 1}
     
@@ -11,7 +14,11 @@ mutable struct TriMesh_collection
         this = new()
 
         this.mesh = mesh
+        this.meshData = MeshData(mesh)
+
         this.mesh_f = Array{TriangleMesh.TriMesh}(mesh.n_cell)
+        this.meshData_f = Array{MeshData}(mesh.n_cell)
+
         this.n_elem_f = Array{Int64}(mesh.n_cell)
 
         for i=1:mesh.n_cell
@@ -23,6 +30,8 @@ mutable struct TriMesh_collection
 
             this.mesh_f[i] = TriMesh(mesh_simplex, point_mapped, string("Mapped ", mesh_simplex.mesh_info))
             this.n_elem_f[i] = this.mesh_f[i].n_cell
+
+            this.meshData_f[i] = MeshData(this.mesh_f[i])
         end
 
         return this

@@ -64,6 +64,26 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
                                             mesh_collection.mesh,
                                             problem)
 
+
+    println("\n\n--------------------------------------------------------------")
+
+    println("Computing reconstruction multiscale FEM solution:\n")
+    
+    println("\t Mesh type:   $(mesh_collection.mesh.mesh_info)")
+    if dof.is_periodic
+        println("\t Problem type:   periodic --- $(problem.type_info)")
+    else
+        println("\t Problem type:   non-periodic --- $(problem.type_info)")
+    end
+    println("\t Time intergrator:   $(typeof(timeStepper))")
+    println("\t number of coarse elements:   $(mesh_collection.mesh.n_cell)")
+    println("\t average number of fine of elements:   $(mean(mesh_collection.n_elem_f))")
+    println("\t number of all (fine) elements:   $(sum(mesh_collection.n_elem_f))")
+    println("\t number of time steps:   $(par.n_steps)")
+    println("\t Number of active dofs:   $(dof.n_true_dof - dof.n_node_dirichlet)")
+    println("\t Number of constraint dofs:   $(dof.n_node_dirichlet)")
+
+
     N = par.n_steps
     p = Progress(N, 0.01, "Progress of time stepping...", 10)
     for k_time=1:par.n_steps
@@ -115,6 +135,8 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
         TimeIntegrator.makeStep!(timeStepper, dof, view(solution.u, :, k_time+1), solution.u[:,k_time])
         next!(p)
     end # end for
+    println("..... done.")
+    println("\n--------------------------------------------------------------\n\n")
     # ----------------------------------------------------------------
     # ----------------------------------------------------------------
     

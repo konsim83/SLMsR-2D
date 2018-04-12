@@ -2,11 +2,13 @@ module Mesh
 
 using WriteVTK
 
-import TriangleMesh
+import TriangleMesh, NearestNeighbors
 
 # ---------------------------------------------------------------------------------------------
 
 include("Mesh_TriMesh.jl")
+include("Mesh_MeshData.jl")
+
 include("Mesh_TriMesh_collection.jl")
 
 # ---------------------------------------------------------------------------------------------

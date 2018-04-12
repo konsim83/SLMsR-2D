@@ -40,3 +40,17 @@ function Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: TriangleMesh.TriMesh)
 
 	return Evaluate_FEM(n_time_point, data, local_function)
 end
+
+
+function local_function(sol :: FEM.Solution_FEM, 
+						mesh :: Mesh.TriangleMesh.TriMesh,
+						ind_cell :: Int,
+						bary :: Array{Float64,1},
+						k_time :: Int)
+	
+	length(bary)!=3 ? error("Barycentirc coordinates vector must be of length 3.") :
+
+	data = sol.u[mesh.cell[:,ind_cell],k_time]
+	
+	return data[1,:]*bary[1] + data[2,:]*bary[2] + data[3,:]*bary[3]
+end

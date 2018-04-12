@@ -3,19 +3,13 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 							par :: Parameter.Parameter_MsFEM,
 							problem_f :: Problem.AbstractBasisProblem,
 							point_orig :: Array{Float64,2},
+							u_orig :: Array{Float64,1},
 							k_time :: Int,
 							ind_cell :: Int)
-    
-    # Create an evaluation struct at previous time step
-    E = PostProcess.Evaluate_MsFEM(solution, mesh_collection, k_time-1);
 
     # ------------------------------------------------
     # Evaluate the solution at the traced back points
-    u_in = PostProcess.evaluate(E, mesh_collection, point_orig)
-    u = Array{Float64,2}(size(point_orig,2), length(u_in[1][1][1][:]))
-    for i in 1:length(u_in)
-        u[i,:] = u_in[i][1][1][:]
-    end
+    u = u_orig #PostProcess.evaluate(solution, mesh_collection, point_orig, k_time-1)
     # ------------------------------------------------
 
 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
@@ -46,23 +40,19 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 							par :: Parameter.Parameter_MsFEM,
 							problem :: Problem.AbstractPhysicalProblem,
 							problem_f :: Problem.AbstractBasisProblem,
-							point_orig :: Array{Float64,2},
-							k_time :: Int,
+							point :: Array{Float64,2},
 							ind_cell :: Int)
     
-    # Create an evaluation struct at previous time step
-    E = PostProcess.Evaluate_MsFEM(solution, mesh_collection, k_time-1);
-
     # ------------------------------------------------
     # Evaluate the solution at the traced back points
-    u = Problem.u_init(problem_f, point_orig)
+    u = Problem.u_init(problem, point)
     # ------------------------------------------------
 
 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
 
     k = par.k
 
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
     u1 = U[1]
     u2 = U[2]
     u3 = U[3]
@@ -92,6 +82,24 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		                        problem_f :: Array{Problem.AbstractBasisProblem,1},
 		                        T :: Float64, k_time :: Int)
 
+	# Reconstruct the first basis as well but only at the beginning, i.e.,
+	# k_time==2.
+	if k_time==2
+		for i in 1:mesh_collection.mesh.n_cell
+			u_basis_tmp = zeros(mesh_collection.mesh_f[i].n_point, 3)
+			u_basis_tmp[:,:] = reconstruct_L2(solution,
+													mesh_collection,
+													par,
+													problem,
+													problem_f[i],
+													mesh_collection.mesh_f[i].point,
+													i)
+			solution.phi_1[i][:,k_time-1] = u_basis_tmp[:,1]
+		    solution.phi_2[i][:,k_time-1] = u_basis_tmp[:,2]
+		    solution.phi_3[i][:,k_time-1] = u_basis_tmp[:,3]
+		end
+	end
+
 	# Needs to be set up only once since velocity is the same everywhere
 	velocity = function(x :: Array{Float64,2}, parameter, t :: Float64)
 
@@ -100,26 +108,19 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 
 	point_all = hcat([mesh.point for mesh in mesh_collection.mesh_f]...)
+
+	display("---------------------------------------")
+	display("Reconstruction at time step $(k_time) / $(par.n_steps+1):")
 	point_orig_all = traceback(point_all, T, velocity, par)
 
-	n_steps_back = length(point_orig_all)-1
-    dt_f = par.dt/(n_steps_back)
+	@time u_orig_all = PostProcess.evaluate(solution, mesh_collection, point_orig_all[end], k_time-1)
+	
 
-	u_basis_tmp = zeros(mesh_local.n_point, 3)
-	# u_basis_tmp[:,:,1] = Problem.u_init(problem_f[i], mesh_local.point)
-	u_basis_tmp[:,:] = reconstruct_L2(solution,
-											mesh_collection,
-											par,
-											problem_f[i],
-											point_orig_all[1][:,ind],
-											k_time,
-											i)
-	solution.phi_1[i][:,k_time-1] = u_basis_tmp[:,1]
-    solution.phi_2[i][:,k_time-1] = u_basis_tmp[:,2]
-    solution.phi_3[i][:,k_time-1] = u_basis_tmp[:,3]
+	n_steps_back = length(point_orig_all)-1
+    dt_f = par.dt/n_steps_back
 
     point_count = 0
-	for i in 1:mesh_collection.mesh.n_cell
+	@time for i in 1:mesh_collection.mesh.n_cell
 		mesh_local = mesh_collection.mesh_f[i]
 		ind = (1:mesh_local.n_point) + point_count
 
@@ -133,7 +134,8 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 												mesh_collection,
 												par,
 												problem_f[i],
-												point_orig_all[1][:,ind],
+												point_orig_all[end][:,ind],
+												u_orig_all[ind],
 												k_time,
 												i)
 
@@ -143,9 +145,13 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		# ----------------------------------------------------
         # -------   Time evolution on distinct grids   -------
         for j=2:(n_steps_back+1)
-
-        	p_old = point_orig_all[j-1][:,ind]
-			p_next = point_orig_all[j][:,ind]
+        	# display(size(point_orig_all))
+        	# display(point_orig_all[end-(j-2)][:,ind])
+        	# display(point_orig_all[end-(j-1)][:,ind])
+        	# display(mesh_local.point)
+        	# display("-------- $(n_steps_back+1) -- $(n_steps_back+1-j+2) -------")
+        	p_old = point_orig_all[end-(j-2)][:,ind]
+			p_next = point_orig_all[end-(j-1)][:,ind]
 
             # Create mesh of next time step
             mesh_old = Mesh.TriMesh(mesh_local, p_old, "Old mesh...")
@@ -179,7 +185,8 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
             # -------   u_t + Ru = Du   -------
 	        # Set the system matrices 
-	        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], par.dt)
+	        # TimeIntegrator.updateSystem!(timeStepper[i].systemData, M, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], par.dt)
+	        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], par.dt)
 
 	        # Make a single time step
 	        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
@@ -203,16 +210,30 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 		point_count += mesh_local.n_point
 	end # end for
-
+	
+	display("---------------------------------------")
 
 	return nothing
 end
 
 
 function traceback(point :: Array{Float64,2}, T :: Float64, 
-					velocity :: Function, par :: Parameter.Parameter_MsFEM,)
+					velocity :: Function, par :: Parameter.Parameter_MsFEM)
 
 	tspan = (-T, -T+par.dt)
+	prob = DifferentialEquations.ODEProblem(velocity, point, tspan)
+	sol = DifferentialEquations.solve(prob, dtmax=par.dt/par.n_steps_f)
+
+	return sol.u
+end
+
+
+function traceback(point :: Array{Float64,2},
+					T0 :: Float64, 
+					Tend :: Float64, 
+					velocity :: Function)
+
+	tspan = (T0, Tend)
 	prob = DifferentialEquations.ODEProblem(velocity, point, tspan)
 	sol = DifferentialEquations.solve(prob)
 

@@ -4,7 +4,8 @@ import Mesh, FEM
 
 using ProgressMeter
 
-import TriangleMesh
+import TriangleMesh, NearestNeighbors
+
 
 # --------------------------------------------
 include("PostProcess_find_cell.jl")

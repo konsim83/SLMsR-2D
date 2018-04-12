@@ -1,4 +1,4 @@
-struct Gaussian_2 <: AbstractPhysicalProblem
+struct Gaussian_R_2 <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
@@ -14,6 +14,8 @@ struct Gaussian_2 <: AbstractPhysicalProblem
     covariance_mat_inv :: Array{Float64,2}
     expectation :: Array{Float64,1}
 
+    psi :: Float64
+
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
@@ -24,11 +26,11 @@ struct Gaussian_2 <: AbstractPhysicalProblem
 end # end type
 
 
-function Gaussian_2(T :: Float64, k :: Int)
+function Gaussian_R_2(T :: Float64, psi :: Float64, k :: Int)
         
-    info_prob = "Evolution of symmetric Gaussian_2 (classic velocity)."
+    info_prob = "Evolution of symmetric Gaussian_R_2 (classic velocity)."
     type_info = "ADE"
-    file_name = "Gaussian_2"
+    file_name = "Gaussian_R_2"
 
     marker_dirichlet_edge = Array{Int}(0)
     marker_neumann_edge = Array{Int}(0)
@@ -45,15 +47,16 @@ function Gaussian_2(T :: Float64, k :: Int)
     expectation = [1/2 ; 1/2]
 
     is_transient_diffusion = false
-    is_transient_velocity = false
+    is_transient_velocity = true
 
     conservative = false
     
-    return Gaussian_2(info_prob, type_info, file_name,
+    return Gaussian_R_2(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
-                    expectation, 
+                    expectation,
+                    psi, 
                     is_transient_diffusion, 
                     is_transient_velocity,
                     conservative,
@@ -65,30 +68,36 @@ end # end constructor
 # ----------------------   Functions   ----------------------
 # --------------------------------------------------------------
 
+# """
+#     streamFun(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+
+#     Stream function for velocity.
+# """
+# function streamFun(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+
+#     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+#     out = sin.(x[1,:]-2*pi*t).^2 .* cos.(x[2,:]).^2 * cos(pi*t) - x[2,:]
+
+#     return out
+# end
+
 """
-    streamFun(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
-
-    Stream function for velocity.
-"""
-function streamFun(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    out = 0.1*sin.(2*pi*problem.k*(x[1,:]-x[2,:])) / problem.k
-
-    return out
-end
-
-"""
-    streamFunDer(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
+    streamFunDer(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
 
     Stream function skew-derivative.
 """
-function streamFunDer(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
+function streamFunDer(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    V = 0.1*[2*pi*cos.(2*pi*problem.k*(x[1,:]-x[2,:])) 2*pi*cos.(2*pi*problem.k*(x[1,:]-x[2,:]))]
+    psi = problem.psi
+    T = 1.
+
+    V = ( psi/(2*pi) ) * hcat( -sin.(2*pi*(x[1,:]-t/T)).^2.*cos.(pi*(x[2,:]-1/2)).*sin.(pi*(x[2,:]-1/2))*cos(pi*t/T)-1/(2*pi*T), 
+                               -2*sin.(2*pi*(x[1,:]-t/T)).*cos.(2*pi*(x[1,:]-t/T)).*cos.(pi*(x[2,:]-1/2)).^2*cos(pi*t/T)
+                               )
+
     out = [V[i,:] for i=1:size(x,2)]
 
     return out
@@ -100,12 +109,12 @@ end
 
 
 """
-    diffusion(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
+    diffusion(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
 
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -119,12 +128,12 @@ end
 
 
 """
-    diffusion(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+    diffusion(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+function diffusion(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
         
     out = [diffusion(problem, t, y) for y in x]
     
@@ -138,13 +147,13 @@ end
 
 
 """
-    velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Float64,2})
+    velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Float64,2})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -157,13 +166,13 @@ end
 
 
 """
-    velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+    velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+function velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
 
@@ -175,13 +184,18 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 
-function u_init(problem :: Gaussian_2, x :: Array{Float64})
+function u_init(problem :: Gaussian_R_2, x :: Array{Float64})
                 
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 
     x = broadcast(+, -problem.expectation, x)
+    x1 = broadcast(+, -[1/12 ; 0], x)
+    x2 = broadcast(+, [1/12 ; 0], x)
     
-    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * sum(x.*(problem.covariance_mat_inv*x),1) )
+    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * (
+                exp.( -1/2 * sum(x1.*(problem.covariance_mat_inv*x1),1) )
+                + exp.( -1/2 * sum(x2.*(problem.covariance_mat_inv*x2),1) )
+                ) / 2
     
     return vec(out)
 end

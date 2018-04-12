@@ -49,7 +49,8 @@ function map_solution(sol :: FEM.Solution_MsFEM,
 	u = PostProcess.evaluate(E, mesh_collection, x);
 
 	# Construct a new solution on mesh_target
-	sol_target = FEM.Solution_FEM(u, mesh_target.n_point)
+	# sol_target = FEM.Solution_FEM(u, mesh_target.n_point)
+	sol_target = FEM.Solution_FEM(u)
 
 	return sol_target
 end

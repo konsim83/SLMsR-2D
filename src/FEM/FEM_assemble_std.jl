@@ -170,7 +170,7 @@ end # end function
 
 
 # -----------------------------
-# -------   Advection   -------
+# -------   Reaction   -------
 # -----------------------------
 function assemble_reaction(mesh :: Mesh.TriangleMesh.TriMesh,
                             dof :: FEM.AbstractDof,
