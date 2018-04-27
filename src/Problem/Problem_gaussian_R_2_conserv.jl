@@ -1,4 +1,4 @@
-struct Gaussian_R_2 <: AbstractPhysicalProblem
+struct Gaussian_R_2_conserv <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
@@ -26,11 +26,11 @@ struct Gaussian_R_2 <: AbstractPhysicalProblem
 end # end type
 
 
-function Gaussian_R_2(T :: Float64, psi :: Float64, k :: Int)
+function Gaussian_R_2_conserv(T :: Float64, psi :: Float64, k :: Int)
         
-    info_prob = "Evolution of symmetric Gaussian_R_2 (classic velocity)."
+    info_prob = "Evolution of symmetric Gaussian_R_2_conserv (classic velocity)."
     type_info = "ADE"
-    file_name = "Gaussian_R_2"
+    file_name = "Gaussian_R_2_conserv"
 
     marker_dirichlet_edge = Array{Int}(0)
     marker_neumann_edge = Array{Int}(0)
@@ -49,9 +49,9 @@ function Gaussian_R_2(T :: Float64, psi :: Float64, k :: Int)
     is_transient_diffusion = false
     is_transient_velocity = true
 
-    conservative = false
+    conservative = true
     
-    return Gaussian_R_2(info_prob, type_info, file_name,
+    return Gaussian_R_2_conserv(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
@@ -69,11 +69,11 @@ end # end constructor
 # --------------------------------------------------------------
 
 """
-    streamFun(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+    streamFun(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{Float64,2})
 
     Stream function for velocity.
 """
-function streamFun(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+function streamFun(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -86,11 +86,13 @@ function streamFun(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
 end
 
 """
-    streamFunDer(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+    streamFunDer(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{Float64,2})
 
     Stream function skew-derivative.
 """
-function streamFunDer(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+function streamFunDer(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{Float64,2})
+
+    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     psi = problem.psi
     T = 1.
@@ -110,17 +112,17 @@ end
 
 
 """
-    diffusion(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+    diffusion(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{Float64,2})
 
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_R_2, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{Float64,2})
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     # strFun = streamFun(problem, t, x)
-    # out = [[0.00001 strFun[i] ; -strFun[i] 0.00001] for i=1:size(x,2)]
+    # out = [[0.01 strFun[i] ; -strFun[i] 0.01] for i=1:size(x,2)]
     
     out = [[0.00001 0.0 ; 0.0 0.00001] for i=1:size(x,2)]
 
@@ -129,12 +131,12 @@ end
 
 
 """
-    diffusion(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+    diffusion(problem :: Gaussian_R_2_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+function diffusion(problem :: Gaussian_R_2_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
         
     out = [diffusion(problem, t, y) for y in x]
     
@@ -148,30 +150,32 @@ end
 
 
 """
-    velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Float64,2})
+    velocity(problem :: Gaussian_R_2_conserv,  t :: Float64, x :: Array{Float64,2})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: Gaussian_R_2_conserv,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     out = streamFunDer(problem, t, x)
+
+    # out = [[0.0 ; 0.0] for i=1:size(x,2)]
     
     return out
 end
 
 
 """
-    velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+    velocity(problem :: Gaussian_R_2_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_R_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+function velocity(problem :: Gaussian_R_2_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
 
@@ -183,7 +187,7 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 
-function u_init(problem :: Gaussian_R_2, x :: Array{Float64})
+function u_init(problem :: Gaussian_R_2_conserv, x :: Array{Float64})
                 
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 

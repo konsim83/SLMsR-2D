@@ -78,6 +78,7 @@ type Parameter_MsFEM <: AbstractParameter
 
     function Parameter_MsFEM(T :: Float64,
                              dt :: Float64,
+                             n_steps_f :: Int,
                              n_edge_per_seg :: Int64,
                              n_refinement :: Int64,
                              n_edge_per_seg_f :: Int64,
@@ -92,7 +93,7 @@ type Parameter_MsFEM <: AbstractParameter
     this.n_refinement = n_refinement
     this.n_steps = round(floor( T/dt ))
 
-    this.n_steps_f = 10
+    this.n_steps_f = n_steps_f
         
 	this.dt = dt
 

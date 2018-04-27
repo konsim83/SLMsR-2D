@@ -35,8 +35,8 @@ function Gaussian_R_3(T :: Float64, psi :: Float64, k :: Int)
     marker_dirichlet_edge = Array{Int}(0)
     marker_neumann_edge = Array{Int}(0)
 
-    lambda_1 = 0.05
-    lambda_2 = 0.05
+    lambda_1 = 0.03
+    lambda_2 = 0.03
 
     alpha = 0*pi/8
     rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
@@ -67,46 +67,6 @@ end # end constructor
 # --------------------------------------------------------------
 # ----------------------   Functions   ----------------------
 # --------------------------------------------------------------
-
-# """
-#     streamFun(problem :: Gaussian_R_3, t :: Float64, x :: Array{Float64,2})
-
-#     Stream function for velocity.
-# """
-# function streamFun(problem :: Gaussian_R_3, t :: Float64, x :: Array{Float64,2})
-
-#     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-#     out = sin.(x[1,:]-2*pi*t).^2 .* cos.(x[2,:]).^2 * cos(pi*t) - x[2,:]
-
-#     return out
-# end
-
-"""
-    streamFunDer(problem :: Gaussian_R_3, t :: Float64, x :: Array{Float64,2})
-
-    Stream function skew-derivative.
-"""
-function streamFunDer(problem :: Gaussian_R_3, t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    psi = problem.psi
-    T = 1.
-
-    V = ( psi/(2*pi) ) * hcat( -sin.(2*pi*(x[1,:]-t/T)).^2.*cos.(pi*(x[2,:]-1/2)).*sin.(pi*(x[2,:]-1/2))*cos(pi*t/T)-1/(2*pi*T), 
-                               -2*sin.(2*pi*(x[1,:]-t/T)).*cos.(2*pi*(x[1,:]-t/T)).*cos.(pi*(x[2,:]-1/2)).^2*cos(pi*t/T)
-                               )
-
-    out = [V[i,:] for i=1:size(x,2)]
-
-    return out
-end
-
-
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
-
 
 """
     diffusion(problem :: Gaussian_R_3, t :: Float64, x :: Array{Float64,2})
@@ -155,9 +115,14 @@ function velocity(problem :: Gaussian_R_3,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    out = streamFunDer(problem, t, x)
+    psi = problem.psi
+    T = 1.
 
-    # out = [[0.0 ; 0.0] for i=1:size(x,2)]
+    V = psi * hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* sin.(pi*(x[2,:]-1/2)) .* cos.(pi*(x[2,:]-1/2)), 
+                    (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
+                   )
+
+    out = [V[i,:] for i=1:size(x,2)]
     
     return out
 end
@@ -187,8 +152,8 @@ function u_init(problem :: Gaussian_R_3, x :: Array{Float64})
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 
     x = broadcast(+, -problem.expectation, x)
-    x1 = broadcast(+, -[1/12 ; 0], x)
-    x2 = broadcast(+, [1/12 ; 0], x)
+    x1 = broadcast(+, -[1/4 ; 0], x)
+    x2 = broadcast(+, [1/4 ; 0], x)
     
     out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * (
                 exp.( -1/2 * sum(x1.*(problem.covariance_mat_inv*x1),1) )

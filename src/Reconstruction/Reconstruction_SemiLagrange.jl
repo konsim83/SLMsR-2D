@@ -9,7 +9,8 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 
     # ------------------------------------------------
     # Evaluate the solution at the traced back points
-    u = u_orig #PostProcess.evaluate(solution, mesh_collection, point_orig, k_time-1)
+    # u = PostProcess.evaluate(solution, mesh_collection, point_orig, k_time-1)
+    u = u_orig
     # ------------------------------------------------
 
 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
@@ -113,8 +114,11 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 	display("Reconstruction at time step $(k_time) / $(par.n_steps+1):")
 	point_orig_all = traceback(point_all, T, velocity, par)
 
-	@time u_orig_all = PostProcess.evaluate(solution, mesh_collection, point_orig_all[end], k_time-1)
-	
+	if k_time==2
+		@time u_orig_all = Problem.u_init(problem, point_orig_all[end])
+	else
+		@time u_orig_all = PostProcess.evaluate(solution, mesh_collection, point_orig_all[end], k_time-1)
+	end
 
 	n_steps_back = length(point_orig_all)-1
     dt_f = par.dt/n_steps_back
@@ -145,11 +149,6 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		# ----------------------------------------------------
         # -------   Time evolution on distinct grids   -------
         for j=2:(n_steps_back+1)
-        	# display(size(point_orig_all))
-        	# display(point_orig_all[end-(j-2)][:,ind])
-        	# display(point_orig_all[end-(j-1)][:,ind])
-        	# display(mesh_local.point)
-        	# display("-------- $(n_steps_back+1) -- $(n_steps_back+1-j+2) -------")
         	p_old = point_orig_all[end-(j-2)][:,ind]
 			p_next = point_orig_all[end-(j-1)][:,ind]
 
@@ -173,6 +172,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
                                             quad_f, 
                                             problem_f[i],
                                             T - (n_steps_back-(j-1))*dt_f)
+
             D_next = FEM.assemble_diffusion(mesh_next, 
             								dof_next,
             								ref_el_f, 
@@ -210,7 +210,6 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 		point_count += mesh_local.n_point
 	end # end for
-	
 	display("---------------------------------------")
 
 	return nothing

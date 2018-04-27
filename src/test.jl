@@ -7,7 +7,7 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 
 compute_low = true
 compute_ref = true
-compute_ms = true
+compute_ms = false
 compute_ms_reconstruction = true
 
 post_process = true
@@ -15,7 +15,7 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 0.5
+T_max = 0.1
 
 
 # problem = Problem.Gaussian(T_max)
@@ -25,9 +25,25 @@ T_max = 0.5
 # problem = Problem.Gaussian_2(T_max, 1)
 # problem = Problem.Gaussian_2a(T_max, 1)
 
+
+
+# Multiscale diffusion, constant advection
 # problem = Problem.Gaussian_R_1(T_max, 20)
-# problem = Problem.Gaussian_R_2(T_max, 10.0 , 20)
-problem = Problem.Gaussian_R_3(T_max, 10.0 , 20)
+
+
+# Constant low diffusion, solenoidal, traveling vortex
+# problem = Problem.Gaussian_R_2(T_max, 0.3 , 20)
+# problem = Problem.Gaussian_R_2_conserv(T_max, 0.3 , 30)
+
+
+# Multiscale diffusion, solenoidal, traveling vortex
+# problem = Problem.Gaussian_R_3(T_max, 0.3 , 30)
+# problem = Problem.Gaussian_R_3_conserv(T_max, 0.3 , 30)
+
+
+# Multiscale diffusion, divergent, traveling vortex
+problem = Problem.Gaussian_R_4(T_max, 0.3 , 30)
+problem = Problem.Gaussian_R_4_conserv(T_max, 0.3 , 30)
 
 # ---------------------------------------------------------------------------
 
@@ -50,8 +66,8 @@ n_order_quad_f = n_order_quad
 
 time_step_method = 1
 
-dt = 1/500
-
+dt = 1/250
+n_steps_f = 3
 
 k = [1.0 ; 1.0 ; 1.0] * 0.0001
 # ---------------------------------------------------------------------------
@@ -94,6 +110,7 @@ if compute_ms
         # -------   Build parameter structure   -------
         par_MsFEM = Parameter.Parameter_MsFEM(problem.T,
                                                 dt,
+                                                n_steps_f,
                                                 n_edge_per_seg,
                                                 n_refinement,
                                                 n_edge_per_seg_f,
@@ -112,6 +129,7 @@ if compute_ms_reconstruction
         # -------   Build parameter structure   -------
         par_MsFEM_r = Parameter.Parameter_MsFEM(problem.T,
                                                 dt,
+                                                n_steps_f,
                                                 n_edge_per_seg,
                                                 n_refinement,
                                                 n_edge_per_seg_f,
@@ -131,13 +149,13 @@ end
 # ---------------------------------------------------------------------------
 if post_process
         solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_ref)
-        solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_ref)
+        # solution_ms_mapped = PostProcess.map_solution(solution_ms, mesh_collection, mesh_FEM_ref)
         solution_ms_r_mapped = PostProcess.map_solution(solution_ms_r, mesh_collection_r, mesh_FEM_ref)
 
         err_low = PostProcess.error_L2(solution_FEM_ref,
                                         solution_FEM_low_mapped)[:]
-        err_ms = PostProcess.error_L2(solution_FEM_ref,
-                                        solution_ms_mapped)[:]
+        # err_ms = PostProcess.error_L2(solution_FEM_ref,
+        #                                 solution_ms_mapped)[:]
         err_ms_r = PostProcess.error_L2(solution_FEM_ref,
                                         solution_ms_r_mapped)[:]
 
@@ -147,9 +165,9 @@ if post_process
         Vis.writeSolution_all(solution_FEM_low_mapped, 
                                 mesh_FEM_ref, 
                                 problem.file_name * "-FEM-low-mapped")
-        Vis.writeSolution_all(solution_ms_mapped, 
-                                mesh_FEM_ref, 
-                                problem.file_name * "-MsFEM-mapped")
+        # Vis.writeSolution_all(solution_ms_mapped, 
+        #                         mesh_FEM_ref, 
+        #                         problem.file_name * "-MsFEM-mapped")
         Vis.writeSolution_all(solution_ms_r_mapped, 
                                 mesh_FEM_ref, 
                                 problem.file_name * "-MsFEM_r-mapped")
