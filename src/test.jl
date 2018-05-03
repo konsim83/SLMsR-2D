@@ -8,14 +8,14 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 compute_low = true
 compute_ref = true
 compute_ms = false
-compute_ms_reconstruction = true
+compute_ms_reconstruction = false
 
-post_process = true
+post_process = false
 
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 0.1
+T_max = 0.5
 
 
 # problem = Problem.Gaussian(T_max)
@@ -37,13 +37,13 @@ T_max = 0.1
 
 
 # Multiscale diffusion, solenoidal, traveling vortex
-# problem = Problem.Gaussian_R_3(T_max, 0.3 , 30)
-# problem = Problem.Gaussian_R_3_conserv(T_max, 0.3 , 30)
+# problem = Problem.Gaussian_R_3(T_max, 0.1 , 30)
+# problem = Problem.Gaussian_R_3_conserv(T_max, 0.1 , 30)
 
 
 # Multiscale diffusion, divergent, traveling vortex
-problem = Problem.Gaussian_R_4(T_max, 0.3 , 30)
-problem = Problem.Gaussian_R_4_conserv(T_max, 0.3 , 30)
+problem = Problem.Gaussian_R_4(T_max, 0.05 , 30)
+# problem = Problem.Gaussian_R_4_conserv(T_max, 0.05 , 30)
 
 # ---------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ n_order_quad_f = n_order_quad
 time_step_method = 1
 
 dt = 1/250
-n_steps_f = 3
+n_steps_f = 5
 
 k = [1.0 ; 1.0 ; 1.0] * 0.0001
 # ---------------------------------------------------------------------------

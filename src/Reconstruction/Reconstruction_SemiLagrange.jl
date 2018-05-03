@@ -17,6 +17,12 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 
     k = par.k
 
+    # Contraints for nodal values of basis
+    n_dof = mesh_collection.mesh_f[ind_cell].n_point
+    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
+    constr_val = vec(eye(3))
+    ind_uncon = setdiff(1:(3*n_dof), ind_con)
+
     U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
     u1 = U[1]
     u2 = U[2]
@@ -28,9 +34,12 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
     					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
 	rhs = [k[1]*u0[:,1] + u1*u; 
 			k[2]*u0[:,2] + u2*u ; 
-			k[3]*u0[:,3] + u3*u]
+			k[3]*u0[:,3] + u3*u]  - system_matrix[:,ind_con]*constr_val
 
-	uOpt = system_matrix \ rhs
+
+	uOpt = zeros(3*n_dof)
+	uOpt[ind_con] = constr_val
+	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
 
 	return reshape(uOpt,:,3)
 end
@@ -53,6 +62,13 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 
     k = par.k
 
+    # Contraints for nodal values of basis
+    n_dof = mesh_collection.mesh_f[ind_cell].n_point
+    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
+    constr_val = vec(eye(3))
+    ind_uncon = setdiff(1:(3*n_dof), ind_con)
+
+    # These are the weights of the basis functions
     U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
     u1 = U[1]
     u2 = U[2]
@@ -64,9 +80,12 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
     					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
 	rhs = [k[1]*u0[:,1] + u1*u; 
 			k[2]*u0[:,2] + u2*u ; 
-			k[3]*u0[:,3] + u3*u]
+			k[3]*u0[:,3] + u3*u] - system_matrix[:,ind_con]*constr_val
 
-	uOpt = system_matrix \ rhs
+
+	uOpt = zeros(3*n_dof)
+	uOpt[ind_con] = constr_val
+	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
 
 	return reshape(uOpt,:,3)
 end
@@ -143,6 +162,35 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 												k_time,
 												i)
 
+		# Contraints for nodal values of basis
+	    n_dof = mesh_local.n_point
+	    ind_con = [1 ; 2 ; 3]
+	    constr_val = eye(3)
+	    ind_uncon = setdiff(1:n_dof, ind_con)
+
+		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		# Evolve the reconstructed boundaries if for reaction
+		# problems
+		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+		if problem.conservative
+			# Solve transient 2D problems
+			for i=1:3
+				# Indices of points on certain boundary edge (indices in terms
+				# of original local mesh)
+				# cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==i] # 2-by-n matrix
+
+
+	        
+	        	u_basis_tmp[4:end,:,j] = 
+
+			end
+		end
+
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -163,8 +211,8 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
             # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	        # Time step (small) with implicit Euler
             M_orig = FEM.assemble_mass(mesh_old, dof_old, ref_el_f, quad_f, problem_f[i])
-            M_next = FEM.assemble_mass(mesh_next, dof_next, ref_el_f, quad_f, problem_f[i])
-            M = 0.5*(M_next + M_orig)
+            # M_next = FEM.assemble_mass(mesh_next, dof_next, ref_el_f, quad_f, problem_f[i])
+            # M = 0.5*(M_next + M_orig)
 
             R_next = FEM.assemble_reaction(mesh_next, 
             								dof_next,
@@ -183,13 +231,25 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
             # Zero forcing
 	        f_orig = zeros(mesh_local.n_point,3)
 
-            # -------   u_t + Ru = Du   -------
-	        # Set the system matrices 
-	        # TimeIntegrator.updateSystem!(timeStepper[i].systemData, M, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], par.dt)
-	        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], par.dt)
+			# -------   u_t + Ru = Du   -------
+	        if problem.conservative
+	        	# system_matrix = M_orig-dt_f*(D_next-R_next)
+	        	# rhs = M_orig*u_basis_tmp[:,:,j-1] - system_matrix[:,ind_con]*constr_val
+	        	# u_basis_tmp[ind_con,:,j] = constr_val
+	        	# u_basis_tmp[ind_uncon,:,j] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon,:]
 
-	        # Make a single time step
-	        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+	        	# Set the system matrices, BV from new state
+		        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j], dt_f)
+
+		        # Make a single time step
+		        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+	        else
+		        # Set the system matrices 
+		        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], dt_f)
+
+		        # Make a single time step
+		        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+		    end
 			# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			
         end # end for

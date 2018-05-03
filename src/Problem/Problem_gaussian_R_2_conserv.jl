@@ -97,9 +97,9 @@ function streamFunDer(problem :: Gaussian_R_2_conserv, t :: Float64, x :: Array{
     psi = problem.psi
     T = 1.
 
-    V = psi * hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* sin.(pi*(x[2,:]-1/2)) .* cos.(pi*(x[2,:]-1/2)), 
-                    (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
-                   )
+    V = hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* sin.(pi*(x[2,:]-1/2)) .* cos.(pi*(x[2,:]-1/2)), 
+                (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
+               )
 
     out = [V[i,:] for i=1:size(x,2)]
 

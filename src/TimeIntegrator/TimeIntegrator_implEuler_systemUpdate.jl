@@ -15,7 +15,7 @@ function updateSystem!(systemData :: ImplEulerData,
 
     systemData.system_matrix[:,:] = (M - dt*A)[innd,innd]
     
-    systemData.system_rhs[:,:] = M[innd,innd]*uOldDof[innd,:] + fDof[innd,:]
+    systemData.system_rhs[:,:] = M[innd,innd]*uOldDof[innd,:] + dt*fDof[innd,:]
     
     if !isempty(ind)
         systemData.system_rhs[:,:] +=  M[innd,ind]*uOldDof[ind,:] - (M - dt*A)[innd,ind]*uOldDof[ind,:]

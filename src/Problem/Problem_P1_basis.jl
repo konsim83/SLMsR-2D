@@ -100,6 +100,31 @@ end
 # --------------------------------------------------------------------
 
 
+"""
+    reaction(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
+
+    Delegate function calls to the original abstract problem.
+
+"""
+function reaction(problem :: BasisFun,  t :: Float64, x :: Array{Float64,2})
+
+    return reaction(problem.problem_parent, t, x)
+end
+
+
+"""
+    reaction(problem :: BasisFun,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    Delegate function calls to the original abstract problem.
+
+"""
+function reaction(problem :: BasisFun,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    return reaction(problem.problem_parent, t, x)
+end
+# --------------------------------------------------------------------
+
+
 function u_init(problem :: BasisFun, x :: Array{Float64,2})
                 
     size(x,1)!=2 ? error("Input points must be of size 2-by-n.") :
