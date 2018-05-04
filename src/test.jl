@@ -10,12 +10,12 @@ compute_ref = true
 compute_ms = false
 compute_ms_reconstruction = false
 
-post_process = false
+post_process = true
 
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 0.5
+T_max = 0.1
 
 
 # problem = Problem.Gaussian(T_max)
