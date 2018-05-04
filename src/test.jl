@@ -8,7 +8,7 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 compute_low = true
 compute_ref = true
 compute_ms = false
-compute_ms_reconstruction = false
+compute_ms_reconstruction = true
 
 post_process = true
 
@@ -41,9 +41,14 @@ T_max = 0.1
 # problem = Problem.Gaussian_R_3_conserv(T_max, 0.1 , 30)
 
 
+# Constant low diffusion, divergent, traveling vortex
+# problem = Problem.Gaussian_R_4(T_max, 0.05 , 30)
+problem = Problem.Gaussian_R_4_conserv(T_max, 0.05 , 30)
+
+
 # Multiscale diffusion, divergent, traveling vortex
-problem = Problem.Gaussian_R_4(T_max, 0.05 , 30)
-# problem = Problem.Gaussian_R_4_conserv(T_max, 0.05 , 30)
+# problem = Problem.Gaussian_R_5(T_max, 0.05 , 30)
+# problem = Problem.Gaussian_R_5_conserv(T_max, 0.05 , 30)
 
 # ---------------------------------------------------------------------------
 

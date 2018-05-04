@@ -475,7 +475,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 		u_basis_tmp = zeros(mesh_local.n_point, 3, n_steps_back+1)
 		# u_basis_tmp[:,:,1] = Problem.u_init(problem_f[i], mesh_local.point)
-		u_basis_tmp[:,:,1] = reconstruct_L2(solution,
+		u_basis_tmp[:,:,1] = reconstruct_L2_edgefirst(solution,
 												mesh_collection,
 												par,
 												problem_f[i],
@@ -518,71 +518,71 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 		# ----------------------------------------------------
         # -------   Time evolution on distinct grids   -------
-   #      for j=2:(n_steps_back+1)
-   #      	p_old = point_orig_all[end-(j-2)][:,ind]
-			# p_next = point_orig_all[end-(j-1)][:,ind]
+        for j=2:(n_steps_back+1)
+        	p_old = point_orig_all[end-(j-2)][:,ind]
+			p_next = point_orig_all[end-(j-1)][:,ind]
 
-   #          # Create mesh of next time step
-   #          mesh_old = Mesh.TriMesh(mesh_local, p_old, "Old mesh...")
-   #          mesh_next = Mesh.TriMesh(mesh_local, p_next, "Next mesh...")
+            # Create mesh of next time step
+            mesh_old = Mesh.TriMesh(mesh_local, p_old, "Old mesh...")
+            mesh_next = Mesh.TriMesh(mesh_local, p_next, "Next mesh...")
 
-   #          # Create dof handler of next timestep
-   #          dof_old = FEM.Dof_Pk(mesh_old, problem_f[i], 1)
-   #          dof_next = FEM.Dof_Pk(mesh_next, problem_f[i], 1)
+            # Create dof handler of next timestep
+            dof_old = FEM.Dof_Pk(mesh_old, problem_f[i], 1)
+            dof_next = FEM.Dof_Pk(mesh_next, problem_f[i], 1)
 
-   #          # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	  #       # Time step (small) with implicit Euler
-   #          M_orig = FEM.assemble_mass(mesh_old, dof_old, ref_el_f, quad_f, problem_f[i])
-   #          # M_next = FEM.assemble_mass(mesh_next, dof_next, ref_el_f, quad_f, problem_f[i])
-   #          # M = 0.5*(M_next + M_orig)
+            # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	        # Time step (small) with implicit Euler
+            M_orig = FEM.assemble_mass(mesh_old, dof_old, ref_el_f, quad_f, problem_f[i])
+            # M_next = FEM.assemble_mass(mesh_next, dof_next, ref_el_f, quad_f, problem_f[i])
+            # M = 0.5*(M_next + M_orig)
 
-   #          R_next = FEM.assemble_reaction(mesh_next, 
-   #          								dof_next,
-   #          								ref_el_f, 
-   #                                          quad_f, 
-   #                                          problem_f[i],
-   #                                          T - (n_steps_back-(j-1))*dt_f)
+            R_next = FEM.assemble_reaction(mesh_next, 
+            								dof_next,
+            								ref_el_f, 
+                                            quad_f, 
+                                            problem_f[i],
+                                            T - (n_steps_back-(j-1))*dt_f)
 
-   #          D_next = FEM.assemble_diffusion(mesh_next, 
-   #          								dof_next,
-   #          								ref_el_f, 
-   #                                          quad_f, 
-   #                                          problem_f[i],
-   #                                          T - (n_steps_back-(j-1))*dt_f)
+            D_next = FEM.assemble_diffusion(mesh_next, 
+            								dof_next,
+            								ref_el_f, 
+                                            quad_f, 
+                                            problem_f[i],
+                                            T - (n_steps_back-(j-1))*dt_f)
 
-   #          # Zero forcing
-	  #       f_orig = zeros(mesh_local.n_point,3)
+            # Zero forcing
+	        f_orig = zeros(mesh_local.n_point,3)
 
-			# # -------   u_t + Ru = Du   -------
-	  #       # if problem.conservative
-	  #       # 	# system_matrix = M_orig-dt_f*(D_next-R_next)
-	  #       # 	# rhs = M_orig*u_basis_tmp[:,:,j-1] - system_matrix[:,ind_con]*constr_val
-	  #       # 	# u_basis_tmp[ind_con,:,j] = constr_val
-	  #       # 	# u_basis_tmp[ind_uncon,:,j] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon,:]
+			# -------   u_t + Ru = Du   -------
+	        # if problem.conservative
+	        # 	# system_matrix = M_orig-dt_f*(D_next-R_next)
+	        # 	# rhs = M_orig*u_basis_tmp[:,:,j-1] - system_matrix[:,ind_con]*constr_val
+	        # 	# u_basis_tmp[ind_con,:,j] = constr_val
+	        # 	# u_basis_tmp[ind_uncon,:,j] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon,:]
 
-	  #       # 	# Set the system matrices, BV from new state
-		 #       #  TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j], dt_f)
+	        # 	# Set the system matrices, BV from new state
+		       #  TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j], dt_f)
 
-		 #       #  # Make a single time step
-		 #       #  TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
-	  #       # else
-		 #        # Set the system matrices 
-		 #        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], dt_f)
+		       #  # Make a single time step
+		       #  TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+	        # else
+		        # Set the system matrices 
+		        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, dof_next, u_basis_tmp[:,:,j-1], dt_f)
 
-		 #        # Make a single time step
-		 #        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
-		 #    # end
-			# # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		        # Make a single time step
+		        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+		    # end
+			# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			
-   #      end # end for
+        end # end for
         # ----------------------------------------------------
         
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# Pass the result of the evolution to the basis...
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		solution.phi_1[i][:,k_time] = u_basis_tmp[:,1,1]
-        solution.phi_2[i][:,k_time] = u_basis_tmp[:,2,1]
-        solution.phi_3[i][:,k_time] = u_basis_tmp[:,3,1]
+		solution.phi_1[i][:,k_time] = u_basis_tmp[:,1,end]
+        solution.phi_2[i][:,k_time] = u_basis_tmp[:,2,end]
+        solution.phi_3[i][:,k_time] = u_basis_tmp[:,3,end]
         
         # Compute time derivative of basis functions via finite differencing
         solution.phi_1_t[i][:,k_time] = FiniteDiff.backward_single(solution.phi_1[i][:,(k_time-1):k_time], par.dt)

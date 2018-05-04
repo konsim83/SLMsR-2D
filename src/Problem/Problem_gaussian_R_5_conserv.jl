@@ -78,7 +78,8 @@ function diffusion(problem :: Gaussian_R_5_conserv, t :: Float64, x :: Array{Flo
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    out = [[0.00001 0.0 ; 0.0 0.00001] for i=1:size(x,2)]
+    out = [[0.01*(1-0.9999*sin(2*pi*problem.k*x[1,i])) 0.0 ; 
+            0.0 0.01*(1-0.9999*sin(2*pi*problem.k*x[2,i]))] for i=1:size(x,2)]
     
     return out
 end
