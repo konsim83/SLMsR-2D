@@ -42,8 +42,8 @@ T_max = 0.1
 
 
 # Constant low diffusion, divergent, traveling vortex
-# problem = Problem.Gaussian_R_4(T_max, 0.05 , 30)
-problem = Problem.Gaussian_R_4_conserv(T_max, 0.05 , 30)
+problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
+# problem = Problem.Gaussian_R_4_conserv(T_max, 0.05 , 30)
 
 
 # Multiscale diffusion, divergent, traveling vortex

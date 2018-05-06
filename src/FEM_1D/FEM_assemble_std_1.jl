@@ -1,8 +1,7 @@
 # --------------------   Reaction term in Lagrangian coordinnates   --------------------
 # --------------------   u_t = Du - <c_x u, v> = Du + <cu_x, v> + <cu, v_x> = (D+R)u
-function assemble_global_R(dof :: Dof_Pk,
-                            mesh :: Grid1D.Mesh,
-                            ref_el :: AbstractRefEl_Pk,
+function assemble_mass_1(cells :: Array{Int,2},
+                            ref_el :: RefEl_Lagrange_1,
                             quad :: Quad1D.JacobiGauss,
                             problem :: Problem.AbstractProblem,
                             t :: Float64)
@@ -11,7 +10,7 @@ function assemble_global_R(dof :: Dof_Pk,
     ind_test = vec(transpose(repmat(ind, 1, size(ind,2))))
     ind = vec(sortrows(transpose(repmat(ind, 1, size(ind,2)))))
 
-    mat_local = assemble_elem_r(mesh, ref_el , quad, problem, t)
+    mat_local = assemble_elem_m(mesh, ref_el , quad, problem, t)
 
     Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
 

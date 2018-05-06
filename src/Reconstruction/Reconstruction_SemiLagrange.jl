@@ -302,114 +302,6 @@ function reconstruct_L2_edgefirst(solution :: FEM.Solution_MsFEM,
 end
 
 
-
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-
-function reconstruct_L2(solution :: FEM.Solution_MsFEM,
-							mesh_collection :: Mesh.TriMesh_collection,
-							par :: Parameter.Parameter_MsFEM,
-							problem_f :: Problem.AbstractBasisProblem,
-							point_orig :: Array{Float64,2},
-							u_orig :: Array{Float64,1},
-							k_time :: Int,
-							ind_cell :: Int)
-
-	# ------------------------------------------------
-    # Evaluate the solution at the traced back points
-    u = u_orig
-    # ------------------------------------------------
-
-	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
-
-	k = par.k
-
-    # Contraints for nodal values of basis
-    n_dof = mesh_collection.mesh_f[ind_cell].n_point
-    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
-    constr_val = vec(eye(3))
-    ind_uncon = setdiff(1:(3*n_dof), ind_con)
-
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
-    u1 = U[1]
-    u2 = U[2]
-    u3 = U[3]
-
-    n = length(u)
-    system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
-    					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
-    					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
-	rhs = [k[1]*u0[:,1] + u1*u; 
-			k[2]*u0[:,2] + u2*u ; 
-			k[3]*u0[:,3] + u3*u]  - system_matrix[:,ind_con]*constr_val
-
-
-	uOpt = zeros(3*n_dof)
-	uOpt[ind_con] = constr_val
-	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
-
-	# rhs = [k[1]*u0[:,1] + u1*u;
-	# 		k[2]*u0[:,2] + u2*u ;
-	# 		k[3]*u0[:,3] + u3*u]
-
-	# uOpt = system_matrix \ rhs
-
-	return reshape(uOpt,:,3)
-end
-
-
-function reconstruct_L2(solution :: FEM.Solution_MsFEM,
-							mesh_collection :: Mesh.TriMesh_collection,
-							par :: Parameter.Parameter_MsFEM,
-							problem :: Problem.AbstractPhysicalProblem,
-							problem_f :: Problem.AbstractBasisProblem,
-							point :: Array{Float64,2},
-							ind_cell :: Int)
-    
-    # ------------------------------------------------
-    # Evaluate the solution at the traced back points
-    u = Problem.u_init(problem, point)
-    # ------------------------------------------------
-
-	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
-
-    k = par.k
-
-    # Contraints for nodal values of basis
-    n_dof = mesh_collection.mesh_f[ind_cell].n_point
-    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
-    constr_val = vec(eye(3))
-    ind_uncon = setdiff(1:(3*n_dof), ind_con)
-
-    # These are the weights of the basis functions
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
-    u1 = U[1]
-    u2 = U[2]
-    u3 = U[3]
-
-    n = length(u)
-    system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
-    					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
-    					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
-	rhs = [k[1]*u0[:,1] + u1*u; 
-			k[2]*u0[:,2] + u2*u ; 
-			k[3]*u0[:,3] + u3*u] - system_matrix[:,ind_con]*constr_val
-
-
-	uOpt = zeros(3*n_dof)
-	uOpt[ind_con] = constr_val
-	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
-
-	# rhs = [k[1]*u0[:,1] + u1*u; 
-	# 		k[2]*u0[:,2] + u2*u ; 
-	# 		k[3]*u0[:,3] + u3*u]
-
-	# uOpt = system_matrix \ rhs
-
-	return reshape(uOpt,:,3)
-end
-
-
 # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
@@ -466,8 +358,10 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
     point_count = 0
 	@time for i in 1:mesh_collection.mesh.n_cell
-		mesh_local = mesh_collection.mesh_f[i]
 		ind = (1:mesh_local.n_point) + point_count
+
+		mesh_local = mesh_collection.mesh_f[i]
+		problem_local = problem_f[i]
 
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# Reconstruct the initial values
@@ -478,7 +372,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		u_basis_tmp[:,:,1] = reconstruct_L2_edgefirst(solution,
 												mesh_collection,
 												par,
-												problem_f[i],
+												problem_local,
 												point_orig_all[end][:,ind],
 												u_orig_all[ind],
 												k_time,
@@ -499,19 +393,103 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		# problems
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-		# if problem.conservative
-		# 	# Solve transient 2D problems
-		# 	for i=1:3
-		# 		# Indices of points on certain boundary edge (indices in terms
-		# 		# of original local mesh)
-		# 		# cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==i] # 2-by-n matrix
+		if problem.conservative
+			# Solve transient 2D problems
+
+			ref_el_1d = FEM.
+			quad_1d = 
+
+			u0_bv = Problem.u_init(problem_local, mesh_local.point)
+			
+			# ++++++++++++++++++++++++++
+			# +++++++   edge 1   +++++++
+			# Cells on edge 1
+			cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==1]
+
+			# Indices of points on edge 1
+			ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==1]))
+			n = length(ind_edge)
+
+			# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
+			for j=2:(n_steps_back+1)
+				M_orig_bv = FEM.assemble_mass_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+				R_bv_next = FEM.assemble_reaction_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+				D_bv_next = FEM.assemble_diffusion_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+
+				# +++   basis 1   +++
+				basis_left = u0_bv[ind_edge,1]
+
+				u_basis_tmp[ind_edge,1,j] = 
+
+			    
+				# +++   basis 2   +++
+			    basis_right = u0_bv[ind_edge,2]
+
+	        	u_basis_tmp[ind_edge,2,j] = 
+			end
+			# +++++++   edge 1   +++++++
+			# ++++++++++++++++++++++++++
 
 
-	        
-	 #        	u_basis_tmp[4:end,:,j] = 
+			# ++++++++++++++++++++++++++
+			# +++++++   edge 2   +++++++
+			# Cells on edge 2
+			cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==2]
 
-		# 	end
-		# end
+			# Indices of points on edge 2
+			ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==2]))
+			n = length(ind_edge)
+
+			# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
+			for j=2:(n_steps_back+1)
+				M_orig_bv = FEM.assemble_mass_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+				R_bv_next = FEM.assemble_reaction_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+				D_bv_next = FEM.assemble_diffusion_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+
+				# +++   basis 1   +++
+				basis_left = u0_bv[ind_edge,2]
+
+				u_basis_tmp[ind_edge,2,j] = 
+
+			    
+				# +++   basis 2   +++
+			    basis_right = u0_bv[ind_edge,3]
+
+	        	u_basis_tmp[ind_edge,3,j] = 
+			end
+			# +++++++   edge 2   +++++++
+			# ++++++++++++++++++++++++++
+
+
+			# ++++++++++++++++++++++++++
+			# +++++++   edge 3   +++++++
+			# Cells on edge 3
+			cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==3]
+
+			# Indices of points on edge 3
+			ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==3]))
+			n = length(ind_edge)
+
+			# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
+			for j=2:(n_steps_back+1)
+				M_orig_bv = FEM.assemble_mass_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+				R_bv_next = FEM.assemble_reaction_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+				D_bv_next = FEM.assemble_diffusion_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+
+				# +++   basis 1   +++
+				basis_left = u0_bv[ind_edge,3]
+
+				u_basis_tmp[ind_edge,3,j] = 
+
+			    
+				# +++   basis 2   +++
+			    basis_right = u0_bv[ind_edge,1]
+
+	        	u_basis_tmp[ind_edge,1,j] = 
+			end
+			# +++++++   edge 3   +++++++
+			# ++++++++++++++++++++++++++
+		end
 
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -619,4 +597,119 @@ function traceback(point :: Array{Float64,2},
 	sol = DifferentialEquations.solve(prob)
 
 	return sol.u
+end
+
+
+
+
+
+
+
+
+
+
+# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+
+function reconstruct_L2(solution :: FEM.Solution_MsFEM,
+							mesh_collection :: Mesh.TriMesh_collection,
+							par :: Parameter.Parameter_MsFEM,
+							problem_f :: Problem.AbstractBasisProblem,
+							point_orig :: Array{Float64,2},
+							u_orig :: Array{Float64,1},
+							k_time :: Int,
+							ind_cell :: Int)
+
+	# ------------------------------------------------
+    # Evaluate the solution at the traced back points
+    u = u_orig
+    # ------------------------------------------------
+
+	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
+
+	k = par.k
+
+    # Contraints for nodal values of basis
+    n_dof = mesh_collection.mesh_f[ind_cell].n_point
+    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
+    constr_val = vec(eye(3))
+    ind_uncon = setdiff(1:(3*n_dof), ind_con)
+
+    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+    u1 = U[1]
+    u2 = U[2]
+    u3 = U[3]
+
+    n = length(u)
+    system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
+    					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
+    					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
+	rhs = [k[1]*u0[:,1] + u1*u; 
+			k[2]*u0[:,2] + u2*u ; 
+			k[3]*u0[:,3] + u3*u]  - system_matrix[:,ind_con]*constr_val
+
+
+	uOpt = zeros(3*n_dof)
+	uOpt[ind_con] = constr_val
+	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
+
+	# rhs = [k[1]*u0[:,1] + u1*u;
+	# 		k[2]*u0[:,2] + u2*u ;
+	# 		k[3]*u0[:,3] + u3*u]
+
+	# uOpt = system_matrix \ rhs
+
+	return reshape(uOpt,:,3)
+end
+
+
+function reconstruct_L2(solution :: FEM.Solution_MsFEM,
+							mesh_collection :: Mesh.TriMesh_collection,
+							par :: Parameter.Parameter_MsFEM,
+							problem :: Problem.AbstractPhysicalProblem,
+							problem_f :: Problem.AbstractBasisProblem,
+							point :: Array{Float64,2},
+							ind_cell :: Int)
+    
+    # ------------------------------------------------
+    # Evaluate the solution at the traced back points
+    u = Problem.u_init(problem, point)
+    # ------------------------------------------------
+
+	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
+
+    k = par.k
+
+    # Contraints for nodal values of basis
+    n_dof = mesh_collection.mesh_f[ind_cell].n_point
+    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
+    constr_val = vec(eye(3))
+    ind_uncon = setdiff(1:(3*n_dof), ind_con)
+
+    # These are the weights of the basis functions
+    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
+    u1 = U[1]
+    u2 = U[2]
+    u3 = U[3]
+
+    n = length(u)
+    system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
+    					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
+    					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
+	rhs = [k[1]*u0[:,1] + u1*u; 
+			k[2]*u0[:,2] + u2*u ; 
+			k[3]*u0[:,3] + u3*u] - system_matrix[:,ind_con]*constr_val
+
+
+	uOpt = zeros(3*n_dof)
+	uOpt[ind_con] = constr_val
+	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
+
+	# rhs = [k[1]*u0[:,1] + u1*u; 
+	# 		k[2]*u0[:,2] + u2*u ; 
+	# 		k[3]*u0[:,3] + u3*u]
+
+	# uOpt = system_matrix \ rhs
+
+	return reshape(uOpt,:,3)
 end
