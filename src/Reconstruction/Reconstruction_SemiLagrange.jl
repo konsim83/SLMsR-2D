@@ -1,4 +1,4 @@
-function reconstruct_L2_edgefirst(solution :: FEM.Solution_MsFEM,
+function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 									mesh_collection :: Mesh.TriMesh_collection,
 									par :: Parameter.Parameter_MsFEM,
 									problem_f :: Problem.AbstractBasisProblem,
@@ -149,7 +149,7 @@ function reconstruct_L2_edgefirst(solution :: FEM.Solution_MsFEM,
 end
 
 
-function reconstruct_L2_edgefirst(solution :: FEM.Solution_MsFEM,
+function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 									mesh_collection :: Mesh.TriMesh_collection,
 									par :: Parameter.Parameter_MsFEM,
 									problem :: Problem.AbstractPhysicalProblem,
@@ -321,7 +321,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 	if k_time==2
 		for i in 1:mesh_collection.mesh.n_cell
 			u_basis_tmp = zeros(mesh_collection.mesh_f[i].n_point, 3)
-			u_basis_tmp[:,:] = reconstruct_L2_edgefirst(solution,
+			u_basis_tmp[:,:] = reconstruct_L2(solution,
 														mesh_collection,
 														par,
 														problem,
@@ -358,10 +358,10 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
     point_count = 0
 	@time for i in 1:mesh_collection.mesh.n_cell
-		ind = (1:mesh_local.n_point) + point_count
-
 		mesh_local = mesh_collection.mesh_f[i]
 		problem_local = problem_f[i]
+
+		ind = (1:mesh_local.n_point) + point_count
 
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# Reconstruct the initial values
@@ -369,7 +369,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 		u_basis_tmp = zeros(mesh_local.n_point, 3, n_steps_back+1)
 		# u_basis_tmp[:,:,1] = Problem.u_init(problem_f[i], mesh_local.point)
-		u_basis_tmp[:,:,1] = reconstruct_L2_edgefirst(solution,
+		u_basis_tmp[:,:,1] = reconstruct_L2(solution,
 												mesh_collection,
 												par,
 												problem_local,
@@ -386,113 +386,134 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# Evolve the reconstructed boundaries if for reaction
 		# problems
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		# if problem.conservative
+		# 	# Solve transient 2D problems
 
-		if problem.conservative
-			# Solve transient 2D problems
+		# 	# ref_el_1d = FEM.
+		# 	# quad_1d = 
 
-			ref_el_1d = FEM.
-			quad_1d = 
-
-			u0_bv = Problem.u_init(problem_local, mesh_local.point)
+		# 	u0_bv = Problem.u_init(problem_local, mesh_local.point)
 			
-			# ++++++++++++++++++++++++++
-			# +++++++   edge 1   +++++++
-			# Cells on edge 1
-			cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==1]
+		# 	# ++++++++++++++++++++++++++
+		# 	# +++++++   edge 1   +++++++
+		# 	# Cells on edge 1
+		# 	# !!! Note that the endpoint in cell_2d is first !!!
+		# 	cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==1]
+		# 	cells_2d = circshift(cell_2d,1)
 
-			# Indices of points on edge 1
-			ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==1]))
-			n = length(ind_edge)
+		# 	# Indices of points on edge 1
+		# 	ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==1]))
+		# 	n = length(ind_edge)
 
-			# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
-			for j=2:(n_steps_back+1)
-				M_orig_bv = FEM.assemble_mass_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-				R_bv_next = FEM.assemble_reaction_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-				D_bv_next = FEM.assemble_diffusion_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 	# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
+		# 	for j=2:(n_steps_back+1)
+		# 		# p_old = point_orig_all[end-(j-2)][:,ind][:,cell_2d]
+		# 		p_next = point_orig_all[end-(j-1)][:,ind][:,ind_edge]
 
-				# +++   basis 1   +++
-				basis_left = u0_bv[ind_edge,1]
+		# 		divVel = Problem.reaction(problem_local, T - (n_steps_back-(j-1))*dt_f, p_next)
 
-				u_basis_tmp[ind_edge,1,j] = 
+		# 		# M_orig_bv = FEM.assemble_mass_1d(cell_2d, p_old, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 		# R_bv_next = FEM.assemble_reaction_1d(cell_2d, p_next, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 		# D_bv_next = FEM.assemble_diffusion_1d(cell_2d, p_next, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
 
-			    
-				# +++   basis 2   +++
-			    basis_right = u0_bv[ind_edge,2]
+		# 		# +++   basis 1   +++
+		# 		basis_left = u0_bv[ind_edge,1]
 
-	        	u_basis_tmp[ind_edge,2,j] = 
-			end
-			# +++++++   edge 1   +++++++
-			# ++++++++++++++++++++++++++
-
-
-			# ++++++++++++++++++++++++++
-			# +++++++   edge 2   +++++++
-			# Cells on edge 2
-			cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==2]
-
-			# Indices of points on edge 2
-			ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==2]))
-			n = length(ind_edge)
-
-			# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
-			for j=2:(n_steps_back+1)
-				M_orig_bv = FEM.assemble_mass_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-				R_bv_next = FEM.assemble_reaction_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-				D_bv_next = FEM.assemble_diffusion_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-
-				# +++   basis 1   +++
-				basis_left = u0_bv[ind_edge,2]
-
-				u_basis_tmp[ind_edge,2,j] = 
+		# 		u_basis_tmp[ind_edge,1,j] = u_basis_tmp[ind_edge,1,j-1] ./ (1 + dt_f*divVel)
 
 			    
-				# +++   basis 2   +++
-			    basis_right = u0_bv[ind_edge,3]
+		# 		# +++   basis 2   +++
+		# 	    basis_right = u0_bv[ind_edge,2]
 
-	        	u_basis_tmp[ind_edge,3,j] = 
-			end
-			# +++++++   edge 2   +++++++
-			# ++++++++++++++++++++++++++
+	 #        	u_basis_tmp[ind_edge,2,j] = u_basis_tmp[ind_edge,2,j-1] ./ (1 + dt_f*divVel)
+		# 	end
+		# 	# +++++++   edge 1   +++++++
+		# 	# ++++++++++++++++++++++++++
 
 
-			# ++++++++++++++++++++++++++
-			# +++++++   edge 3   +++++++
-			# Cells on edge 3
-			cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==3]
+		# 	# ++++++++++++++++++++++++++
+		# 	# +++++++   edge 2   +++++++
+		# 	# Cells on edge 2
+		# 	# !!! Note that the endpoint in cell_2d is first !!!
+		# 	cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==2]
+		# 	cells_2d = circshift(cell_2d,1)
 
-			# Indices of points on edge 3
-			ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==3]))
-			n = length(ind_edge)
+		# 	# Indices of points on edge 2
+		# 	ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==2]))
+		# 	n = length(ind_edge)
 
-			# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
-			for j=2:(n_steps_back+1)
-				M_orig_bv = FEM.assemble_mass_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-				R_bv_next = FEM.assemble_reaction_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
-				D_bv_next = FEM.assemble_diffusion_1d(cell_2d, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 	# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
+		# 	for j=2:(n_steps_back+1)
+		# 		# p_old = point_orig_all[end-(j-2)][:,ind][:,cell_2d]
+		# 		p_next = point_orig_all[end-(j-1)][:,ind][:,ind_edge]
 
-				# +++   basis 1   +++
-				basis_left = u0_bv[ind_edge,3]
+		# 		divVel = Problem.reaction(problem_local, T - (n_steps_back-(j-1))*dt_f, p_next)
 
-				u_basis_tmp[ind_edge,3,j] = 
+		# 		# M_orig_bv = FEM.assemble_mass_1d(cell_2d, p_old, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 		# R_bv_next = FEM.assemble_reaction_1d(cell_2d, p_next, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 		# D_bv_next = FEM.assemble_diffusion_1d(cell_2d, p_next, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+
+		# 		# +++   basis 1   +++
+		# 		basis_left = u0_bv[ind_edge,2]
+
+		# 		u_basis_tmp[ind_edge,2,j] = u_basis_tmp[ind_edge,2,j-1] ./ (1 + dt_f*divVel)
 
 			    
-				# +++   basis 2   +++
-			    basis_right = u0_bv[ind_edge,1]
+		# 		# +++   basis 2   +++
+		# 	    basis_right = u0_bv[ind_edge,3]
 
-	        	u_basis_tmp[ind_edge,1,j] = 
-			end
-			# +++++++   edge 3   +++++++
-			# ++++++++++++++++++++++++++
-		end
+	 #        	u_basis_tmp[ind_edge,3,j] = u_basis_tmp[ind_edge,3,j-1] ./ (1 + dt_f*divVel)
+		# 	end
+		# 	# +++++++   edge 2   +++++++
+		# 	# ++++++++++++++++++++++++++
 
+
+		# 	# ++++++++++++++++++++++++++
+		# 	# +++++++   edge 3   +++++++
+		# 	# Cells on edge 3
+		# 	# !!! Note that the endpoint in cell_2d is first !!!
+		# 	cell_2d = mesh_local.segment[:,mesh_local.segment_marker.==3]
+		# 	cells_2d = circshift(cell_2d,1)
+
+		# 	# Indices of points on edge 3
+		# 	ind_edge = sort(unique(mesh_local.segment[:,mesh_local.segment_marker.==3]))
+		# 	n = length(ind_edge)
+
+		# 	# Solve a 1D-reaction-diffusion problem u_t + Ru = Du
+		# 	for j=2:(n_steps_back+1)
+		# 		# p_old = point_orig_all[end-(j-2)][:,ind][:,cell_2d]
+		# 		p_next = point_orig_all[end-(j-1)][:,ind][:,ind_edge]
+
+		# 		divVel = Problem.reaction(problem_local, T - (n_steps_back-(j-1))*dt_f, p_next)
+
+		# 		# M_orig_bv = FEM.assemble_mass_1d(cell_2d, p_old, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 		# R_bv_next = FEM.assemble_reaction_1d(cell_2d, p_next, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+		# 		# D_bv_next = FEM.assemble_diffusion_1d(cell_2d, p_next, ref_el_1d, quad_1d, problem_local, T - (n_steps_back-(j-1))*dt_f)
+
+		# 		# +++   basis 1   +++
+		# 		basis_left = u0_bv[ind_edge,3]
+
+		# 		u_basis_tmp[ind_edge,3,j] = u_basis_tmp[ind_edge,3,j-1] ./ (1 + dt_f*divVel)
+
+			    
+		# 		# +++   basis 2   +++
+		# 	    basis_right = u0_bv[ind_edge,1]
+
+	 #        	u_basis_tmp[ind_edge,1,j] = u_basis_tmp[ind_edge,1,j-1] ./ (1 + dt_f*divVel)
+		# 	end
+		# 	# +++++++   edge 3   +++++++
+		# 	# ++++++++++++++++++++++++++
+		# end
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 		# ----------------------------------------------------
         # -------   Time evolution on distinct grids   -------
@@ -608,108 +629,108 @@ end
 
 
 
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+# # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
-function reconstruct_L2(solution :: FEM.Solution_MsFEM,
-							mesh_collection :: Mesh.TriMesh_collection,
-							par :: Parameter.Parameter_MsFEM,
-							problem_f :: Problem.AbstractBasisProblem,
-							point_orig :: Array{Float64,2},
-							u_orig :: Array{Float64,1},
-							k_time :: Int,
-							ind_cell :: Int)
+# function reconstruct_L2(solution :: FEM.Solution_MsFEM,
+# 							mesh_collection :: Mesh.TriMesh_collection,
+# 							par :: Parameter.Parameter_MsFEM,
+# 							problem_f :: Problem.AbstractBasisProblem,
+# 							point_orig :: Array{Float64,2},
+# 							u_orig :: Array{Float64,1},
+# 							k_time :: Int,
+# 							ind_cell :: Int)
 
-	# ------------------------------------------------
-    # Evaluate the solution at the traced back points
-    u = u_orig
-    # ------------------------------------------------
+# 	# ------------------------------------------------
+#     # Evaluate the solution at the traced back points
+#     u = u_orig
+#     # ------------------------------------------------
 
-	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
+# 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
 
-	k = par.k
+# 	k = par.k
 
-    # Contraints for nodal values of basis
-    n_dof = mesh_collection.mesh_f[ind_cell].n_point
-    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
-    constr_val = vec(eye(3))
-    ind_uncon = setdiff(1:(3*n_dof), ind_con)
+#     # Contraints for nodal values of basis
+#     n_dof = mesh_collection.mesh_f[ind_cell].n_point
+#     ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
+#     constr_val = vec(eye(3))
+#     ind_uncon = setdiff(1:(3*n_dof), ind_con)
 
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
-    u1 = U[1]
-    u2 = U[2]
-    u3 = U[3]
+#     U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+#     u1 = U[1]
+#     u2 = U[2]
+#     u3 = U[3]
 
-    n = length(u)
-    system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
-    					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
-    					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
-	rhs = [k[1]*u0[:,1] + u1*u; 
-			k[2]*u0[:,2] + u2*u ; 
-			k[3]*u0[:,3] + u3*u]  - system_matrix[:,ind_con]*constr_val
-
-
-	uOpt = zeros(3*n_dof)
-	uOpt[ind_con] = constr_val
-	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
-
-	# rhs = [k[1]*u0[:,1] + u1*u;
-	# 		k[2]*u0[:,2] + u2*u ;
-	# 		k[3]*u0[:,3] + u3*u]
-
-	# uOpt = system_matrix \ rhs
-
-	return reshape(uOpt,:,3)
-end
+#     n = length(u)
+#     system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
+#     					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
+#     					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
+# 	rhs = [k[1]*u0[:,1] + u1*u; 
+# 			k[2]*u0[:,2] + u2*u ; 
+# 			k[3]*u0[:,3] + u3*u]  - system_matrix[:,ind_con]*constr_val
 
 
-function reconstruct_L2(solution :: FEM.Solution_MsFEM,
-							mesh_collection :: Mesh.TriMesh_collection,
-							par :: Parameter.Parameter_MsFEM,
-							problem :: Problem.AbstractPhysicalProblem,
-							problem_f :: Problem.AbstractBasisProblem,
-							point :: Array{Float64,2},
-							ind_cell :: Int)
+# 	uOpt = zeros(3*n_dof)
+# 	uOpt[ind_con] = constr_val
+# 	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
+
+# 	# rhs = [k[1]*u0[:,1] + u1*u;
+# 	# 		k[2]*u0[:,2] + u2*u ;
+# 	# 		k[3]*u0[:,3] + u3*u]
+
+# 	# uOpt = system_matrix \ rhs
+
+# 	return reshape(uOpt,:,3)
+# end
+
+
+# function reconstruct_L2(solution :: FEM.Solution_MsFEM,
+# 							mesh_collection :: Mesh.TriMesh_collection,
+# 							par :: Parameter.Parameter_MsFEM,
+# 							problem :: Problem.AbstractPhysicalProblem,
+# 							problem_f :: Problem.AbstractBasisProblem,
+# 							point :: Array{Float64,2},
+# 							ind_cell :: Int)
     
-    # ------------------------------------------------
-    # Evaluate the solution at the traced back points
-    u = Problem.u_init(problem, point)
-    # ------------------------------------------------
+#     # ------------------------------------------------
+#     # Evaluate the solution at the traced back points
+#     u = Problem.u_init(problem, point)
+#     # ------------------------------------------------
 
-	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
+# 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
 
-    k = par.k
+#     k = par.k
 
-    # Contraints for nodal values of basis
-    n_dof = mesh_collection.mesh_f[ind_cell].n_point
-    ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
-    constr_val = vec(eye(3))
-    ind_uncon = setdiff(1:(3*n_dof), ind_con)
+#     # Contraints for nodal values of basis
+#     n_dof = mesh_collection.mesh_f[ind_cell].n_point
+#     ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
+#     constr_val = vec(eye(3))
+#     ind_uncon = setdiff(1:(3*n_dof), ind_con)
 
-    # These are the weights of the basis functions
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
-    u1 = U[1]
-    u2 = U[2]
-    u3 = U[3]
+#     # These are the weights of the basis functions
+#     U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
+#     u1 = U[1]
+#     u2 = U[2]
+#     u3 = U[3]
 
-    n = length(u)
-    system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
-    					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
-    					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
-	rhs = [k[1]*u0[:,1] + u1*u; 
-			k[2]*u0[:,2] + u2*u ; 
-			k[3]*u0[:,3] + u3*u] - system_matrix[:,ind_con]*constr_val
+#     n = length(u)
+#     system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
+#     					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
+#     					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
+# 	rhs = [k[1]*u0[:,1] + u1*u; 
+# 			k[2]*u0[:,2] + u2*u ; 
+# 			k[3]*u0[:,3] + u3*u] - system_matrix[:,ind_con]*constr_val
 
 
-	uOpt = zeros(3*n_dof)
-	uOpt[ind_con] = constr_val
-	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
+# 	uOpt = zeros(3*n_dof)
+# 	uOpt[ind_con] = constr_val
+# 	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
 
-	# rhs = [k[1]*u0[:,1] + u1*u; 
-	# 		k[2]*u0[:,2] + u2*u ; 
-	# 		k[3]*u0[:,3] + u3*u]
+# 	# rhs = [k[1]*u0[:,1] + u1*u; 
+# 	# 		k[2]*u0[:,2] + u2*u ; 
+# 	# 		k[3]*u0[:,3] + u3*u]
 
-	# uOpt = system_matrix \ rhs
+# 	# uOpt = system_matrix \ rhs
 
-	return reshape(uOpt,:,3)
-end
+# 	return reshape(uOpt,:,3)
+# end

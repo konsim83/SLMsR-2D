@@ -163,19 +163,19 @@ function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Flo
 end
 
 
-"""
-    reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+# """
+#     reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
-    Velocity is represented by a 2-vector. The solenoidal part can be
-    represented by a stream function.
+#     Velocity is represented by a 2-vector. The solenoidal part can be
+#     represented by a stream function.
 
-"""
-function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+# """
+# function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
-    out = [reaction(problem, t, y) for y in x]
+#     out = [reaction(problem, t, y) for y in x]
 
-    return out
-end
+#     return out
+# end
 
 
 
