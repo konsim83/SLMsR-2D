@@ -102,34 +102,6 @@ end
 
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
-function velocity_div(problem :: Gaussian_R_5,  t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    psi = problem.psi
-    T = 1.
-
-    V = (psi/T)*8*pi^2 * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* cos.(pi*(x[2,:]-1/2)) * ( 
-            cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2))
-          ) 
-                
-
-    out = [V[i,:] for i=1:size(x,2)]
-    
-    return out
-end
-
-function velocity_div(problem :: Gaussian_R_5,  t :: Float64, x :: Array{Array{Float64,2},1})
-
-    out = [velocity_div(problem, t, y) for y in x]
-
-    return out
-end
-
-
-
-
-
 """
     velocity(problem :: Gaussian_R_5,  t :: Float64, x :: Array{Float64,2})
 
@@ -144,9 +116,9 @@ function velocity(problem :: Gaussian_R_5,  t :: Float64, x :: Array{Float64,2})
     psi = problem.psi
     T = 1.
 
-    V = psi * hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
-                    (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
-                   )
+    V = hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
+                (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
+               )
 
     out = [V[i,:] for i=1:size(x,2)]
     
