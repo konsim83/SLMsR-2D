@@ -15,7 +15,7 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 1.0
+T_max = 1.0/10
 
 
 # problem = Problem.Gaussian(T_max)
@@ -42,12 +42,12 @@ T_max = 1.0
 
 
 # Constant low diffusion, divergent, traveling vortex
-# problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
-# problem = Problem.Gaussian_R_4_conserv(T_max, 0.05 , 30)
+problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
+# problem = Problem.Gaussian_R_4_conserv(T_max, 0.2 , 30)
 
 
 # Multiscale diffusion, divergent, traveling vortex
-problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
+# problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
 # problem = Problem.Gaussian_R_5_conserv(T_max, 0.05 , 30)
 
 # ---------------------------------------------------------------------------

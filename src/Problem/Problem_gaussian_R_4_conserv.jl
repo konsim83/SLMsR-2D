@@ -146,8 +146,7 @@ end
 """
     reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
 
-    Velocity is represented by a 2-vector. The solenoidal part can be
-    represented by a stream function.
+    Divergence of velocity field.
 
 """
 function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
