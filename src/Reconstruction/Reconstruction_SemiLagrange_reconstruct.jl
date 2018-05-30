@@ -55,15 +55,14 @@ function reconstruct_L2(solution :: FEM.Solution_MsFEM,
 
     # ------------------------------------------------
     # Reconstruct edges
-    reconstruct_edge!(uOpt, m_f, U, u0, u, 1, par.k[1])
-    reconstruct_edge!(uOpt, m_f, U, u0, u, 2, par.k[1])
-    reconstruct_edge!(uOpt, m_f, U, u0, u, 3, par.k[1])
+    reconstruct_edge!(uOpt, m_f, U, u0, u, 1, par.k[4])
+    reconstruct_edge!(uOpt, m_f, U, u0, u, 2, par.k[4])
+    reconstruct_edge!(uOpt, m_f, U, u0, u, 3, par.k[4])
     # ------------------------------------------------
 
 
     # ------------------------------------------------
     # Reconstruct interior
-
     uOpt = vec(uOpt)
 
     # Contraints for nodal values of basis at boundary for ALL THREE BASIS

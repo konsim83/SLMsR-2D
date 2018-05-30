@@ -2,6 +2,7 @@ import Mesh, Problem, FEM, Quad, TimeIntegrator, Plot
 
 import DifferentialEquations
 
+using PyPlot
 
 function traceback(point :: Array{Float64,2},
 					T :: Float64, 
@@ -54,24 +55,26 @@ U = Problem.u_init(problem, mesh_collection.mesh.point)
 u_before = Problem.u_init(problem, point_orig_all[1])
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	i_mesh = 1 # mesh index
+	i_mesh = 10 # mesh index
 	j = 2 # Time
-	seg = 3 # segment
+	seg = 2 # segment
 
 	mesh_local = mesh_collection.mesh_f[i_mesh]
 
 	
 	cell_2d = circshift(mesh_local.segment[:,mesh_local.segment_marker.==seg],1)
 	ind_edge = sort(unique(cell_2d))
-	n = length(ind_edge)
-
+	n = length(ind_edge)	
 
 	tri = Geometry.Triangle(mesh_collection.mesh.point[:, mesh_collection.mesh.cell[:,i_mesh]])
     problem_f = Problem.BasisFun(problem, tri)
     
 	ind = (1:mesh_local.n_point) + (i_mesh-1)*mesh_local.n_point
 	
-	u_before_local = u_before[ind_edge]
+	p0 = point_orig_all[1][:,ind]
+	p_edge = p0[:,ind_edge]
+
+	u_before_local = u_before[ind][ind_edge]
 	u0_local = Problem.u_init(problem_f, point_orig_all[1][:,ind])
 
 	if seg==1
@@ -96,14 +99,14 @@ u_before = Problem.u_init(problem, point_orig_all[1])
 		basis_right = u0_local[ind_edge,3]
 	elseif seg==3
 		ind_con = [1 ; 2 ; 1+n ; 2+n]
-	    val_con = [1. ; 0. ; 0. ; 1.]
+	    val_con = [0. ; 1. ; 1. ; 0.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
-	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
-	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
+	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
+	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
 
-		basis_left = u0_local[ind_edge,1]
-		basis_right = u0_local[ind_edge,3]
+		basis_left = u0_local[ind_edge,3]
+		basis_right = u0_local[ind_edge,1]
 	end
 
 
