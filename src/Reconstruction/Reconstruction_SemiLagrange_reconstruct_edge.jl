@@ -1,4 +1,4 @@
-function reconstruct_edge!(uOpt :: Array{Float64,1},
+function reconstruct_edge!(uOpt :: Array{Float64,2},
 							 m_f  :: Mesh.TriangleMesh.TriMesh, 
 							 U :: Array{Float64,1},
 							 u0 :: Array{Float64,2}, 

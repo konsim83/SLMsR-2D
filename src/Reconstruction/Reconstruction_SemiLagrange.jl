@@ -14,7 +14,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 	if k_time==2
 		for i in 1:mesh_collection.mesh.n_cell
 			u_basis_tmp = zeros(mesh_collection.mesh_f[i].n_point, 3)
-			u_basis_tmp[:,:] = reconstruct_L2_nonconformal(solution,
+			u_basis_tmp[:,:] = reconstruct_L2_conformal(solution,
 														mesh_collection,
 														par,
 														problem,
@@ -63,7 +63,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		u_basis_tmp = zeros(mesh_local.n_point, 3, n_steps_back+1)
 		# u_basis_tmp[:,:,1] = Problem.u_init(problem_f[i], mesh_local.point)
-		u_basis_tmp[:,:,1] = reconstruct_L2_nonconformal(solution,
+		u_basis_tmp[:,:,1] = reconstruct_L2_conformal(solution,
 														mesh_collection,
 														par,
 														problem_local,
@@ -134,13 +134,25 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
             # Zero forcing
 	        f_orig = zeros(mesh_local.n_point,3)
 
-			# -------   u_t + Ru = Du   -------
-	        # Set the system matrices 
-	        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, 
-	        								dof_next, u_basis_tmp[:,:,j-1], u_basis_tmp[:,:,j-1], dt_f)
+			# -------   Mu_t + Ru = Du   -------
+			# Set the system matrices 
+	        if false
+	        	ind_con = [1 ; 2 ; 3]
+			    constr_val = eye(3)
+			    ind_uncon = setdiff(1:mesh_local.n_point, ind_con)
 
-	        # Make a single time step
-	        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+	        	system = M_orig-dt_f*(D_next-R_next)
+	        	rhs = M_orig[ind_uncon,:]*u_basis_tmp[:,:,j-1] - system[ind_uncon,ind_con]*constr_val
+	        	u_basis_tmp[ind_uncon,:,j] = system[ind_uncon,ind_uncon]\ rhs
+	        	u_basis_tmp[ind_con,:,j] = constr_val
+	        else
+		        # # Set the system matrices 
+		        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, 
+		        								dof_next, u_basis_tmp[:,:,j-1], u_basis_tmp[:,:,j-1], dt_f)
+
+		        # Make a single time step
+		        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+	    	end
 			# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			
         end # end for
