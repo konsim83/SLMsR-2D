@@ -1,4 +1,10 @@
-function reconstruct_edge!(uOpt, m_f, U, u0, u, ind_seg, k_edge)
+function reconstruct_edge!(uOpt :: Array{Float64,1},
+							 m_f  :: Mesh.TriangleMesh.TriMesh, 
+							 U :: Array{Float64,1},
+							 u0 :: Array{Float64,2}, 
+							 u :: Array{Float64,1}, 
+							 ind_seg :: Int,
+							 k_edge :: Float64)
 
 	cell_2d = circshift(m_f.segment[:,m_f.segment_marker.==ind_seg],1)
 	ind_edge = sort(unique(cell_2d))

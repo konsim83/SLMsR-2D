@@ -14,7 +14,7 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 	if k_time==2
 		for i in 1:mesh_collection.mesh.n_cell
 			u_basis_tmp = zeros(mesh_collection.mesh_f[i].n_point, 3)
-			u_basis_tmp[:,:] = reconstruct_L2_initial(solution,
+			u_basis_tmp[:,:] = reconstruct_L2_nonconformal(solution,
 														mesh_collection,
 														par,
 														problem,
@@ -63,13 +63,13 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		u_basis_tmp = zeros(mesh_local.n_point, 3, n_steps_back+1)
 		# u_basis_tmp[:,:,1] = Problem.u_init(problem_f[i], mesh_local.point)
-		u_basis_tmp[:,:,1] = reconstruct_L2(solution,
-												mesh_collection,
-												par,
-												problem_local,
-												u_orig_all[ind],
-												k_time,
-												i)
+		u_basis_tmp[:,:,1] = reconstruct_L2_nonconformal(solution,
+														mesh_collection,
+														par,
+														problem_local,
+														u_orig_all[ind],
+														k_time,
+														i)
 
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
