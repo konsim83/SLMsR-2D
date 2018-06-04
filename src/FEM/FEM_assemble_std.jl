@@ -286,3 +286,52 @@ end # end function
 
 # -----------------------------
 # -----------------------------
+
+
+
+
+# -----------------------------
+# -------   Laplace   -------
+# -----------------------------
+function assemble_Laplace(mesh :: Mesh.TriangleMesh.TriMesh,
+                            dof :: FEM.AbstractDof,
+                            ref_el :: FEM.RefEl_Pk,
+                            quad :: Quad.AbstractQuad)
+    
+    # Assemble element matrices in a list of size (n, n, n_elem)
+    mat_local = assemble_elem_Laplace(mesh, ref_el, dof, quad)
+
+    Mat_global = sparse(dof.ind_test, dof.ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
+    
+    return Mat_global
+end
+
+
+function assemble_elem_Laplace(mesh :: Mesh.TriangleMesh.TriMesh,
+                                 ref_el :: FEM.RefEl_Pk,
+                                 dof :: FEM.AbstractDof,
+                                 quad :: Quad.AbstractQuad)
+    
+    n = ref_el.n_basis
+    d_loc = zeros(n, n, mesh.n_cell)
+
+    DF = FEM.map_ref_point_grad_inv(dof, quad.point, 1:dof.n_elem);
+    weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
+
+    DPhi = FEM.shapeFun_grad(ref_el, quad.point)
+    DPhi_test = FEM.shapeFun_grad(ref_el, quad.point)
+
+    for k = 1:mesh.n_cell
+        for j=1:quad.n_point
+            DtDiffD = weight_elem[k] * quad.weight[j] * DF[k]*DF[k]'
+            for i2=1:ref_el.n_basis
+                for i1=1:ref_el.n_basis
+                    # d_loc[i1,i2,k] = weight_elem[k] * quad.weight[j] * (DPhi_test[i1,j]'*DF[k]) * (diffusion[k][j]*(DF[k]'*DPhi[i2,j]))
+                    d_loc[i1,i2,k] += dot( DPhi_test[i1,j] ,  DtDiffD*DPhi[i2,j])
+                end
+            end
+        end
+    end
+
+    return -d_loc
+end # end function

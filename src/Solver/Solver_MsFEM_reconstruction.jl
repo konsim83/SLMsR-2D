@@ -91,7 +91,18 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
         Time = (k_time-1)*par.dt
 
         # Reconstruct the next basis function (due to implicit scheme)
-        Reconstruction.SemiLagrange_L2_opt!(solution, 
+        # Reconstruction.SemiLagrange_L2_opt!(solution, 
+        #                                         timeStepper_local,
+        #                                         mesh_collection,
+        #                                         dof_collection,
+        #                                         ref_el_f,
+        #                                         quad_f,
+        #                                         par,
+        #                                         problem,
+        #                                         problem_f,
+        #                                         Time + par.dt, k_time + 1)
+
+        Reconstruction.SemiLagrange_L2_opt_new!(solution, 
                                                 timeStepper_local,
                                                 mesh_collection,
                                                 dof_collection,

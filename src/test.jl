@@ -15,7 +15,7 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 1.0/10
+T_max = 1.0/30
 
 
 # problem = Problem.Gaussian(T_max)
@@ -72,9 +72,11 @@ n_order_quad_f = n_order_quad
 time_step_method = 1
 
 dt = 1/250
-n_steps_f = 5
+n_steps_f = 4
 
-k = [1.0 ; 1.0 ; 1.0 ; 1.0] * 0.1
+k_edge = .0001
+k_int = [1.0 ; 1.0 ; 1.0] * 0.0000001
+k = [k_int ; k_edge]
 # ---------------------------------------------------------------------------
 
 
@@ -167,6 +169,9 @@ if post_process
         Vis.writeSolution_all(solution_FEM_ref, 
                                 mesh_FEM_ref,
                                 problem.file_name * "-FEM-ref")
+        Vis.writeSolution_all(solution_FEM_low, 
+                                mesh_FEM_low, 
+                                problem.file_name * "-FEM-low")
         Vis.writeSolution_all(solution_FEM_low_mapped, 
                                 mesh_FEM_ref, 
                                 problem.file_name * "-FEM-low-mapped")
