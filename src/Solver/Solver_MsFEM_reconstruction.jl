@@ -3,18 +3,21 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     
     # Build mesh of unit square (0,1)x(0,1)
     m_coarse = Mesh.mesh_unit_square(par.n_edge_per_seg)
-    m_simplex = Mesh.mesh_unit_simplex()
-    if par.n_refinement>0
-        # If this is not the case then the conformal MsFEM is just the
-        # standard FEM
-        m_simplex = Mesh.refine_rg(m_simplex, par.n_refinement)
+    
+    m_simplex = Mesh.mesh_unit_simplex(par.n_edge_per_seg_f, par.max_are_cell_f)
 
-        # Subdividing edges messes up boundary markers. We need to correct
-        # that.
-        ind_point_boundary = sort(unique(m_simplex.edge[:,m_simplex.edge_marker.!=0]))
-        m_simplex.point_marker[:] = zeros(Int, size(m_simplex.point_marker))
-        m_simplex.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
-    end
+    # m_simplex = Mesh.mesh_unit_simplex()
+    # if par.n_refinement>0
+    #     # If this is not the case then the conformal MsFEM is just the
+    #     # standard FEM
+    #     m_simplex = Mesh.refine_rg(m_simplex, par.n_refinement)
+
+    #     # Subdividing edges messes up boundary markers. We need to correct
+    #     # that.
+    #     ind_point_boundary = sort(unique(m_simplex.edge[:,m_simplex.edge_marker.!=0]))
+    #     m_simplex.point_marker[:] = zeros(Int, size(m_simplex.point_marker))
+    #     m_simplex.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
+    # end
     
     mesh_collection = Mesh.TriMesh_collection(m_coarse, m_simplex)
     #mesh_collection = Mesh.TriMesh_collection(m_coarse, par.n_edge_per_seg_f)
@@ -90,19 +93,9 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
         # Time at index k
         Time = (k_time-1)*par.dt
 
+        # ------------------------------------------------------------
         # Reconstruct the next basis function (due to implicit scheme)
-        # Reconstruction.SemiLagrange_L2_opt!(solution, 
-        #                                         timeStepper_local,
-        #                                         mesh_collection,
-        #                                         dof_collection,
-        #                                         ref_el_f,
-        #                                         quad_f,
-        #                                         par,
-        #                                         problem,
-        #                                         problem_f,
-        #                                         Time + par.dt, k_time + 1)
-
-        Reconstruction.SemiLagrange_L2_opt_new!(solution, 
+        Reconstruction.SemiLagrange_opt!(solution, 
                                                 timeStepper_local,
                                                 mesh_collection,
                                                 dof_collection,
@@ -112,6 +105,7 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
                                                 problem,
                                                 problem_f,
                                                 Time + par.dt, k_time + 1)
+        # ------------------------------------------------------------
 
         M, Mt = FEM.assemble_mass(solution,
                                    mesh_collection,

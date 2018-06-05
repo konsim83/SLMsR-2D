@@ -20,17 +20,19 @@ end
 
 # ----------------------------------------------------------------
 m_coarse = Mesh.mesh_unit_square(2)
-m_simplex = Mesh.mesh_unit_simplex()
+m_simplex = Mesh.mesh_unit_simplex(10, 0.01)
 
+#-----------------------------------------------------------------
 # If this is not the case then the conformal MsFEM is just the
 # standard FEM
-m_simplex = Mesh.refine_rg(m_simplex, 4)
+# m_simplex = Mesh.refine_rg(m_simplex, 4)
 
 # Subdividing edges messes up boundary markers. We need to correct
 # that.
-ind_point_boundary = sort(unique(m_simplex.edge[:,m_simplex.edge_marker.!=0]))
-m_simplex.point_marker[:] = zeros(Int, size(m_simplex.point_marker))
-m_simplex.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
+# ind_point_boundary = sort(unique(m_simplex.edge[:,m_simplex.edge_marker.!=0]))
+# m_simplex.point_marker[:] = zeros(Int, size(m_simplex.point_marker))
+# m_simplex.point_marker[ind_point_boundary] = ones(Int, size(ind_point_boundary))
+#-----------------------------------------------------------------
 
 mesh_collection = Mesh.TriMesh_collection(m_coarse, m_simplex)
 # ----------------------------------------------------------------

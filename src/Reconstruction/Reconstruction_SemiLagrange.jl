@@ -1,31 +1,75 @@
-function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
-								timeStepper :: Array{TimeIntegrator.ImplEuler,1},
-								mesh_collection :: Mesh.TriMesh_collection,
-		                        dof_collection :: FEM.AbstractDofCollection,
-		                        ref_el_f :: FEM.AbstractRefEl,
-		                        quad_f :: Quad.AbstractQuad,
-		                        par :: Parameter.Parameter_MsFEM,
-		                        problem :: Problem.AbstractPhysicalProblem,
-		                        problem_f :: Array{Problem.AbstractBasisProblem,1},
-		                        T :: Float64, k_time :: Int)
+function SemiLagrange_opt!(solution :: FEM.Solution_MsFEM,
+							timeStepper :: Array{TimeIntegrator.ImplEuler,1},
+							mesh_collection :: Mesh.TriMesh_collection,
+	                        dof_collection :: FEM.AbstractDofCollection,
+	                        ref_el_f :: FEM.AbstractRefEl,
+	                        quad_f :: Quad.AbstractQuad,
+	                        par :: Parameter.Parameter_MsFEM,
+	                        problem :: Problem.AbstractPhysicalProblem,
+	                        problem_f :: Array{Problem.AbstractBasisProblem,1},
+	                        T :: Float64,
+	                        k_time :: Int)
 
-	# Reconstruct the first basis as well but only at the beginning, i.e.,
-	# k_time==2.
+
 	if k_time==2
-		for i in 1:mesh_collection.mesh.n_cell
-			u_basis_tmp = zeros(mesh_collection.mesh_f[i].n_point, 3)
-			u_basis_tmp[:,:] = reconstruct_L2_conformal(solution,
-														mesh_collection,
-														par,
-														problem,
-														problem_f[i],
-														mesh_collection.mesh_f[i].point,
-														i)
-			solution.phi_1[i][:,k_time-1] = u_basis_tmp[:,1]
-		    solution.phi_2[i][:,k_time-1] = u_basis_tmp[:,2]
-		    solution.phi_3[i][:,k_time-1] = u_basis_tmp[:,3]
+		println("\n---------------------------------------")
+		println("Reconstruction of initial basis:")
+		@time for i_mesh_local in 1:mesh_collection.mesh.n_cell
+			u_basis_tmp = zeros(mesh_collection.mesh_f[i_mesh_local].n_point, 3)
+			if par.reconstruction_method==0
+				u_basis_tmp[:,:] = reconstruct_L2_noConstraint(solution,
+																mesh_collection,
+																par,
+																problem,
+																problem_f[i_mesh_local],
+																mesh_collection.mesh_f[i_mesh_local].point,
+																i_mesh_local)
+			elseif par.reconstruction_method==1
+				u_basis_tmp[:,:] = reconstruct_L2_nonconformal(solution,
+																mesh_collection,
+																par,
+																problem,
+																problem_f[i_mesh_local],
+																mesh_collection.mesh_f[i_mesh_local].point,
+																i_mesh_local)
+			elseif par.reconstruction_method==2
+				u_basis_tmp[:,:] = reconstruct_L2_conformal(solution,
+															mesh_collection,
+															par,
+															problem,
+															problem_f[i_mesh_local],
+															mesh_collection.mesh_f[i_mesh_local].point,
+															i_mesh_local)
+			elseif par.reconstruction_method==3
+				u_basis_tmp[:,:] = reconstruct_H1_conformal(solution,
+																mesh_collection,
+																dof_collection,
+																ref_el_f,
+				                        						quad_f,
+																par,
+																problem,
+																problem_f[i_mesh_local],
+																mesh_collection.mesh_f[i_mesh_local].point,
+																i_mesh_local)
+			elseif par.reconstruction_method==4
+				u_basis_tmp[:,:] = reconstruct_H1_conformal_sumEqualOne(solution,
+																mesh_collection,
+																dof_collection,
+																ref_el_f,
+				                        						quad_f,
+																par,
+																problem,
+																problem_f[i_mesh_local],
+																mesh_collection.mesh_f[i_mesh_local].point,
+																i_mesh_local)
+			end
+			solution.phi_1[i_mesh_local][:,k_time-1] = u_basis_tmp[:,1]
+		    solution.phi_2[i_mesh_local][:,k_time-1] = u_basis_tmp[:,2]
+		    solution.phi_3[i_mesh_local][:,k_time-1] = u_basis_tmp[:,3]
 		end
+		println("---------------------------------------\n")
 	end
+
 
 	# ------------------------------------------------------------------
 	# Needs to be set up only once since velocity is the same everywhere
@@ -35,100 +79,127 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 	end
 	# ------------------------------------------------------------------
 
-
-	point_all = hcat([mesh.point for mesh in mesh_collection.mesh_f]...)
-
-	display("---------------------------------------")
-	display("Reconstruction at time step $(k_time) / $(par.n_steps+1):")
-	point_orig_all = traceback(point_all, T, velocity, par)
-
-	if k_time==2
-		@time u_orig_all = Problem.u_init(problem, point_orig_all[end])
+	if problem.conservative # || problem.reconstructEdge
+		println("\n---------------------------------------")
+		println("Reconstruction at time step $(k_time) / $(par.n_steps+1):")
+		println("Edge evolution --- yes")
 	else
-		@time u_orig_all = PostProcess.evaluate(solution, mesh_collection, point_orig_all[end], k_time-1)
+		println("\n---------------------------------------")
+		println("Reconstruction at time step $(k_time) / $(par.n_steps+1):")
+		println("Edge evolution --- no")
 	end
+	@time for i_mesh_local in 1:mesh_collection.mesh.n_cell
+		mesh_local = mesh_collection.mesh_f[i_mesh_local]
+		problem_local = problem_f[i_mesh_local]
 
-	n_steps_back = length(point_orig_all)-1
-    dt_f = par.dt/n_steps_back
+		# Trace back points
+		point_orig = traceback(mesh_local.point, T, velocity, par)
 
-    point_count = 0
-	@time for i in 1:mesh_collection.mesh.n_cell
-		mesh_local = mesh_collection.mesh_f[i]
-		problem_local = problem_f[i]
+		n_steps_back = length(point_orig)-1
+    	dt_f = par.dt/n_steps_back
 
-		ind = (1:mesh_local.n_point) + point_count
+		# Reconstruct basis at previous time step
+		if k_time==2
+			uOrig = Problem.u_init(problem, point_orig[end])
+		else
+			uOrig = PostProcess.evaluate(solution, mesh_collection, point_orig[end], k_time-1)
+		end
 
-		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		# Reconstruct the initial values
-		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		u_basis_tmp = zeros(mesh_local.n_point, 3, n_steps_back+1)
-		# u_basis_tmp[:,:,1] = Problem.u_init(problem_f[i], mesh_local.point)
-		u_basis_tmp[:,:,1] = reconstruct_L2_conformal(solution,
-														mesh_collection,
-														par,
-														problem_local,
-														u_orig_all[ind],
-														k_time,
-														i)
+    	# initialize basis
+    	u_basis_tmp = zeros(mesh_local.n_point, 3, n_steps_back+1)
 
-		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    	# Solve inverse problem for basis
+    	if par.reconstruction_method==0
+    		u_basis_tmp[:,:,1] = reconstruct_L2_noConstraint(solution,
+																mesh_collection,
+																par,
+																problem_local,
+																uOrig,
+																k_time,
+																i_mesh_local)
+    	elseif par.reconstruction_method==1
+    		u_basis_tmp[:,:,1] = reconstruct_L2_nonconformal(solution,
+																mesh_collection,
+																par,
+																problem_local,
+																uOrig,
+																k_time,
+																i_mesh_local)
+    	elseif par.reconstruction_method==2
+    		u_basis_tmp[:,:,1] = reconstruct_L2_conformal(solution,
+															mesh_collection,
+															par,
+															problem_local,
+															uOrig,
+															k_time,
+															i_mesh_local)
+		elseif par.reconstruction_method==3
+	    	u_basis_tmp[:,:,1] = reconstruct_H1_conformal(solution,
+															mesh_collection,
+															dof_collection,
+															ref_el_f,
+			                        						quad_f,
+															par,
+															problem_local,
+															uOrig,
+															k_time,
+															i_mesh_local)
+    	elseif par.reconstruction_method==4
+    		u_basis_tmp[:,:,1] = reconstruct_H1_conformal_sumEqualOne(solution,
+															mesh_collection,
+															dof_collection,
+															ref_el_f,
+			                        						quad_f,
+															par,
+															problem_local,
+															uOrig,
+															k_time,
+															i_mesh_local)
+	    end
+
+
+    	# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    	# Evolve boundary values
 		# if problem.conservative # || problem.reconstructEdge
-		# 	for j=2:(n_steps_back+1)
-		# 		for seg in 1:3
-		# 			# Connectivity
-		# 			cell_2d = circshift(mesh_local.segment[:,mesh_local.segment_marker.==seg],1)
-
-		# 			# Indices in mesh_local coordinates, not ordered
-		# 			ind_edge = sort(unique(cell_2d))
-		# 			n = length(ind_edge)
-
-		# 			# point list
-		# 			p_old = point_orig_all[end-(j-2)][:,ind][:,ind_edge]
-		# 			p_next = point_orig_all[end-(j-1)][:,ind][:,ind_edge]
-
-		# 			error("Stop here...")
-		# 			u_basis_tmp[:,:,j] = predict_boundary_value()
-		# 		end
+		# 	for segment in 1:3
+		# 		evolve_edge!(mesh_local, uBasisOpt, point_orig, problem_local, dt_f, n_steps_back, segment)
 		# 	end
 		# end
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-		# ----------------------------------------------------
         # -------   Time evolution on distinct grids   -------
         for j=2:(n_steps_back+1)
-        	p_old = point_orig_all[end-(j-2)][:,ind]
-			p_next = point_orig_all[end-(j-1)][:,ind]
+        	p_old = point_orig[end-(j-2)]
+			p_next = point_orig[end-(j-1)]
 
             # Create mesh of next time step
             mesh_old = Mesh.TriMesh(mesh_local, p_old, "Old mesh...")
             mesh_next = Mesh.TriMesh(mesh_local, p_next, "Next mesh...")
 
             # Create dof handler of next timestep
-            dof_old = FEM.Dof_Pk(mesh_old, problem_f[i], 1)
-            dof_next = FEM.Dof_Pk(mesh_next, problem_f[i], 1)
+            dof_old = FEM.Dof_Pk(mesh_old, problem_local, 1)
+            dof_next = FEM.Dof_Pk(mesh_next, problem_local, 1)
 
             # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	        # Time step (small) with implicit Euler
-            M_orig = FEM.assemble_mass(mesh_old, dof_old, ref_el_f, quad_f, problem_f[i])
-            # M_next = FEM.assemble_mass(mesh_next, dof_next, ref_el_f, quad_f, problem_f[i])
+            M_orig = FEM.assemble_mass(mesh_old, dof_old, ref_el_f, quad_f, problem_local)
+            # M_next = FEM.assemble_mass(mesh_next, dof_next, ref_el_f, quad_f, problem_local)
             # M = 0.5*(M_next + M_orig)
 
             R_next = FEM.assemble_reaction(mesh_next, 
             								dof_next,
             								ref_el_f, 
                                             quad_f, 
-                                            problem_f[i],
+                                            problem_local,
                                             T - (n_steps_back-(j-1))*dt_f)
 
             D_next = FEM.assemble_diffusion(mesh_next, 
             								dof_next,
             								ref_el_f, 
                                             quad_f, 
-                                            problem_f[i],
+                                            problem_local,
                                             T - (n_steps_back-(j-1))*dt_f)
 
             # Zero forcing
@@ -136,7 +207,8 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 
 			# -------   Mu_t + Ru = Du   -------
 			# Set the system matrices 
-	        if false
+	        if problem.conservative # || problem.reconstructEdge
+	        	error("Not implemented")
 	        	ind_con = [1 ; 2 ; 3]
 			    constr_val = eye(3)
 			    ind_uncon = setdiff(1:mesh_local.n_point, ind_con)
@@ -147,34 +219,28 @@ function SemiLagrange_L2_opt!(solution :: FEM.Solution_MsFEM,
 	        	u_basis_tmp[ind_con,:,j] = constr_val
 	        else
 		        # # Set the system matrices 
-		        TimeIntegrator.updateSystem!(timeStepper[i].systemData, M_orig, D_next-R_next, f_orig, 
+		        TimeIntegrator.updateSystem!(timeStepper[i_mesh_local].systemData, M_orig, D_next-R_next, f_orig, 
 		        								dof_next, u_basis_tmp[:,:,j-1], u_basis_tmp[:,:,j-1], dt_f)
-
 		        # Make a single time step
-		        TimeIntegrator.makeStep!(timeStepper[i], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
+		        TimeIntegrator.makeStep!(timeStepper[i_mesh_local], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
 	    	end
-			# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			
-        end # end for
-        # ----------------------------------------------------
-        
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		# Pass the result of the evolution to the basis...
+	    end # end for
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		solution.phi_1[i][:,k_time] = u_basis_tmp[:,1,end]
-        solution.phi_2[i][:,k_time] = u_basis_tmp[:,2,end]
-        solution.phi_3[i][:,k_time] = u_basis_tmp[:,3,end]
 
+		# Pass the result of the evolution to the basis
+		solution.phi_1[i_mesh_local][:,k_time] = u_basis_tmp[:,1,end]
+        solution.phi_2[i_mesh_local][:,k_time] = u_basis_tmp[:,2,end]
+        solution.phi_3[i_mesh_local][:,k_time] = u_basis_tmp[:,3,end]
         
         # Compute time derivative of basis functions via finite differencing
-        solution.phi_1_t[i][:,k_time] = FiniteDiff.backward_single(solution.phi_1[i][:,(k_time-1):k_time], par.dt)
-        solution.phi_2_t[i][:,k_time] = FiniteDiff.backward_single(solution.phi_2[i][:,(k_time-1):k_time], par.dt)
-        solution.phi_3_t[i][:,k_time] = FiniteDiff.backward_single(solution.phi_3[i][:,(k_time-1):k_time], par.dt)
+        solution.phi_1_t[i_mesh_local][:,k_time] = FiniteDiff.backward_single(solution.phi_1[i_mesh_local][:,(k_time-1):k_time], par.dt)
+        solution.phi_2_t[i_mesh_local][:,k_time] = FiniteDiff.backward_single(solution.phi_2[i_mesh_local][:,(k_time-1):k_time], par.dt)
+        solution.phi_3_t[i_mesh_local][:,k_time] = FiniteDiff.backward_single(solution.phi_3[i_mesh_local][:,(k_time-1):k_time], par.dt)
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-		point_count += mesh_local.n_point
-	end # end for
-	display("---------------------------------------")
+			
+    end # end for
+    println("---------------------------------------\n\n")
+    # ----------------------------------------------------
 
 	return nothing
 end
@@ -189,131 +255,3 @@ function traceback(point :: Array{Float64,2}, T :: Float64,
 
 	return sol.u
 end
-
-
-function traceback(point :: Array{Float64,2},
-					T0 :: Float64, 
-					Tend :: Float64, 
-					velocity :: Function)
-
-	tspan = (T0, Tend)
-	prob = DifferentialEquations.ODEProblem(velocity, point, tspan)
-	sol = DifferentialEquations.solve(prob)
-
-	return sol.u
-end
-
-
-
-
-
-
-
-
-
-
-# # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-
-# function reconstruct_L2(solution :: FEM.Solution_MsFEM,
-# 							mesh_collection :: Mesh.TriMesh_collection,
-# 							par :: Parameter.Parameter_MsFEM,
-# 							problem_f :: Problem.AbstractBasisProblem,
-# 							point_orig :: Array{Float64,2},
-# 							u_orig :: Array{Float64,1},
-# 							k_time :: Int,
-# 							ind_cell :: Int)
-
-# 	# ------------------------------------------------
-#     # Evaluate the solution at the traced back points
-#     u = u_orig
-#     # ------------------------------------------------
-
-# 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
-
-# 	k = par.k
-
-#     # Contraints for nodal values of basis
-#     n_dof = mesh_collection.mesh_f[ind_cell].n_point
-#     ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
-#     constr_val = vec(eye(3))
-#     ind_uncon = setdiff(1:(3*n_dof), ind_con)
-
-#     U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
-#     u1 = U[1]
-#     u2 = U[2]
-#     u3 = U[3]
-
-#     n = length(u)
-#     system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
-#     					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
-#     					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
-# 	rhs = [k[1]*u0[:,1] + u1*u; 
-# 			k[2]*u0[:,2] + u2*u ; 
-# 			k[3]*u0[:,3] + u3*u]  - system_matrix[:,ind_con]*constr_val
-
-
-# 	uOpt = zeros(3*n_dof)
-# 	uOpt[ind_con] = constr_val
-# 	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
-
-# 	# rhs = [k[1]*u0[:,1] + u1*u;
-# 	# 		k[2]*u0[:,2] + u2*u ;
-# 	# 		k[3]*u0[:,3] + u3*u]
-
-# 	# uOpt = system_matrix \ rhs
-
-# 	return reshape(uOpt,:,3)
-# end
-
-
-# function reconstruct_L2(solution :: FEM.Solution_MsFEM,
-# 							mesh_collection :: Mesh.TriMesh_collection,
-# 							par :: Parameter.Parameter_MsFEM,
-# 							problem :: Problem.AbstractPhysicalProblem,
-# 							problem_f :: Problem.AbstractBasisProblem,
-# 							point :: Array{Float64,2},
-# 							ind_cell :: Int)
-    
-#     # ------------------------------------------------
-#     # Evaluate the solution at the traced back points
-#     u = Problem.u_init(problem, point)
-#     # ------------------------------------------------
-
-# 	u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
-
-#     k = par.k
-
-#     # Contraints for nodal values of basis
-#     n_dof = mesh_collection.mesh_f[ind_cell].n_point
-#     ind_con = [1 ; 2 ; 3 ; n_dof+1 ; n_dof+2 ; n_dof+3 ; 2*n_dof+1 ; 2*n_dof+2 ; 2*n_dof+3]
-#     constr_val = vec(eye(3))
-#     ind_uncon = setdiff(1:(3*n_dof), ind_con)
-
-#     # These are the weights of the basis functions
-#     U = solution.u[mesh_collection.mesh.cell[:,ind_cell],1]
-#     u1 = U[1]
-#     u2 = U[2]
-#     u3 = U[3]
-
-#     n = length(u)
-#     system_matrix = [(u1^2+k[1])*speye(n) u1*u2*speye(n) u1*u3*speye(n) ; 
-#     					u2*u1*speye(n) (u2^2+k[2])*speye(n) u2*u3*speye(n) ; 
-#     					u3*u1*speye(n) u3*u2*speye(n) (u3^2+k[3])*speye(n)]
-# 	rhs = [k[1]*u0[:,1] + u1*u; 
-# 			k[2]*u0[:,2] + u2*u ; 
-# 			k[3]*u0[:,3] + u3*u] - system_matrix[:,ind_con]*constr_val
-
-
-# 	uOpt = zeros(3*n_dof)
-# 	uOpt[ind_con] = constr_val
-# 	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
-
-# 	# rhs = [k[1]*u0[:,1] + u1*u; 
-# 	# 		k[2]*u0[:,2] + u2*u ; 
-# 	# 		k[3]*u0[:,3] + u3*u]
-
-# 	# uOpt = system_matrix \ rhs
-
-# 	return reshape(uOpt,:,3)
-# end

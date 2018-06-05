@@ -1,4 +1,4 @@
-function reconstruct_L2_conformal_new(solution :: FEM.Solution_MsFEM,
+function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
     									mesh_collection :: Mesh.TriMesh_collection,
                                         dof_collection :: FEM.AbstractDofCollection,
                                         ref_el_local :: FEM.AbstractRefEl,
@@ -12,16 +12,16 @@ function reconstruct_L2_conformal_new(solution :: FEM.Solution_MsFEM,
     # Evaluate the solution at the traced back points
     uOrig = Problem.u_init(problem, point)
 
-    uBasisOpt = reconstruct_L2_conformal_new(solution,
-                                                mesh_collection,
-                                                dof_collection,
-                                                ref_el_local,
-                                                quad_local,
-                                                par,
-                                                problem_local,
-                                                uOrig,
-                                                2,
-                                                ind_cell)
+    uBasisOpt = reconstruct_H1_conformal_sumEqualOne(solution,
+                                            mesh_collection,
+                                            dof_collection,
+                                            ref_el_local,
+                                            quad_local,
+                                            par,
+                                            problem_local,
+                                            uOrig,
+                                            2,
+                                            ind_cell)
     
 	return uBasisOpt
  
@@ -33,7 +33,7 @@ end
 
 
 
-function reconstruct_L2_conformal_new(solution :: FEM.Solution_MsFEM,
+function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
                                         mesh_collection :: Mesh.TriMesh_collection,
                                         dof_collection :: FEM.AbstractDofCollection,
                                         ref_el_local :: FEM.AbstractRefEl,
@@ -59,9 +59,9 @@ function reconstruct_L2_conformal_new(solution :: FEM.Solution_MsFEM,
     uBasisOpt = zeros(mesh_local.n_point,3)
 
     # Reconstruct edges
-    reconstruct_edge_new!(uBasisOpt, mesh_local, uGlobal, uBasis0, uOrig, 1, k[4])
-    reconstruct_edge_new!(uBasisOpt, mesh_local, uGlobal, uBasis0, uOrig, 2, k[4])
-    reconstruct_edge_new!(uBasisOpt, mesh_local, uGlobal, uBasis0, uOrig, 3, k[4])
+    reconstruct_edge_L2_sumEqualOne!(uBasisOpt, mesh_local, uGlobal, uBasis0, uOrig, 1, k[4], k[5])
+    reconstruct_edge_L2_sumEqualOne!(uBasisOpt, mesh_local, uGlobal, uBasis0, uOrig, 2, k[4], k[5])
+    reconstruct_edge_L2_sumEqualOne!(uBasisOpt, mesh_local, uGlobal, uBasis0, uOrig, 3, k[4], k[5])
 
     # Reconstruct interior
     uBasisOpt = vec(uBasisOpt)
@@ -77,15 +77,6 @@ function reconstruct_L2_conformal_new(solution :: FEM.Solution_MsFEM,
 
     # System matrix and right-hand side
     n = length(uOrig)
-    # system_matrix = [   (uGlobal[1]^2+k[1])*speye(n)    uGlobal[1]*uGlobal[2]*speye(n)      uGlobal[1]*uGlobal[3]*speye(n) ; 
-    #                     uGlobal[2]*uGlobal[1]*speye(n)  (uGlobal[2]^2+k[2])*speye(n)        uGlobal[2]*uGlobal[3]*speye(n) ; 
-    #                     uGlobal[3]*uGlobal[1]*speye(n)  uGlobal[3]*uGlobal[2]*speye(n)      (uGlobal[3]^2+k[3])*speye(n)]
-
-    # rhs = [ k[1]*uBasis0[:,1] + uGlobal[1]*uOrig ;
-    #         k[2]*uBasis0[:,2] + uGlobal[2]*uOrig ;
-    #         k[3]*uBasis0[:,3] + uGlobal[3]*uOrig] - system_matrix[:,ind_con]*constr_val
-
-
     laplace_matrix = FEM.assemble_Laplace(mesh_local, 
                                             dof_local,
                                             ref_el_local, 
@@ -93,15 +84,25 @@ function reconstruct_L2_conformal_new(solution :: FEM.Solution_MsFEM,
     # A = laplace_matrix' * laplace_matrix
     A = laplace_matrix
 
-    system_matrix = [   uGlobal[1]^2*speye(n)+k[1]*A    uGlobal[1]*uGlobal[2]*speye(n)      uGlobal[1]*uGlobal[3]*speye(n) ; 
-                        uGlobal[2]*uGlobal[1]*speye(n)  uGlobal[2]^2*speye(n)+k[2]*A        uGlobal[2]*uGlobal[3]*speye(n) ; 
-                        uGlobal[3]*uGlobal[1]*speye(n)  uGlobal[3]*uGlobal[2]*speye(n)      uGlobal[3]^2*speye(n)+k[3]*A    ]
+    # system_matrix = [   (uGlobal[1]^2 + k[5])*speye(n)+k[1]*A    (uGlobal[1]*uGlobal[2] + k[5])*speye(n)      (uGlobal[1]*uGlobal[3] + k[5])*speye(n) ; 
+    #                     (uGlobal[2]*uGlobal[1] + k[5])*speye(n)  (uGlobal[2]^2 + k[5])*speye(n)+k[2]*A        (uGlobal[2]*uGlobal[3] + k[5])*speye(n) ; 
+    #                     (uGlobal[3]*uGlobal[1] + k[5])*speye(n)  (uGlobal[3]*uGlobal[2] + k[5])*speye(n)      (uGlobal[3]^2 + k[5])*speye(n)+k[3]*A   ]
 
-    rhs = [ uGlobal[1]*uOrig ;
-            uGlobal[2]*uOrig ;
-            uGlobal[3]*uOrig] - system_matrix[:,ind_con]*constr_val
+    # rhs = [ uGlobal[1]*uOrig + k[5]*ones(n) ;
+    #         uGlobal[2]*uOrig + k[5]*ones(n) ;
+    #         uGlobal[3]*uOrig + k[5]*ones(n) ] - system_matrix[:,ind_con]*constr_val
 
-    uBasisOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
+    system_matrix = [   (uGlobal[1]^2)*speye(n)+k[1]*A    (uGlobal[1]*uGlobal[2])*speye(n)      (uGlobal[1]*uGlobal[3])*speye(n) ; 
+                        (uGlobal[2]*uGlobal[1])*speye(n)  (uGlobal[2]^2)*speye(n)+k[2]*A        (uGlobal[2]*uGlobal[3])*speye(n) ; 
+                        (uGlobal[3]*uGlobal[1])*speye(n)  (uGlobal[3]*uGlobal[2])*speye(n)      (uGlobal[3]^2)*speye(n)+k[3]*A   ; 
+                        speye(n)                            speye(n)                               speye(n)                       ]
+
+    rhs = [ [ uGlobal[1]*uOrig;
+                uGlobal[2]*uOrig;
+                uGlobal[3]*uOrig] - system_matrix[1:3*n,ind_con]*constr_val ;
+                ones(n) ]
+
+    uBasisOpt[ind_uncon] = system_matrix[[ind_uncon ; (3*n+1):4*n],ind_uncon] \ rhs[[ind_uncon ; (3*n+1):4*n]]
     # ------------------------------------------------
 
     return reshape(uBasisOpt,:,3)

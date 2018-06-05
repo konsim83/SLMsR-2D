@@ -1,13 +1,13 @@
-function reconstruct_edge_new!(uOpt :: Array{Float64,2},
-							 mesh_local  :: Mesh.TriangleMesh.TriMesh, 
-							 uGlobal :: Array{Float64,1},
-							 uBasis0 :: Array{Float64,2}, 
-							 uOrig :: Array{Float64,1}, 
-							 ind_seg :: Int,
-							 k_edge :: Float64)
+function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
+								 mesh_local  :: Mesh.TriangleMesh.TriMesh, 
+								 uGlobal :: Array{Float64,1},
+								 uBasis0 :: Array{Float64,2}, 
+								 uOrig :: Array{Float64,1}, 
+								 ind_seg :: Int,
+								 k_edge :: Float64)
 
 	cell_2d = circshift(mesh_local.segment[:,mesh_local.segment_marker.==ind_seg],1)
-	ind_edge = sort(unique(cell_2d))
+	ind_edge = (unique(cell_2d))
 	n = length(ind_edge)
 
     basis_lr = zeros(2*n)
@@ -18,7 +18,8 @@ function reconstruct_edge_new!(uOpt :: Array{Float64,2},
 	    basis_left = uBasis0[ind_edge,1]
 	    basis_right = uBasis0[ind_edge,2]
 
-	    ind_con = [1 ; 2 ; 1+n ; 2+n]
+	    # ind_con = [1 ; 2 ; 1+n ; 2+n]
+	    ind_con = [1 ; n ; 1+n ; 2*n]
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
@@ -35,7 +36,8 @@ function reconstruct_edge_new!(uOpt :: Array{Float64,2},
 		basis_left = uBasis0[ind_edge,2]
 	    basis_right = uBasis0[ind_edge,3]
 
-	    ind_con = [1 ; 2 ; 1+n ; 2+n]
+	    # ind_con = [1 ; 2 ; 1+n ; 2+n]
+	    ind_con = [1 ; n ; 1+n ; 2*n]
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
@@ -53,8 +55,10 @@ function reconstruct_edge_new!(uOpt :: Array{Float64,2},
 		basis_left = uBasis0[ind_edge,3]
 	    basis_right = uBasis0[ind_edge,1]
 
-	    ind_con = [1 ; 2 ; 1+n ; 2+n]
-	    val_con = [0. ; 1. ; 1. ; 0.]
+	    ind_con = [1 ; n ; 1+n ; 2*n]
+	    val_con = [1. ; 0. ; 0. ; 1.]
+	    # ind_con = [1 ; 2 ; 1+n ; 2+n]
+	    # val_con = [0. ; 1. ; 1. ; 0.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
 	    a_1 = uGlobal[3] # weight of left basis
