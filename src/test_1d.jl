@@ -17,6 +17,7 @@ function traceback(point :: Array{Float64,2},
 	return sol.u
 end
 
+close()
 
 # ----------------------------------------------------------------
 m_coarse = Mesh.mesh_unit_square(2)
@@ -49,66 +50,64 @@ end
 # ----------------------------------------------------------------
 
 T = 1.0
+i_mesh = i_mesh+1 # mesh index
+j = 2 # Time
+seg = 1 # segment
 
-point_all = hcat([mesh.point for mesh in mesh_collection.mesh_f]...)
-point_orig_all = traceback(point_all, T, velocity)
+mesh = mesh_collection.mesh_f[i_mesh]
 
-U = Problem.u_init(problem, mesh_collection.mesh.point)
-u_before = Problem.u_init(problem, point_orig_all[1])
+tri = Geometry.Triangle(mesh_collection.mesh.point[:, mesh_collection.mesh.cell[:,i_mesh]])
+problem_f = Problem.BasisFun(problem, tri)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	i_mesh = 10 # mesh index
-	j = 2 # Time
-	seg = 2 # segment
-
-	mesh_local = mesh_collection.mesh_f[i_mesh]
-
 	
-	cell_2d = circshift(mesh_local.segment[:,mesh_local.segment_marker.==seg],1)
-	ind_edge = sort(unique(cell_2d))
+	point_orig = traceback(mesh_collection.mesh_f[i_mesh].point, T, velocity)
+	pOrig = point_orig[1]
+	u0 = Problem.u_init(problem_f, pOrig)
+
+	U = Problem.u_init(problem, mesh_collection.mesh.point)
+	
+	uOrig = Problem.u_init(problem, pOrig)
+	
+	cell = circshift(mesh.segment[:,mesh.segment_marker.==seg],1)
+	ind_edge = unique(cell)
 	n = length(ind_edge)	
 
-	tri = Geometry.Triangle(mesh_collection.mesh.point[:, mesh_collection.mesh.cell[:,i_mesh]])
-    problem_f = Problem.BasisFun(problem, tri)
-    
-	ind = (1:mesh_local.n_point) + (i_mesh-1)*mesh_local.n_point
+	pOrigEdge = pOrig[:,ind_edge]
+	uOrigEdge = uOrig[ind_edge]
 	
-	p0 = point_orig_all[1][:,ind]
-	p_edge = p0[:,ind_edge]
-
-	u_before_local = u_before[ind][ind_edge]
-	u0_local = Problem.u_init(problem_f, point_orig_all[1][:,ind])
+	
 
 	if seg==1
-		ind_con = [1 ; 2 ; 1+n ; 2+n]
+		ind_con = [1 ; n ; 1+n ; 2*n]
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
 	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
 	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][2]
 
-		basis_left = u0_local[ind_edge,1]
-		basis_right = u0_local[ind_edge,2]
+		basis_left = u0[ind_edge,1]
+		basis_right = u0[ind_edge,2]
 	elseif seg==2
-		ind_con = [1 ; 2 ; 1+n ; 2+n]
+		ind_con = [1 ; n ; 1+n ; 2*n]
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
 	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][2]
 	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
 
-		basis_left = u0_local[ind_edge,2]
-		basis_right = u0_local[ind_edge,3]
+		basis_left = u0[ind_edge,2]
+		basis_right = u0[ind_edge,3]
 	elseif seg==3
-		ind_con = [1 ; 2 ; 1+n ; 2+n]
-	    val_con = [0. ; 1. ; 1. ; 0.]
+		ind_con = [1 ; n ; 1+n ; 2*n]
+	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
 	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
 	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
 
-		basis_left = u0_local[ind_edge,3]
-		basis_right = u0_local[ind_edge,1]
+		basis_left = u0[ind_edge,3]
+		basis_right = u0[ind_edge,1]
 	end
 
 
@@ -117,8 +116,8 @@ u_before = Problem.u_init(problem, point_orig_all[1])
 	system_matrix = [ (a_1^2 + k_edge)*speye(n)   (a_1*a_2)*speye(n) ; 
                         (a_1*a_2)*speye(n)   (a_2^2 + k_edge)*speye(n) ]
 
-    rhs = ( [k_edge*basis_left + a_1*u_before_local ;
-            k_edge*basis_right + a_2*u_before_local]
+    rhs = ( [k_edge*basis_left + a_1*uOrigEdge ;
+            k_edge*basis_right + a_2*uOrigEdge]
             - system_matrix[:,ind_con]*val_con )
 
 
@@ -128,9 +127,14 @@ u_before = Problem.u_init(problem, point_orig_all[1])
 
 
 
+    display([norm(uOrigEdge-a_1*basis_left - a_2*basis_right)  norm(uOrigEdge-a_1*basis_lr[1:n] - a_2*basis_lr[n+1:end])])
 
+    plot(linspace(0,1,n), uOrigEdge, color="black", linewidth=2.5)
 
+    plot(linspace(0,1,n), basis_lr[1:n], color="orange", linewidth=1.5)
+    plot(linspace(0,1,n), basis_lr[n+1:end], color="orange", linewidth=1.5)
 
+    plot(linspace(0,1,n), a_1*basis_lr[1:n] + a_2*basis_lr[n+1:end], color="green", linewidth=2.5)
 
 
 	

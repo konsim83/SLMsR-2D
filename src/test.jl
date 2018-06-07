@@ -235,6 +235,11 @@ if post_process
         # for ind in j
         #    Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis-2---")
         # end
+
+        # i,j = ind2sub(mesh_collection_r.mesh.cell,find(mesh_collection_r.mesh.cell.==22))
+        # for ind in j
+        #    Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis-3---")
+        # end
 end
 # ---------------------------------------------------------------------------
 

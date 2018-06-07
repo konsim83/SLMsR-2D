@@ -1,8 +1,8 @@
 # Ignore the following files
 
 *~
+
 *.vtu
-*.pvsm
 *.png
 
 *.out
