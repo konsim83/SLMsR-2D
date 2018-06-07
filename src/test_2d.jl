@@ -3,6 +3,12 @@ import Mesh, Problem, FEM, Quad, TimeIntegrator, Plot
 import DifferentialEquations
 
 using PyPlot
+PyPlot.pyimport("mpl_toolkits.mplot3d.axes3d")
+
+
+smooth = false
+# smooth = true
+
 
 function traceback(point :: Array{Float64,2},
 					T :: Float64, 
@@ -18,8 +24,8 @@ function traceback(point :: Array{Float64,2},
 end
 
 # ----------------------------------------------------------------
-m_coarse = Mesh.mesh_unit_square(2)
-m_simplex = Mesh.mesh_unit_simplex(10, 0.01)
+m_coarse = Mesh.mesh_unit_square(4)
+m_simplex = Mesh.mesh_unit_simplex(12, 0.005)
 
 #-----------------------------------------------------------------
 # If this is not the case then the conformal MsFEM is just the
@@ -48,10 +54,10 @@ end
 
 
 T = 1.0
-i_mesh = i_mesh+1 # mesh index
+i_mesh = 5 # mesh index
 j = 2 # Time
 
-for i_mesh = 1:m_coarse.n_cell
+# for i_mesh = 1:m_coarse.n_cell
 	close()
 	close()
 	close()
@@ -67,7 +73,7 @@ for i_mesh = 1:m_coarse.n_cell
 		
 	point_orig = traceback(mesh_collection.mesh_f[i_mesh].point, T, velocity)
 	pOrig = point_orig[1]
-	u0 = Problem.u_init(problem_f, pOrig)
+	u0 = Problem.u_init(problem_f, point_orig[1])
 	uOrig = Problem.u_init(problem, pOrig)
 
 	phi = zeros(size(u0))
@@ -154,10 +160,8 @@ for i_mesh = 1:m_coarse.n_cell
 	end # end for seg
 
 	# -----------------------------
-	n_dof = m_simplex.n_point
+	n_dof = mesh.n_point
 	nOrig = length(uOrig)
-
-	k = [1 ; 1 ; 1] * 0.01
 
 	u1 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
 	u2 = U[mesh_collection.mesh.cell[:,i_mesh]][2]
@@ -165,21 +169,46 @@ for i_mesh = 1:m_coarse.n_cell
 
 	uOpt = vec(phi)
 
-	ind_con = [find(m_simplex.point_marker.!=0) ; 
-				find(m_simplex.point_marker.!=0)+n_dof ;
-				find(m_simplex.point_marker.!=0)+2*n_dof]			
+	ind_con = [find(mesh.point_marker.!=0) ; 
+				find(mesh.point_marker.!=0)+n_dof ;
+				find(mesh.point_marker.!=0)+2*n_dof]			
 	constr_val = uOpt[ind_con]
 	ind_uncon = setdiff(1:(3*nOrig), ind_con)
 
 	nOrig = length(uOrig)
 
-	system_matrix = [(u1^2+k[1])*speye(nOrig) u1*u2*speye(nOrig) u1*u3*speye(nOrig) ; 
-	                    u2*u1*speye(nOrig) (u2^2+k[2])*speye(nOrig) u2*u3*speye(nOrig) ; 
-	                    u3*u1*speye(nOrig) u3*u2*speye(nOrig) (u3^2+k[3])*speye(nOrig)]
+	if smooth
+		ref_el = FEM.RefEl_Pk(1)
+	    quad = Quad.Quad_simplex(3)
+	    dof = FEM.Dof_Pk(mesh, problem, 1)
 
-	rhs = [k[1]*u0[:,1] + u1*uOrig; 
-	        k[2]*u0[:,2] + u2*uOrig ; 
-	        k[3]*u0[:,3] + u3*uOrig]  - system_matrix[:,ind_con]*constr_val
+	    k_smooth = 0.01
+
+		laplace_matrix = FEM.assemble_Laplace(mesh, 
+	                                            dof,
+	                                            ref_el, 
+	                                            quad)
+	    # A = laplace_matrix' * laplace_matrix
+	    A = laplace_matrix
+
+	    system_matrix = [u1^2*speye(nOrig)+k_smooth*A    u1*u2*speye(nOrig)               u1*u3*speye(nOrig) ; 
+                         u2*u1*speye(nOrig)              u2^2*speye(nOrig)+k_smooth*A     u2*u3*speye(nOrig) ; 
+                         u3*u1*speye(nOrig)              u3*u2*speye(nOrig)               u3^2*speye(nOrig)+k_smooth*A ]
+
+	    rhs = [ u1*uOrig ;
+	            u2*uOrig ;
+	            u3*uOrig ] - system_matrix[:,ind_con]*constr_val
+	else
+		k = [1 ; 1 ; 1] * 0.01
+
+		system_matrix = [(u1^2+k[1])*speye(nOrig)    u1*u2*speye(nOrig)          u1*u3*speye(nOrig) ; 
+	                    u2*u1*speye(nOrig)           (u2^2+k[2])*speye(nOrig)    u2*u3*speye(nOrig) ; 
+	                    u3*u1*speye(nOrig)           u3*u2*speye(nOrig)          (u3^2+k[3])*speye(nOrig)]
+
+		rhs = [k[1]*u0[:,1] + u1*uOrig; 
+		        k[2]*u0[:,2] + u2*uOrig ; 
+		        k[3]*u0[:,3] + u3*uOrig]  - system_matrix[:,ind_con]*constr_val
+	end
 
 	uOpt[ind_uncon] = system_matrix[ind_uncon,ind_uncon] \ rhs[ind_uncon]
 
@@ -190,25 +219,27 @@ for i_mesh = 1:m_coarse.n_cell
 
 	f2 = figure(2, figsize = (18,6))
 	ax1 = subplot(131, projection="3d")
-	ax1[:plot_trisurf](pOrig[1,:], pOrig[2,:], uOrig, triangles=m_simplex.cell'-1)
+	ax1[:plot_trisurf](pOrig[1,:], pOrig[2,:], uOrig, triangles=mesh.cell'-1)
 	ax2 = subplot(132, projection="3d")
-	ax2[:plot_trisurf](pOrig[1,:], pOrig[2,:], u1*u0[:,1]+u2*u0[:,2]+u3*u0[:,3], triangles=m_simplex.cell'-1)
+	ax2[:plot_trisurf](pOrig[1,:], pOrig[2,:], u1*u0[:,1]+u2*u0[:,2]+u3*u0[:,3], triangles=mesh.cell'-1)
 	ax3 = subplot(133, projection="3d")
-	ax3[:plot_trisurf](pOrig[1,:], pOrig[2,:], u1*uOpt[:,1]+u2*uOpt[:,2]+u3*uOpt[:,3], triangles=m_simplex.cell'-1)
+	ax3[:plot_trisurf](pOrig[1,:], pOrig[2,:], u1*uOpt[:,1]+u2*uOpt[:,2]+u3*uOpt[:,3], triangles=mesh.cell'-1)
 
 	f3 = figure(3, figsize = (18,6))
 	subplot(131, projection="3d")
-	plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,1], triangles=m_simplex.cell'-1)
+	plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,1], triangles=mesh.cell'-1)
 	subplot(132, projection="3d")
-	plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,2], triangles=m_simplex.cell'-1)
+	plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,2], triangles=mesh.cell'-1)
 	subplot(133, projection="3d")
-	plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,3], triangles=m_simplex.cell'-1)
+	plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,3], triangles=mesh.cell'-1)
 	# -----------------------------
-end
+# end
 
 
 
-
+ind_corner = [sort(circshift(mesh.segment[:,mesh.segment_marker.==1],1)[:])[1] ; 
+               sort(circshift(mesh.segment[:,mesh.segment_marker.==1],1)[:])[end] ; 
+               sort(circshift(mesh.segment[:,mesh.segment_marker.==2],1)[:])[end] ]
 
 	
 # 		# Connectivity

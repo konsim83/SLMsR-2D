@@ -42,8 +42,8 @@ T_max = 1.0/10
 
 
 # Constant low diffusion, divergent, traveling vortex
-problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
-# problem = Problem.Gaussian_R_4_conserv(T_max, 0.2 , 30)
+# problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
+problem = Problem.Gaussian_R_4_conserv(T_max, 0.2 , 30)
 
 
 # Multiscale diffusion, divergent, traveling vortex
@@ -58,8 +58,13 @@ problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
 # -------   Mesh parameters   -------
 n_edge_per_seg = 4
 n_refinement = 4
-n_edge_per_seg_f = 12
+
+
+n_edge_per_seg_f = 15
 max_are_cell_f = 0.005
+
+n_edge_per_seg_f = 20
+max_are_cell_f = 0.004
 
 
 # -------   FEM parameters   -------
@@ -85,8 +90,8 @@ reconstruction_method = 2
 
 
 
-k_edge = 0.1
-k_int = [1.0 ; 1.0 ; 1.0] * 0.1
+k_edge = 0.01
+k_int = [1.0 ; 1.0 ; 1.0] * 0.01
 k_sum = 0
 k = [k_int ; k_edge; k_sum]
 # ---------------------------------------------------------------------------

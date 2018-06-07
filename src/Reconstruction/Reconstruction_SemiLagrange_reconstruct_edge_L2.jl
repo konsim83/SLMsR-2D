@@ -25,13 +25,6 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
 
 	    a_1 = uGlobal[1]
 	    a_2 = uGlobal[2]
-
-	    system_matrix = [ (a_1^2 + k_edge)*speye(n)   (a_1*a_2)*speye(n) ; 
-                        (a_1*a_2)*speye(n)   (a_2^2 + k_edge)*speye(n) ]
-
-	    rhs = ( [k_edge*basis_left + a_1*uOrigEdge ;
-	            k_edge*basis_right + a_2*uOrigEdge]
-	            - system_matrix[:,ind_con]*val_con )
 	elseif ind_seg==2
 		basis_left = uBasis0[ind_edge,2]
 	    basis_right = uBasis0[ind_edge,3]
@@ -43,13 +36,6 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
 
 	    a_1 = uGlobal[2] # left
 	    a_2 = uGlobal[3] # right
-
-	    system_matrix = [ (a_1^2 + k_edge)*speye(n)   (a_1*a_2)*speye(n) ; 
-                        (a_1*a_2)*speye(n)   (a_2^2 + k_edge)*speye(n) ]
-
-	    rhs = ( [k_edge*basis_left + a_1*uOrigEdge ;
-	            k_edge*basis_right + a_2*uOrigEdge]
-	            - system_matrix[:,ind_con]*val_con )
 	elseif ind_seg==3
 		# Note that here the boundaries of left and right basis are switched
 		basis_left = uBasis0[ind_edge,3]
@@ -63,15 +49,14 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
 
 	    a_1 = uGlobal[3] # weight of left basis
 	    a_2 = uGlobal[1] # weight of right basis
-
-	    system_matrix = [ (a_1^2 + k_edge)*speye(n)   (a_1*a_2)*speye(n) ; 
-                        (a_1*a_2)*speye(n)   (a_2^2 + k_edge)*speye(n) ]
-
-	    rhs = ( [k_edge*basis_left + a_1*uOrigEdge ;
-	            k_edge*basis_right + a_2*uOrigEdge]
-	            - system_matrix[:,ind_con]*val_con )
 	end
 
+	system_matrix = [ (a_1^2 + k_edge)*speye(n)   (a_1*a_2)*speye(n) ; 
+                        (a_1*a_2)*speye(n)   (a_2^2 + k_edge)*speye(n) ]
+
+    rhs = ( [k_edge*basis_left + a_1*uOrigEdge ;
+            k_edge*basis_right + a_2*uOrigEdge]
+            - system_matrix[:,ind_con]*val_con )
     
     basis_lr[ind_con] = val_con
     basis_lr[ind_uncon] = system_matrix[ind_uncon, ind_uncon] \ rhs[ind_uncon]

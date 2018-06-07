@@ -39,10 +39,6 @@ function reconstruct_L2_conformal(solution :: FEM.Solution_MsFEM,
     # Evaluate the solution at the traced back points
     # u = PostProcess.evaluate(solution, mesh_collection, point_orig, k_time-1)
     u = u_orig
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
-    u1 = U[1]
-    u2 = U[2]
-    u3 = U[3]
     # ------------------------------------------------
 
     u0 = Problem.u_init(problem_f, mesh_collection.mesh_f[ind_cell].point)
@@ -51,6 +47,17 @@ function reconstruct_L2_conformal(solution :: FEM.Solution_MsFEM,
     m_f = mesh_collection.mesh_f[ind_cell]
     n_dof = m_f.n_point
     uOpt = zeros(n_dof,3)
+
+
+    ind_corner = [sort(circshift(m_f.segment[:,m_f.segment_marker.==1],1)[:])[1] ; 
+                    sort(circshift(m_f.segment[:,m_f.segment_marker.==1],1)[:])[end] ; 
+                    sort(circshift(m_f.segment[:,m_f.segment_marker.==2],1)[:])[end] ]
+    # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+    U = u_orig[ind_corner]
+
+    u1 = U[1]
+    u2 = U[2]
+    u3 = U[3]
 
 
     # ------------------------------------------------
@@ -67,7 +74,9 @@ function reconstruct_L2_conformal(solution :: FEM.Solution_MsFEM,
 
     # Contraints for nodal values of basis at boundary for ALL THREE BASIS
     # FUNCTIONS!!!
-    ind_con = [find(m_f.point_marker.!=0) ; find(m_f.point_marker.!=0)+n_dof ; find(m_f.point_marker.!=0)+2*n_dof]
+    ind_con = [find(m_f.point_marker.!=0) ; 
+                find(m_f.point_marker.!=0)+n_dof ; 
+                find(m_f.point_marker.!=0)+2*n_dof]
 
     constr_val = uOpt[ind_con]
     ind_uncon = setdiff(1:(3*n_dof), ind_con)

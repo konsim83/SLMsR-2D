@@ -207,23 +207,23 @@ function SemiLagrange_opt!(solution :: FEM.Solution_MsFEM,
 
 			# -------   Mu_t + Ru = Du   -------
 			# Set the system matrices 
-	        if problem.conservative # || problem.reconstructEdge
-	        	error("Not implemented")
-	        	ind_con = [1 ; 2 ; 3]
-			    constr_val = eye(3)
-			    ind_uncon = setdiff(1:mesh_local.n_point, ind_con)
+	      #   if problem.conservative # || problem.reconstructEdge
+	      #   	# error("Not implemented")
+	      #   	ind_con = [1 ; 2 ; 3]
+			    # constr_val = eye(3)
+			    # ind_uncon = setdiff(1:mesh_local.n_point, ind_con)
 
-	        	system = M_orig-dt_f*(D_next-R_next)
-	        	rhs = M_orig[ind_uncon,:]*u_basis_tmp[:,:,j-1] - system[ind_uncon,ind_con]*constr_val
-	        	u_basis_tmp[ind_uncon,:,j] = system[ind_uncon,ind_uncon]\ rhs
-	        	u_basis_tmp[ind_con,:,j] = constr_val
-	        else
+	      #   	system = M_orig-dt_f*(D_next-R_next)
+	      #   	rhs = M_orig[ind_uncon,:]*u_basis_tmp[:,:,j-1] - system[ind_uncon,ind_con]*constr_val
+	      #   	u_basis_tmp[ind_uncon,:,j] = system[ind_uncon,ind_uncon]\ rhs
+	      #   	u_basis_tmp[ind_con,:,j] = constr_val
+	      #   else
 		        # # Set the system matrices 
 		        TimeIntegrator.updateSystem!(timeStepper[i_mesh_local].systemData, M_orig, D_next-R_next, f_orig, 
 		        								dof_next, u_basis_tmp[:,:,j-1], u_basis_tmp[:,:,j-1], dt_f)
 		        # Make a single time step
 		        TimeIntegrator.makeStep!(timeStepper[i_mesh_local], dof_next, view(u_basis_tmp, :, :,j), u_basis_tmp[:,:,j-1])
-	    	end
+	    	# end
 	    end # end for
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
