@@ -31,9 +31,6 @@ function map_ref_point_grad(dof :: AbstractDof, x :: Array{Float64,2}, ind_c :: 
     
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
     
-    n_points = size(x,1)
-    n_cells = length(ind_c)
-    
     P_grad = [dof.T_ref2cell[ind][:,1:2] for ind in ind_c]
     
     return P_grad

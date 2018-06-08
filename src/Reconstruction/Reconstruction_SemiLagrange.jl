@@ -63,9 +63,9 @@ function SemiLagrange_opt!(solution :: FEM.Solution_MsFEM,
 																mesh_collection.mesh_f[i_mesh_local].point,
 																i_mesh_local)
 			end
-			solution.phi_1[i_mesh_local][:,k_time-1] = u_basis_tmp[:,1]
-		    solution.phi_2[i_mesh_local][:,k_time-1] = u_basis_tmp[:,2]
-		    solution.phi_3[i_mesh_local][:,k_time-1] = u_basis_tmp[:,3]
+			solution.phi_1[i_mesh_local][:,1] = u_basis_tmp[:,1]
+		    solution.phi_2[i_mesh_local][:,1] = u_basis_tmp[:,2]
+		    solution.phi_3[i_mesh_local][:,1] = u_basis_tmp[:,3]
 		end
 		println("---------------------------------------\n")
 	end
@@ -79,6 +79,8 @@ function SemiLagrange_opt!(solution :: FEM.Solution_MsFEM,
 	end
 	# ------------------------------------------------------------------
 
+	
+	# ------------------------------------------------------------------
 	if problem.conservative # || problem.reconstructEdge
 		println("\n---------------------------------------")
 		println("Reconstruction at time step $(k_time) / $(par.n_steps+1):")
@@ -159,12 +161,12 @@ function SemiLagrange_opt!(solution :: FEM.Solution_MsFEM,
 
 
     	# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    	# Evolve boundary values
-		# if problem.conservative # || problem.reconstructEdge
-		# 	for segment in 1:3
-		# 		evolve_edge!(mesh_local, uBasisOpt, point_orig, problem_local, dt_f, n_steps_back, segment)
-		# 	end
-		# end
+    	Evolve boundary values
+		if problem.conservative # || problem.reconstructEdge
+			for segment in 1:3
+				evolve_edge!(u_basis_tmp, mesh_local, point_orig, problem_local, dt_f, n_steps_back, segment, T)
+			end
+		end
 		# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 

@@ -1,22 +1,19 @@
 # !!! Mass 1D !!!
-function assemble_mass_1d(cells :: Array{Int,2},
-                            points :: Array{Int,2},
+function assemble_mass_1d(mesh :: Mesh_1D,
+                            quad :: Quad.Quad_line,
                             ref_el :: RefEl_Lagrange_1,
-                            quad :: Quad1D.JacobiGauss,
-                            problem :: Problem.AbstractProblem,
-                            t :: Float64)
+                            dof :: Dof_1D,
+                            problem :: Problem.AbstractProblem)
 
-    ind = vec(transpose([cells[1,:] cells[1,:] cells[2,:] cells[2,:]]))
-    ind_test = vec([cells ; cells])
-
-    p_start = points[:,2,]
-    p_end = points[:,1,]
+    ind_trial = dof.ind_trial
+    ind_test = dof.ind_test
     
-    weight_elem = reshape( sqrt.(sum((p_end-p_start).^2,1)) , 1, 1, size(cells,2))
-    mat_local = ref_el.eval(quad.point) * diagm(quad.weight) * transpose(ref_el.eval(quad.point))
-    mat_local = mat_local.*weight_elem
+    weight_elem = map_ref_point_der(mesh, quad.point, collect(1:mesh.n_cell))
+    mat_local = shapeFun(ref_el, quad.point) * diagm(quad.weight) * transpose(shapeFun(ref_el, quad.point))
+    
+    mat_local = hcat([mat_local*w for w in weight_elem]...)
 
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
+    Mat_global = sparse(ind_test, ind_trial, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
 
     return Mat_global
 end # end function
@@ -27,46 +24,41 @@ end # end function
 
 
 
-function assemble_reaction_1d(cells :: Array{Int,2},
-                            points :: Array{Int,2},
+function assemble_reaction(mesh :: Mesh_1D,
+                            quad :: Quad.Quad_line,
                             ref_el :: RefEl_Lagrange_1,
-                            quad :: Quad1D.JacobiGauss,
+                            dof :: Dof_1D,
                             problem :: Problem.AbstractProblem,
                             t :: Float64)
 
-    ind = vec(transpose([cells[1,:] cells[1,:] cells[2,:] cells[2,:]]))
-    ind_test = vec([cells ; cells])
-
-    p_start = points[:,2,]
-    p_end = points[:,1,]
+    ind_trial = dof.ind_trial
+    ind_test = dof.ind_test
     
-    mat_local = assemble_elem_r(p_start, p_end, ref_el , quad, problem, t)
+    mat_local = assemble_elem_r(mesh, quad, ref_el, problem)
 
-    Mat_global = sparse(ind_test, ind, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
+    Mat_global = sparse(ind_test, ind_trial, vec(mat_local), dof.n_true_dof, dof.n_true_dof)
 
     return Mat_global
 end # end function
 
-function assemble_elem_r(cells :: Array{Int,2},
-                            p_start :: Array{Int,2},
-                            p_end :: Array{Int,2},
-                            ref_el :: AbstractRefEl_Pk,
-                            quad :: Quad1D.JacobiGauss,
+function assemble_elem_r(mesh :: Mesh_1D,
+                            quad :: Quad.Quad_line,
+                            ref_el :: RefEl_Lagrange_1,
                             problem :: Problem.AbstractProblem,
                             t :: Float64)
 
     n = length(ref_el.node)
-    r = zeros(n, n, size(cell,2))
+    r = zeros(n, n, mesh.n_cell)
     
     # x must be an array of 2-by-n_q arrays
-    x = [hcat([(p_end[:,i] - p_start[:,i])*q + p_start[:,i] for q in quad.point]...) for i in 1:size(cell,2)]
+    x = map_ref_point(mesh, quad.point, collect(1:mesh.n_cell))
     velocity = Problem.velocity(problem, t, x)
     
-    # weight_elem = reshape( sqrt.(sum((p_end-p_start).^2,1)) , 1, 1, size(cells,2))
+    
+    Phi = shapefun(ref_el, quad.point) * diagm(quad.weight)
+    Phi_x = shapefun_der(ref_el, quad.point)
 
-
-    Phi = eval_shapefun(ref_el, quad.point) * diagm(quad.weight)
-    Phi_x = eval_shapefun_der(ref_el, quad.point)
+    
 
     for k = 1:mesh.n_cell
         for j=1:quad.n_point
@@ -85,7 +77,7 @@ function assemble_elem_r(cells :: Array{Int,2},
 end # end function
 
 
-
+#=
 # ----------------------------------------------------------
 
 
@@ -146,3 +138,4 @@ function assemble_elem_d(cells :: Array{Int,2},
 
     return d
 end # end function
+=#
