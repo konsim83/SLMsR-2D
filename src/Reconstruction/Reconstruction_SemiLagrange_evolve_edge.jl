@@ -46,12 +46,16 @@ function evolve_edge!(uBasisOpt :: Array{Float64,3},
 	        # Time step (small) with implicit Euler
             M_orig = FEM_1D.assemble_mass(mesh_old, quad_1d, ref_el_1d, dof_old, problem_local)
 
-            R_next = FEM_1D.assemble_reaction(mesh_next, 
-            								quad_1d,
-											ref_el_1d,
-            								dof_next,                                             
-                                            problem_local,
-                                            T - (n_steps_f-(j-1))*dt_f)
+            if problem_local.conservative
+	            R_next = FEM_1D.assemble_reaction(mesh_next, 
+	            								quad_1d,
+												ref_el_1d,
+	            								dof_next,                                             
+	                                            problem_local,
+	                                            T - (n_steps_f-(j-1))*dt_f)
+	        else
+	        	R_next = spzeros(size(M_orig,1), size(M_orig,2))
+	        end
 
             D_next = FEM_1D.assemble_diffusion(mesh_next, 
 	            								quad_1d,
@@ -59,6 +63,9 @@ function evolve_edge!(uBasisOpt :: Array{Float64,3},
 	            								dof_next,                                             
 	                                            problem_local,
 	                                            T - (n_steps_f-(j-1))*dt_f)
+
+            # display((R_next))
+            # display(full(D_next))
 
             # Zero forcing
 	        f_orig = zeros(mesh_old.n_point,2)

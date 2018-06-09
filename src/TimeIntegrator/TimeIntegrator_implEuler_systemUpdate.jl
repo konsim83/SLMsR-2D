@@ -31,7 +31,7 @@ function updateSystem!(systemData :: ImplEulerData,
                         f :: Array{Float64},
                         dof :: FEM.AbstractDof,
                         uOld :: Array{Float64},
-                        uNew :: Array{Float64},
+                        uNewBC :: Array{Float64},
                         dt :: Float64)
     
     # Just an abbreviation
@@ -39,7 +39,7 @@ function updateSystem!(systemData :: ImplEulerData,
     ind = systemData.ind_node_dirichlet
 
     uOldDof = FEM.map_vec_mesh2dof(dof, uOld[:,:])
-    uNewDof = FEM.map_vec_mesh2dof(dof, uNew[:,:])
+    uNewBCDof = FEM.map_vec_mesh2dof(dof, uNewBC[:,:])
     fDof = FEM.map_vec_mesh2dof(dof, f[:,:])
 
     systemData.system_matrix[:,:] = (M - dt*A)[innd,innd]
@@ -47,7 +47,7 @@ function updateSystem!(systemData :: ImplEulerData,
     systemData.system_rhs[:,:] = M[innd,innd]*uOldDof[innd,:] + dt*fDof[innd,:]
     
     if !isempty(ind)
-        systemData.system_rhs[:,:] +=  M[innd,ind]*uOldDof[ind,:] - (M - dt*A)[innd,ind]*uNewDof[ind,:]
+        systemData.system_rhs[:,:] +=  M[innd,ind]*uOldDof[ind,:] - (M - dt*A)[innd,ind]*uNewBCDof[ind,:]
     end
     
     return nothing

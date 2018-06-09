@@ -50,7 +50,8 @@ end
 function get_cell_normal(mesh :: Mesh_1D, ind_c :: Array{Int64,1})
 
 	rot = [0. 1.;-1. 0.]
-	normal = [rot*(mesh.point[:,mesh.cell[2,i]]-mesh.point[:,mesh.cell[1,i]])/sqrt(sum((mesh.point[:,mesh.cell[2,1:mesh.n_cell]]-mesh.point[:,mesh.cell[1,1:mesh.n_cell]]).^2)) for i in 1:mesh.n_cell]
+	normal = [rot*(mesh.point[:,mesh.cell[2,i]]-mesh.point[:,mesh.cell[1,i]]) /
+				sqrt(sum((mesh.point[:,mesh.cell[2,i]]-mesh.point[:,mesh.cell[1,i]]).^2)) for i in 1:mesh.n_cell]
 
 	return normal
 end
