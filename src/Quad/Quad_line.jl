@@ -5,7 +5,9 @@ struct Quad_line <: AbstractQuad
     order :: Int64
 
     weight :: Array{Float64, 1}
-    point:: Array{Float64, 1}
+    point :: Array{Float64, 1}
+
+    n_point :: Int
 
     function Quad_line(alpha, beta, N)
             
@@ -34,6 +36,6 @@ struct Quad_line <: AbstractQuad
         w = (V[1,:]').^2 * 2^(alpha + beta + 1)/(alpha + beta + 1) * gamma(alpha + 1)*gamma(beta + 1)/gamma(alpha + beta  + 1)
         order = 2*length(w) - 1
 
-        return new(order, 0.5*collect(vec(w)), 0.5*(collect(vec(x))+1))
+        return new(order, 0.5*collect(vec(w)), 0.5*(collect(vec(x))+1), length(w))
     end # end function    
 end # end immutable type

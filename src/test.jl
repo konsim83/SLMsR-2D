@@ -86,6 +86,8 @@ n_steps_f = 5
 # 3: conformal (smooth) H1-reconstruction
 # 4: conformal (smooth) H1-reconstruction with soft/hard PoU constraint
 reconstruction_method = 2
+
+reconstruct_edge = false
 # ---------------------------
 
 
@@ -143,6 +145,7 @@ if compute_ms
                                                 n_order_quad_f,
                                                 time_step_method,
                                                 reconstruction_method,
+                                                reconstruct_edge,
                                                 k)
 
 
@@ -164,6 +167,7 @@ if compute_ms_reconstruction
                                                 n_order_quad_f,
                                                 time_step_method,
                                                 reconstruction_method,
+                                                reconstruct_edge,
                                                 k)
 
 

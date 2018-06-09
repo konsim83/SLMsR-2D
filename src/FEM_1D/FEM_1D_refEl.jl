@@ -29,6 +29,6 @@ end # end function
 # ------------------------------------------------------------------
 function shapeFunDer(r :: RefEl_Lagrange_1, x :: Array{Float64,1})
     
-    return transpose([ones(length(x)) ; -ones(length(x))])
+    return transpose([-ones(length(x)) ones(length(x))])
 end # end function
 # ------------------------------------------------------------------

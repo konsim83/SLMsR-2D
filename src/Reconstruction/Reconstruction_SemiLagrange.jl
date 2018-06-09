@@ -161,9 +161,9 @@ function SemiLagrange_opt!(solution :: FEM.Solution_MsFEM,
 
 
     	# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    	Evolve boundary values
-		if problem.conservative # || problem.reconstructEdge
-			for segment in 1:3
+    	# Evolve boundary values
+		if problem.conservative  || par.reconstructEdge
+			@time for segment in 1:3
 				evolve_edge!(u_basis_tmp, mesh_local, point_orig, problem_local, dt_f, n_steps_back, segment, T)
 			end
 		end

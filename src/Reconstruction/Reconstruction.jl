@@ -1,6 +1,6 @@
 module Reconstruction
 
-import Mesh, Parameter, Problem, FEM, Quad, TimeIntegrator, FiniteDiff, PostProcess
+import Mesh, Parameter, Problem, FEM, FEM_1D, Quad, TimeIntegrator, FiniteDiff, PostProcess
 
 import DifferentialEquations
 
@@ -13,6 +13,8 @@ using ProgressMeter
 # ---------------------
 
 include("Reconstruction_SemiLagrange.jl")
+
+include("Reconstruction_SemiLagrange_evolve_edge.jl")
 
 include("Reconstruction_SemiLagrange_reconstruct_edge_L2.jl")
 include("Reconstruction_SemiLagrange_reconstruct_edge_L2_sumEqualOne.jl")

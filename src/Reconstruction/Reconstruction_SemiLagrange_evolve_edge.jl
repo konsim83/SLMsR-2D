@@ -1,5 +1,5 @@
-function evolve_edge!(uBasisOpt :: Array{Float64,2},,
-						mesh_local  :: Mesh.TriangleMesh.TriMesh,						
+function evolve_edge!(uBasisOpt :: Array{Float64,3},
+						mesh_local  :: Mesh.TriangleMesh.TriMesh,
 						point_orig :: Array{Array{Float64,2},1},
 						problem_local :: Problem.AbstractBasisProblem,
 						dt_f :: Float64, n_steps_f :: Int,
@@ -28,9 +28,9 @@ function evolve_edge!(uBasisOpt :: Array{Float64,2},,
 	# -----------------------
 
 	ref_el_1d = FEM_1D.RefEl_Lagrange_1()
-	quad_1D = Quad.Quad_line(0, 0, 2)
+	quad_1d = Quad.Quad_line(0, 0, 2)
 
-	for j=2:(n_steps_back+1)
+	for j=2:(n_steps_f+1)
         	p_old = point_orig[end-(j-2)][:,ind_edge]
 			p_next = point_orig[end-(j-1)][:,ind_edge]
 
@@ -44,21 +44,21 @@ function evolve_edge!(uBasisOpt :: Array{Float64,2},,
 
             # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	        # Time step (small) with implicit Euler
-            M_orig = FEM_1D.assemble_mass(mesh_old, quad_1D, ref_el_1d, dof_old, problem_local)
+            M_orig = FEM_1D.assemble_mass(mesh_old, quad_1d, ref_el_1d, dof_old, problem_local)
 
-            R_next = FEM.assemble_reaction(mesh_next, 
+            R_next = FEM_1D.assemble_reaction(mesh_next, 
             								quad_1d,
 											ref_el_1d,
             								dof_next,                                             
                                             problem_local,
-                                            T - (n_steps_back-(j-1))*dt_f)
+                                            T - (n_steps_f-(j-1))*dt_f)
 
             D_next = FEM_1D.assemble_diffusion(mesh_next, 
-            								quad_1d,
-											ref_el_1d,
-            								dof_next,                                             
-                                            problem_local,
-                                            T - (n_steps_back-(j-1))*dt_f)
+	            								quad_1d,
+												ref_el_1d,
+	            								dof_next,                                             
+	                                            problem_local,
+	                                            T - (n_steps_f-(j-1))*dt_f)
 
             # Zero forcing
 	        f_orig = zeros(mesh_old.n_point,2)
@@ -69,8 +69,8 @@ function evolve_edge!(uBasisOpt :: Array{Float64,2},,
 
 			rhs = M_orig*uBasisOpt[ind_edge, ind_basis,j-1] + dt_f*f_orig - system_matrix[:,[1;n]]*eye(2)
 
-	        uBasisOpt[ind_edge[2:end-1],ind_basis,j] = system_matrix[2:end-1,2:end-1] \ rhs[2:end-1]
-	        uBasisOpt[ind_edge[1;n],ind_basis,j] = eye(2)
+	        uBasisOpt[ind_edge[2:end-1], ind_basis, j] = system_matrix[2:end-1,2:end-1] \ rhs[2:end-1,:]
+	        uBasisOpt[ind_edge[[1;n]], ind_basis, j] = eye(2)
 			# ----------------------------------
 	    end # end for
 

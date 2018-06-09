@@ -27,8 +27,8 @@ end
 # -------------------------------------------------------------------------------------
 function map_ref_point(mesh :: Mesh_1D, x :: Array{Float64,1}, ind_c :: Array{Int64,1})
 
-	P = [mesh.point[:,mesh.cell[1,ind]] + [(mesh.point[1,mesh.cell[2,ind]]-mesh.point[1,mesh.cell[1,ind]])*x ; 
-											  (mesh.point[2,mesh.cell[2,ind]]-mesh.point[2,mesh.cell[1,ind]])*x  ]
+	P = [repmat(mesh.point[:,mesh.cell[1,ind]],1,length(x)) + [(mesh.point[1,mesh.cell[2,ind]]-mesh.point[1,mesh.cell[1,ind]])*transpose(x) ; 
+											  (mesh.point[2,mesh.cell[2,ind]]-mesh.point[2,mesh.cell[1,ind]])*transpose(x)  ]
 			for ind in ind_c ]
 
 	return P
@@ -50,7 +50,7 @@ end
 function get_cell_normal(mesh :: Mesh_1D, ind_c :: Array{Int64,1})
 
 	rot = [0. 1.;-1. 0.]
-	normal = [rot*(mesh.point[:,mesh.cell[2,i]]-mesh.point[:,mesh.cell[1,i]])/sqrt(sum((mesh.point[:,mesh.cell[2,1:n_cell]]-mesh.point[:,mesh.cell[1,1:n_cell]]).^2)) for i in 1:n_cell]
+	normal = [rot*(mesh.point[:,mesh.cell[2,i]]-mesh.point[:,mesh.cell[1,i]])/sqrt(sum((mesh.point[:,mesh.cell[2,1:mesh.n_cell]]-mesh.point[:,mesh.cell[1,1:mesh.n_cell]]).^2)) for i in 1:mesh.n_cell]
 
 	return normal
 end

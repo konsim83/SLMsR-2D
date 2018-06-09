@@ -77,6 +77,8 @@ type Parameter_MsFEM <: AbstractParameter
     k :: Array{Float64,1}
     reconstruction_method :: Int64
 
+    reconstruct_edge :: Bool
+
     function Parameter_MsFEM(T :: Float64,
                              dt :: Float64,
                              n_steps_f :: Int,
@@ -88,6 +90,7 @@ type Parameter_MsFEM <: AbstractParameter
                              n_order_quad_f :: Int64,
                 	         time_step_method :: Int64,
                              reconstruction_method :: Int64,
+                             reconstruct_edge :: Bool,
                              k :: Array{Float64,1})
         
     	this = new()
@@ -111,6 +114,8 @@ type Parameter_MsFEM <: AbstractParameter
         this.n_edge_per_seg_f = n_edge_per_seg_f
         this.n_order_FEM_f = n_order_FEM_f
         this.n_order_quad_f = n_order_quad_f
+
+        this.reconstruct_edge = reconstruct_edge
 
        this.k = k        
 	   
