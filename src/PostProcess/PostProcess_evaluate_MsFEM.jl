@@ -75,11 +75,13 @@ function evaluate(sol :: FEM.Solution_MsFEM,
 
 	# Where are the new points found in the original mesh and what are their
 	# barycentric coordinates?
-	x_cell, x_bary, x_cell_f, x_bary_f = PostProcess.find_cell(mesh_collection, x);
+	x_cell, x_bary, x_cell_f, x_bary_f = PostProcess.find_cell(mesh_collection, x)
 
 	u_f = zeros(size(x,2))
 
 	for idx in 1:size(x,2)
+		# display(x_cell[idx])
+		# display(x_cell_f[idx])
 		u_f[idx] = local_function_f(sol, 
 									mesh_collection, 
 									x_cell[idx][1], 

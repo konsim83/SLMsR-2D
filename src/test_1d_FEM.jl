@@ -1,4 +1,4 @@
-import Mesh, Problem, FEM, Quad, TimeIntegrator, Plot
+import Mesh, Problem, FEM, FEM_1D, Quad, TimeIntegrator, Plot
 
 import DifferentialEquations
 
@@ -14,11 +14,11 @@ function traceback(point :: Array{Float64,2},
 					T :: Float64, 
 					velocity :: Function)
 	dt = 1/10
-	n_steps_f = 5
+	n_steps_back = 5
 
 	tspan = (-T, -T+dt)
 	prob = DifferentialEquations.ODEProblem(velocity, point, tspan)
-	sol = DifferentialEquations.solve(prob, dtmax=dt/n_steps_f)
+	sol = DifferentialEquations.solve(prob, dtmax=dt/n_steps_back)
 
 	return sol.u
 end
@@ -42,8 +42,11 @@ m_simplex = Mesh.mesh_unit_simplex(12, 0.005)
 mesh_collection = Mesh.TriMesh_collection(m_coarse, m_simplex)
 # ----------------------------------------------------------------
 
+T = 1.0
+i_mesh = 5 # mesh index
 
-problem = Problem.Gaussian_R_4_conserv(1.0, 0.05 , 30)
+# problem = Problem.Gaussian_R_4(1.0, 0.2 , 30)
+problem = Problem.Gaussian_R_4_conserv(1.0, 0.2 , 30)
 
 
 # ----------------------------------------------------------------
@@ -53,34 +56,37 @@ velocity = function(x :: Array{Float64,2}, parameter, t :: Float64)
 end
 
 
-T = 1.0
-i_mesh = 5 # mesh index
-j = 2 # Time
-
 close()
 close()
 close()
 close()
 close()
 
-
+mesh = mesh_collection.mesh_f[i_mesh]
 
 tri = Geometry.Triangle(mesh_collection.mesh.point[:, mesh_collection.mesh.cell[:,i_mesh]])
 problem_f = Problem.BasisFun(problem, tri)
 
 
 	
-point_orig = traceback(mesh_collection.mesh_f[i_mesh].point, T, velocity)
-pOrig = point_orig[1]
+point_orig = traceback(mesh.point, T, velocity)
+pOrig = point_orig[end]
 u0 = Problem.u_init(problem_f, point_orig[1])
 uOrig = Problem.u_init(problem, pOrig)
 
-phi = zeros(size(u0))
+n_steps_back = length(point_orig)-1
+dt_f = (1/10)/n_steps_back
 
-U = Problem.u_init(problem, mesh_collection.mesh.point)
+uBasisOpt = zeros(size(u0,1), size(u0,2), n_steps_back+1)
+
+# -----------------------------------------
+ind_corner = [sort(circshift(mesh.segment[:,mesh.segment_marker.==1],1)[:])[1] ; 
+                sort(circshift(mesh.segment[:,mesh.segment_marker.==1],1)[:])[end] ; 
+                sort(circshift(mesh.segment[:,mesh.segment_marker.==2],1)[:])[end] ]
+pOrigCorner = pOrig[:,ind_corner]
+U = Problem.u_init(problem, pOrigCorner)
+# -----------------------------------------
 	
-
-mesh = mesh_collection.mesh_f[i_mesh]
 # ----------------------------------------------------------------
 for seg in 1:3
 
@@ -96,8 +102,8 @@ for seg in 1:3
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
-	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
-	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][2]
+	    a_1 = U[1]
+	    a_2 = U[2]
 
 		basis_left = u0[ind_edge,1]
 		basis_right = u0[ind_edge,2]
@@ -106,8 +112,8 @@ for seg in 1:3
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
-	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][2]
-	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
+	    a_1 = U[2]
+	    a_2 = U[3]
 
 		basis_left = u0[ind_edge,2]
 		basis_right = u0[ind_edge,3]
@@ -116,8 +122,8 @@ for seg in 1:3
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
-	    a_1 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
-	    a_2 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
+	    a_1 = U[3]
+	    a_2 = U[1]
 
 		basis_left = u0[ind_edge,3]
 		basis_right = u0[ind_edge,1]
@@ -140,14 +146,14 @@ for seg in 1:3
     display([norm(uOrigEdge-a_1*basis_left - a_2*basis_right)  norm(uOrigEdge-a_1*basis_lr[1:n] - a_2*basis_lr[n+1:end])])
 
     if seg==1
-    	phi[ind_edge,1] = basis_lr[1:n]
-    	phi[ind_edge,2] = basis_lr[n+1:end]
+    	uBasisOpt[ind_edge,1,1] = basis_lr[1:n]
+    	uBasisOpt[ind_edge,2,1] = basis_lr[n+1:end]
 	elseif seg==2
-		phi[ind_edge,2] = basis_lr[1:n]
-		phi[ind_edge,3] = basis_lr[n+1:end]
+		uBasisOpt[ind_edge,2,1] = basis_lr[1:n]
+		uBasisOpt[ind_edge,3,1] = basis_lr[n+1:end]
 	elseif seg==3
-		phi[ind_edge,3] = basis_lr[1:n]
-		phi[ind_edge,1] = basis_lr[n+1:end]
+		uBasisOpt[ind_edge,3,1] = basis_lr[1:n]
+		uBasisOpt[ind_edge,1,1] = basis_lr[n+1:end]
 	end
 
 	f1 = figure(1, figsize = (18,6))
@@ -158,15 +164,118 @@ for seg in 1:3
     plot(linspace(0,1,n), a_1*basis_lr[1:n] + a_2*basis_lr[n+1:end], color="green", linewidth=2.5)
 end # end for seg
 
+
+
+R = []
+D = []
+
+
+for seg in 1:3
+
+	cell_edge = sort(mesh.segment[:,mesh.segment_marker.==seg],1)
+	if seg==3
+		cell_edge[[1;2],end] = cell_edge[[2;1],end]
+	end
+
+	if seg==1
+		ind_basis = [1;2]
+	elseif seg==2
+		ind_basis = [2;3]
+	elseif seg==3
+		ind_basis = [3;1]
+	end
+
+    # -----------------------     
+    # We need this array to plug the solution of
+    # the evolution into the uBasisOpt vector.
+	ind_edge = unique(cell_edge)
+	n = length(ind_edge)
+	# -----------------------
+
+	ref_el_1d = FEM_1D.RefEl_Lagrange_1()
+	quad_1d = Quad.Quad_line(0, 0, 2)
+
+
+	for j=2:(n_steps_back+1)
+    	p_old = point_orig[end-(j-2)][:,ind_edge]
+		p_next = point_orig[end-(j-1)][:,ind_edge]
+
+        # Create mesh of next time step
+        mesh_old = FEM_1D.Mesh_1D(cell_edge, p_old)
+        mesh_next = FEM_1D.Mesh_1D(cell_edge, p_next)
+
+        # Create dof handler of next timestep
+        dof_old = FEM_1D.Dof_1D(mesh_old)
+        dof_next = FEM_1D.Dof_1D(mesh_next)
+
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        # Time step (small) with implicit Euler
+        M_orig = FEM_1D.assemble_mass(mesh_old, quad_1d, ref_el_1d, dof_old, problem_f)
+
+        if problem_f.conservative
+            R_next = FEM_1D.assemble_reaction(mesh_next, 
+            								quad_1d,
+											ref_el_1d,
+            								dof_next,                                             
+                                            problem_f,
+                                            T - (n_steps_back-(j-1))*dt_f)
+        else
+        	R_next = spzeros(size(M_orig,1), size(M_orig,2))
+        end
+
+        D_next = FEM_1D.assemble_diffusion(mesh_next, 
+            								quad_1d,
+											ref_el_1d,
+            								dof_next,                                             
+                                            problem_f,
+                                            T - (n_steps_back-(j-1))*dt_f)
+
+        R = R_next
+        D = D_next
+        # display((R_next))
+        # display(full(D_next))
+
+        # Zero forcing
+        f_orig = zeros(mesh_old.n_point,2)
+
+		# ----------------------------------
+		# -------   Mu_t + Ru = Du   -------
+		system_matrix = M_orig - dt_f*(D_next-R_next)
+
+		rhs = M_orig*uBasisOpt[ind_edge, ind_basis,j-1] + dt_f*f_orig - system_matrix[:,[1;n]]*eye(2)
+
+        uBasisOpt[ind_edge[2:end-1], ind_basis, j] = system_matrix[2:end-1,2:end-1] \ rhs[2:end-1,:]
+        uBasisOpt[ind_edge[[1;n]], ind_basis, j] = eye(2)
+		# ----------------------------------
+    end # end for
+
+
+end # end for evolve seg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#=
 # -----------------------------
 n_dof = mesh.n_point
 nOrig = length(uOrig)
 
-u1 = U[mesh_collection.mesh.cell[:,i_mesh]][1]
-u2 = U[mesh_collection.mesh.cell[:,i_mesh]][2]
-u3 = U[mesh_collection.mesh.cell[:,i_mesh]][3]
+u1 = U[1]
+u2 = U[2]
+u3 = U[3]
 
-uOpt = vec(phi)
+uOpt = vec(uBasisOpt)
 
 ind_con = [find(mesh.point_marker.!=0) ; 
 			find(mesh.point_marker.!=0)+n_dof ;
@@ -231,3 +340,4 @@ subplot(132, projection="3d")
 plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,2], triangles=mesh.cell'-1)
 subplot(133, projection="3d")
 plot_trisurf(pOrig[1,:], pOrig[2,:], uOpt[:,3], triangles=mesh.cell'-1)
+=#

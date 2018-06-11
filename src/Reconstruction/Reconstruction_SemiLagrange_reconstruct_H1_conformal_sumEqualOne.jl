@@ -49,8 +49,11 @@ function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
     dof_local = dof_collection.dof_f[ind_cell]
     k = par.k
 
-    # Global weights of basis
-    uGlobal = solution.u[mesh.cell[:,ind_cell],k_time-1]
+    ind_corner = [sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],1)[:])[1] ; 
+                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],1)[:])[end] ; 
+                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==2],1)[:])[end] ]
+    # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+    uGlobal = uOrig[ind_corner]
 
     # Initialize reference basis as convected standard basis
     uBasis0 = Problem.u_init(problem_local, mesh_local.point)

@@ -29,6 +29,8 @@ include("Problem_gaussian_R_4_conserv.jl")
 include("Problem_gaussian_R_5.jl")
 include("Problem_gaussian_R_5_conserv.jl")
 
+include("Problem_gaussian_R_6_conserv.jl")
+
 #include("Problem_wave.jl")
 #include("Problem_rect_1.jl")
 #include("Problem_hat_function_1.jl")

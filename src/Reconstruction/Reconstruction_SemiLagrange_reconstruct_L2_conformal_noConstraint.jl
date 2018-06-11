@@ -34,7 +34,13 @@ function reconstruct_L2_noConstraint_conformal(solution :: FEM.Solution_MsFEM,
     # Evaluate the solution at the traced back points
     # u = PostProcess.evaluate(solution, mesh_collection, point_orig, k_time-1)
     u = u_orig
-    U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+    
+    ind_corner = [sort(circshift(m_f.segment[:,m_f.segment_marker.==1],1)[:])[1] ; 
+                    sort(circshift(m_f.segment[:,m_f.segment_marker.==1],1)[:])[end] ; 
+                    sort(circshift(m_f.segment[:,m_f.segment_marker.==2],1)[:])[end] ]
+    # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
+    U = u_orig[ind_corner]
+
     u1 = U[1]
     u2 = U[2]
     u3 = U[3]

@@ -23,7 +23,9 @@ end
     is in.
 
 """
-function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64}, warning = false :: Bool)
+function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, 
+					x :: Array{Float64}, 
+					warning = false :: Bool)
 
 	size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -46,7 +48,7 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh, x :: Array{Float64}, warni
 	end
 
 	for i in 1:size(P,3)
-		bary_coord = round.(inv(P[:,:,i]) * X,12)
+		bary_coord = round.(inv(P[:,:,i]) * X,9)
 
 		in_triangle = (sum((bary_coord.>=0.0) .& (bary_coord.<=1.0),1).==3)[:]
 
@@ -84,7 +86,8 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh,
 	end
 
 	# Find indices of nearest neighbor in mesh
-	idx, dist = NearestNeighbors.knn(meshData.tree, x, 5, true)
+	n_knn = 15
+	idx, dist = NearestNeighbors.knn(meshData.tree, x, n_knn, true)
 
 
 	x_bary_coord = Array{Array{Array{Float64,1},1},1}(0)
@@ -93,11 +96,11 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh,
 		bary_coord = []
 		cell = []
 		counter = 1
-		while isempty(cell) && counter<=5
+		while isempty(cell) && counter<=n_knn
 			oneRing = meshData.oneRingCells[idx[i][counter]...]
 			PInv = meshData.oneRingPointInv[idx[i][counter]...]
 			for j in 1:length(oneRing)
-				b_coord = round.(PInv[j] * [x[:,i];1],12)
+				b_coord = round.(PInv[j] * [x[:,i];1],9)
 
 				condition = all(0.0.<=b_coord.<=1.0)
 				if condition

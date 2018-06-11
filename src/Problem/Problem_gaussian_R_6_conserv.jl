@@ -1,4 +1,4 @@
-struct Gaussian_R_4_conserv <: AbstractPhysicalProblem
+struct Gaussian_R_6_conserv <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
@@ -26,11 +26,11 @@ struct Gaussian_R_4_conserv <: AbstractPhysicalProblem
 end # end type
 
 
-function Gaussian_R_4_conserv(T :: Float64, psi :: Float64, k :: Int)
+function Gaussian_R_6_conserv(T :: Float64, psi :: Float64, k :: Int)
         
-    info_prob = "Evolution of symmetric Gaussian_R_4_conserv (classic velocity)."
+    info_prob = "Evolution of symmetric Gaussian_R_6_conserv (classic velocity)."
     type_info = "ADE"
-    file_name = "Gaussian_R_4_conserv"
+    file_name = "Gaussian_R_6_conserv"
 
     marker_dirichlet_edge = Array{Int}(0)
     marker_neumann_edge = Array{Int}(0)
@@ -51,16 +51,16 @@ function Gaussian_R_4_conserv(T :: Float64, psi :: Float64, k :: Int)
 
     conservative = true
     
-    return Gaussian_R_4_conserv(info_prob, type_info, file_name,
-                    T, 
-                    marker_dirichlet_edge, marker_neumann_edge,
-                    covariance_mat, covariance_mat_det, covariance_mat_inv, 
-                    expectation,
-                    psi, 
-                    is_transient_diffusion, 
-                    is_transient_velocity,
-                    conservative,
-                    k)
+    return Gaussian_R_6_conserv(info_prob, type_info, file_name,
+                                T, 
+                                marker_dirichlet_edge, marker_neumann_edge,
+                                covariance_mat, covariance_mat_det, covariance_mat_inv, 
+                                expectation,
+                                psi, 
+                                is_transient_diffusion, 
+                                is_transient_velocity,
+                                conservative,
+                                k)
 end # end constructor
 
 
@@ -69,12 +69,12 @@ end # end constructor
 # --------------------------------------------------------------
 
 """
-    diffusion(problem :: Gaussian_R_4_conserv, t :: Float64, x :: Array{Float64,2})
+    diffusion(problem :: Gaussian_R_6_conserv, t :: Float64, x :: Array{Float64,2})
 
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_R_4_conserv, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: Gaussian_R_6_conserv, t :: Float64, x :: Array{Float64,2})
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -85,12 +85,12 @@ end
 
 
 """
-    diffusion(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    diffusion(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function diffusion(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
         
     out = [diffusion(problem, t, y) for y in x]
     
@@ -102,22 +102,20 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 """
-    velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+    velocity(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Float64,2})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     psi = problem.psi
     T = 1.
-
-    V = hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
-                (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
-               )
+    
+    V = hcat( psi*x[1,:], psi*x[2,:] )
 
     out = [V[i,:] for i=1:size(x,2)]
     
@@ -126,13 +124,13 @@ end
 
 
 """
-    velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    velocity(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function velocity(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
 
@@ -144,32 +142,32 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 """
-    reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+    reaction(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Float64,2})
 
     Divergence of velocity field.
 
 """
-function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+function reaction(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     psi = problem.psi
     T = 1.
 
-    out = (psi/T)*8*pi^2 * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* cos.(pi*(x[2,:]-1/2)) .* (cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2)))
+    out = psi*2*ones(size(x,2))
     
     return out
 end
 
 
 """
-    reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    reaction(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function reaction(problem :: Gaussian_R_6_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [reaction(problem, t, y) for y in x]
 
@@ -181,7 +179,7 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 
-function u_init(problem :: Gaussian_R_4_conserv, x :: Array{Float64})
+function u_init(problem :: Gaussian_R_6_conserv, x :: Array{Float64})
                 
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 
