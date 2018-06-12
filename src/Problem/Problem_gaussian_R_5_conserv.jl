@@ -102,32 +102,6 @@ end
 
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
-function velocity_div(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    psi = problem.psi
-    T = 1.
-
-    V = (psi/T)*8*pi^2 * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* cos.(pi*(x[2,:]-1/2)) * ( 
-            cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2))
-          ) 
-                
-
-    out = [V[i,:] for i=1:size(x,2)]
-    
-    return out
-end
-
-function velocity_div(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
-
-    out = [velocity_div(problem, t, y) for y in x]
-
-    return out
-end
-
-
-
 
 
 """
@@ -169,9 +143,44 @@ function velocity(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Arr
 end
 
 
+# --------------------------------------------------------------------
+# --------------------------------------------------------------------
+"""
+    reaction(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Float64,2})
+
+    Divergence of velocity field.
+
+"""
+function reaction(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Float64,2})
+
+    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+    psi = problem.psi
+
+    out = psi*8*pi^2 * sin.(2*pi*(x[1,:]-t)) .* cos.(2*pi*(x[1,:]-t)) .* cos.(pi*(x[2,:]-1/2)) .* (cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2)))
+    
+    return out
+end
+
+
+"""
+    reaction(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    Velocity is represented by a 2-vector. The solenoidal part can be
+    represented by a stream function.
+
+"""
+function reaction(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    out = [reaction(problem, t, y) for y in x]
+
+    return out
+end
+
 
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
+
 
 function u_init(problem :: Gaussian_R_5_conserv, x :: Array{Float64})
                 

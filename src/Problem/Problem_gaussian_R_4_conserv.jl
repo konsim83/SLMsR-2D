@@ -113,10 +113,9 @@ function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Flo
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     psi = problem.psi
-    T = 1.
 
-    V = hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
-                (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
+    V = hcat( psi*2*pi * (sin.(2*pi*(x[1,:]-t)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
+                psi*4*pi * sin.(2*pi*(x[1,:]-t)) .* cos.(2*pi*(x[1,:]-t)) .* cos.(pi*(x[2,:]-1/2)).^2
                )
 
     out = [V[i,:] for i=1:size(x,2)]
@@ -140,9 +139,32 @@ function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Arr
 end
 
 
+# function velocityGrad(problem :: Gaussian_R_4_conserv, t :: Float64, x :: Array{Float64,2})
+    
+#     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+#     psi = problem.psi
+
+#     out = [2*pi*psi* [  4*pi*sin.(2*pi*(x[1,i]-t)).*cos.(2*pi*(x[1,i]-t)).*cos.(pi*(x[2,i]-1/2))                   -2*pi*sin.(2*pi*(x[1,i]-t)).^2 .* cos.(pi*(x[2,i]-1/2)) .*sin.(pi*(x[2,i]-1/2))                    ; 
+#                         4*pi*cos.(pi*(x[2,:i]-1/2)).^2 .*(cos.(2*pi*(x[1,i]-t)).^2 - sin.(2*pi*(x[1,i]-t)).^2)    -4*pi*cos.(2*pi*(x[1,i]-t)).*sin.(2*pi*(x[1,i]-t)).*cos.(pi*(x[2,i]-1/2)).*sin.(pi*(x[2,i]-1/2))    ]
+#                         for i=1:size(x,2)]
+    
+#     return out
+# end
+
+
+# function velocityGrad(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+        
+#     out = [velocityGrad(problem, t, y) for y in x]
+    
+#     return out
+    
+# end
 
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
+
+
 """
     reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
 
@@ -154,9 +176,8 @@ function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Flo
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     psi = problem.psi
-    T = 1.
 
-    out = (psi/T)*8*pi^2 * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* cos.(pi*(x[2,:]-1/2)) .* (cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2)))
+    out = psi*8*pi^2 * sin.(2*pi*(x[1,:]-t)) .* cos.(2*pi*(x[1,:]-t)) .* cos.(pi*(x[2,:]-1/2)) .* (cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2)))
     
     return out
 end
@@ -175,7 +196,6 @@ function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Arr
 
     return out
 end
-
 
 
 # --------------------------------------------------------------------

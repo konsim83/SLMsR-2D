@@ -7,15 +7,13 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 
 compute_low = true
 compute_ref = true
-compute_ms = false
 compute_ms_reconstruction = true
 
 post_process = true
 
-
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 1.0/4
+T_max = 1.0
 
 
 # Multiscale diffusion, constant advection
@@ -23,28 +21,23 @@ T_max = 1.0/4
 
 
 # Constant low diffusion, solenoidal, traveling vortex
-# problem = Problem.Gaussian_R_2(T_max, 0.3 , 30)
+problem = Problem.Gaussian_R_2(T_max, 0.3 , 30)
 # problem = Problem.Gaussian_R_2_conserv(T_max, 0.3 , 30)
 
 
 # Multiscale diffusion, solenoidal, traveling vortex
 # problem = Problem.Gaussian_R_3(T_max, 0.2 , 30)
-problem = Problem.Gaussian_R_3_conserv(T_max, 0.1 , 30)
+# problem = Problem.Gaussian_R_3_conserv(T_max, 0.1 , 30)
 
 
 # Constant low diffusion, divergent, traveling vortex
 # problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
-problem = Problem.Gaussian_R_4_conserv(T_max, 0.1 , 30)
+# problem = Problem.Gaussian_R_4_conserv(T_max, 0.1 , 30)
 
 
 # Multiscale diffusion, divergent, traveling vortex
 # problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
 # problem = Problem.Gaussian_R_5_conserv(T_max, 0.1 , 30)
-
-
-# problem = Problem.Gaussian_R_6_conserv(T_max, 0.5 , 30)
-
-
 # ---------------------------------------------------------------------------
 
 
@@ -85,7 +78,7 @@ n_steps_f = 5
 # 4: conformal (smooth) H1-reconstruction with soft/hard PoU constraint
 reconstruction_method = 3
 
-reconstruct_edge = true
+reconstruct_edge = false
 # ---------------------------
 
 
@@ -161,7 +154,7 @@ if post_process
         solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_ref)
         solution_ms_r_mapped = PostProcess.map_solution(solution_ms_r, mesh_collection_r, mesh_FEM_ref)
         # ---------------------
-
+        
 
         # ---------------------
         err_low = PostProcess.error_L2(solution_FEM_ref, solution_FEM_low_mapped)[:]
@@ -173,18 +166,15 @@ if post_process
 
         # ---------------------
         if reconstruct_edge
-            err_ms_r_recon = PostProcess.error_L2(solution_FEM_ref,
-                                                  solution_ms_r_mapped)[:]
-            err_ms_r_recon_H1 = PostProcess.error_H1(solution_FEM_ref,
-                                                  solution_ms_r_mapped)[:]
+            err_ms_r_recon = PostProcess.error_L2(solution_FEM_ref, solution_ms_r_mapped)[:]
+            err_ms_r_recon_H1 = PostProcess.error_H1(solution_FEM_ref, solution_ms_r_mapped)[:]
 
             Vis.writeError2file(err_ms_r_recon, T_max, "Error-L2-" * problem.file_name * "-MsFEM_r-reconstruct-mapped", "L2")
             Vis.writeError2file(err_ms_r_recon_H1, T_max, "Error-H1-" * problem.file_name * "-MsFEM_r-reconstruct-mapped", "H1")
         else
-            err_ms_r = PostProcess.error_L2(solution_FEM_ref,
-                                            solution_ms_r_mapped)[:]
-            err_ms_r_H1 = PostProcess.error_H1(solution_FEM_ref,
-                                                  solution_ms_r_mapped)[:]
+            err_ms_r = PostProcess.error_L2(solution_FEM_ref, solution_ms_r_mapped)[:]
+            err_ms_r_H1 = PostProcess.error_H1(solution_FEM_ref, solution_ms_r_mapped)[:]
+
             Vis.writeError2file(err_ms_r, T_max, "Error-L2-" * problem.file_name * "-MsFEM_r-mapped", "L2")
             Vis.writeError2file(err_ms_r_H1, T_max, "Error-H1-" * problem.file_name * "-MsFEM_r-mapped", "H1")
         end
@@ -192,35 +182,29 @@ if post_process
 
 
         # ---------------------
-        Vis.writeSolution_all(solution_FEM_low, 
-                                               mesh_FEM_low, 
-                                               problem.file_name * "-FEM-low")
+        Vis.writeSolution_all(solution_FEM_low, mesh_FEM_low, problem.file_name * "-FEM-low")
 
-        Vis.writeSolution_all(solution_FEM_ref, 
-                                mesh_FEM_ref,
-                                problem.file_name * "-FEM-ref")
+        Vis.writeSolution_all(solution_FEM_ref, mesh_FEM_ref, problem.file_name * "-FEM-ref")
         
-        Vis.writeSolution_all(solution_FEM_low_mapped, 
-                                mesh_FEM_ref, 
-                                problem.file_name * "-FEM-low-mapped")
+        Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_ref, problem.file_name * "-FEM-low-mapped")
         # ---------------------
         
+        # ---------------------
         if reconstruct_edge
-            Vis.writeSolution_all(solution_ms_r_mapped, 
-                                    mesh_FEM_ref, 
-                                    problem.file_name * "-MsFEM_r-reconstruct-mapped")
+            Vis.writeSolution_all(solution_ms_r_mapped, mesh_FEM_ref, problem.file_name * "-MsFEM_r-reconstruct-mapped")
+            
             i,j = ind2sub(mesh_collection_r.mesh.cell,find(mesh_collection_r.mesh.cell.==35))
             for ind in j
-               Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis-reconstruct-1---")
+               Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis---recon---" * problem.file_name)
             end
         else
-            Vis.writeSolution_all(solution_ms_r_mapped, 
-                                    mesh_FEM_ref, 
-                                    problem.file_name * "-MsFEM_r-mapped")
+            Vis.writeSolution_all(solution_ms_r_mapped, mesh_FEM_ref, problem.file_name * "-MsFEM_r-mapped")
+            
             i,j = ind2sub(mesh_collection_r.mesh.cell,find(mesh_collection_r.mesh.cell.==35))
             for ind in j
-               Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis-1---")
+               Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis---" * problem.file_name)
             end
         end
+        # ---------------------
 end
 # ---------------------------------------------------------------------------

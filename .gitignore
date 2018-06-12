@@ -4,11 +4,12 @@
 
 *.vtu
 *.png
+*.dat
+
+*.pdf
 
 *.out
 *.aux
 *.bbl
 *.blg
 *.log
-
-main.pdf

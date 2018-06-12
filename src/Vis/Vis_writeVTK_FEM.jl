@@ -1,4 +1,7 @@
-function writeSolution_at_timestep(solution :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh, k_time :: Int64, filename :: String)
+function writeSolution_at_timestep(solution :: FEM.Solution_FEM, 
+                                    mesh :: Mesh.TriangleMesh.TriMesh, 
+                                    k_time :: Int64, 
+                                    filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
     points = mesh.point
@@ -22,7 +25,9 @@ end
 # ================================================
 
 
-function writeSolution_all(solution :: FEM.Solution_FEM, mesh :: Mesh.TriangleMesh.TriMesh, filename :: String)
+function writeSolution_all(solution :: FEM.Solution_FEM, 
+                            mesh :: Mesh.TriangleMesh.TriMesh, 
+                            filename :: String)
     
     cell_type = VTKCellTypes.VTK_TRIANGLE
     points = mesh.point
@@ -38,7 +43,8 @@ function writeSolution_all(solution :: FEM.Solution_FEM, mesh :: Mesh.TriangleMe
     
     for k_time in 1:size(solution.u,2)
         vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,0)), points, cells)
-        vtk_point_data(vtkfile, solution.u[:,k_time], "point data")
+        vtk_point_data(vtkfile, solution.u[:,k_time], "u")
+        vtk_cell_data(vtkfile, hcat(solution.uGrad[:,k_time]...), "grad_u")
     
         outfiles = vtk_save(vtkfile)
 
