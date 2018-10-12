@@ -13,7 +13,7 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 1.0
+T_max = 1.0/10
 
 
 # Multiscale diffusion, constant advection
