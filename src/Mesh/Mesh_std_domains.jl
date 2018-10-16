@@ -251,7 +251,7 @@ function mesh_unit_square(n_segs_per_edge :: Int64)
     TriangleMesh.set_polygon_segment_marker!(p, segment_marker)
 
     area_max = 1/n_segs_per_edge^2 * sqrt(3)/4
-    switches = "pQYqena" * @sprintf("%.12f", area_max)
+    switches = "pQYqena" * Base.Printf.@sprintf("%.12f", area_max)
 
     mesh = TriangleMesh.create_mesh(p, switches, info_str = "Delaunay mesh of triangle")
 

@@ -83,8 +83,8 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Node infos
         n_node = mesh.n_point
 
-        ind_node_boundary = find(mesh.point_marker.!=0)
-        ind_node_interior = find(mesh.point_marker.==0)
+        ind_node_boundary = findall(mesh.point_marker.!=0)
+        ind_node_interior = findall(mesh.point_marker.==0)
         ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_dirichlet_edge]...)))
         ind_node_non_dirichlet = setdiff(1:n_node, ind_node_dirichlet)
         ind_node_neumann  = setdiff(ind_node_non_dirichlet, ind_node_interior)
@@ -102,10 +102,10 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Edge infos
         n_edge = mesh.n_edge
 
-        ind_edge_boundary = find(mesh.edge_marker.!=0)
-        ind_edge_interior = find(mesh.edge_marker.==0)
-        ind_edge_dirichlet = sort(cat(1, [find(mesh.edge_marker.==marker) for marker in problem.marker_dirichlet_edge]...))
-        ind_edge_neumann = sort(cat(1, [find(mesh.edge_marker.==marker) for marker in problem.marker_neumann_edge]...))
+        ind_edge_boundary = findall(mesh.edge_marker.!=0)
+        ind_edge_interior = findall(mesh.edge_marker.==0)
+        ind_edge_dirichlet = sort(cat(1, [findall(mesh.edge_marker.==marker) for marker in problem.marker_dirichlet_edge]...))
+        ind_edge_neumann = sort(cat(1, [findall(mesh.edge_marker.==marker) for marker in problem.marker_neumann_edge]...))
 
         
         n_edge_boundary = length(ind_edge_boundary)
@@ -120,8 +120,8 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Element infos
         n_elem = mesh.n_cell
         
-        ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,1).!=0)
-        ind_elem_interior = find(sum(mesh.cell_neighbor.==0,1).==0)
+        ind_elem_boundary = findall(sum(mesh.cell_neighbor.==0,1).!=0)
+        ind_elem_interior = findall(sum(mesh.cell_neighbor.==0,1).==0)
 
         n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,1).!=0)
         n_elem_interior = sum(sum(mesh.cell_neighbor.==0,1).==0)

@@ -25,7 +25,7 @@ function RefEl_Pk(n_order :: Int)
         # columns are coefficients of basis functions
         # phi(x) = ax + by + c
         coeff = [ node ; 
-                    ones(1,n_basis) ] \ eye(n_basis)
+                    ones(1,n_basis) ] \ I
 
     elseif n_order==2
             # -------   P2   -------
@@ -39,7 +39,7 @@ function RefEl_Pk(n_order :: Int)
             coeff = [ node.^2 ; 
                         node[1,:]'.*node[2,:]' ; 
                         node ; 
-                        ones(1, n_basis) ] \ eye(n_basis)
+                        ones(1, n_basis) ] \ I
 
     elseif n_order==3
             # -------   P3   -------
@@ -50,10 +50,10 @@ function RefEl_Pk(n_order :: Int)
 
             # columns are coefficients of basis functions
             # phi(x) = ax^3 + by^3 + cx^2y + dxy^2 + ex^2 + fy^2 + gxy + hx + iy + j
-            coeff = [ node.^3 ; node[1,:]'.^2.*node[2,:]' ; node[1,:]'.*node[2,:]'.^2 ; 
+            coeff = [ node.^3 ; node[1,:]'.^2 .* node[2,:]' ; node[1,:]'.*node[2,:]'.^2 ; 
                         node[1,:].^2 ; node[2,:].^2 ; node[1,:]'.*node[2,:]' ; 
                         node ; 
-                        ones(1, n_basis) ] \ eye(n_basis)
+                        ones(1, n_basis) ] \ I
     else
         error("Element order not implemented.")
     end # end if
@@ -121,8 +121,8 @@ function shapeFun(ref_el :: RefEl_Pk{3}, p :: Array{Float64})
     
     size(p,1)!=2 ? error("Point array must be of size=2-by-n.") :
 
-    value  = ref_el.coeff * [ p.^3 ; p[1,:]'.^2.*p[2,:]' ; p[1,:]'.*p[2,:]'.^2 ; 
-                                p[1,:].^2 ; p[2,:].^2 ; p[1,:]'.*p[2,:]' ; 
+    value  = ref_el.coeff * [ p.^3 ; p[1,:]'.^2 .* p[2,:]' ; p[1,:]' .* p[2,:]'.^2 ; 
+                                p[1,:].^2 ; p[2,:].^2 ; p[1,:]' .* p[2,:]' ; 
                                 p ; 
                                 ones(1, size(p,2)) ]
     

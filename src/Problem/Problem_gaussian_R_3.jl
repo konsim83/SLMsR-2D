@@ -32,8 +32,8 @@ function Gaussian_R_3(T :: Float64, psi :: Float64, k :: Int)
     type_info = "ADE"
     file_name = "Gaussian_R_3"
 
-    marker_dirichlet_edge = Array{Int}(0)
-    marker_neumann_edge = Array{Int}(0)
+    marker_dirichlet_edge = Array{Int}(undef, 0)
+    marker_neumann_edge = Array{Int}(undef, 0)
 
     lambda_1 = 0.03
     lambda_2 = 0.03
@@ -41,9 +41,9 @@ function Gaussian_R_3(T :: Float64, psi :: Float64, k :: Int)
     alpha = 0*pi/8
     rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
     
-    covariance_mat = rot * diagm([lambda_1 ; lambda_2]) * rot'
+    covariance_mat = rot * diagm(0=>[lambda_1 ; lambda_2]) * rot'
     covariance_mat_det = det(covariance_mat)
-    covariance_mat_inv = covariance_mat \ eye(2)
+    covariance_mat_inv = covariance_mat \ I
     expectation = [1/2 ; 1/2]
 
     is_transient_diffusion = false

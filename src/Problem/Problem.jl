@@ -1,7 +1,7 @@
 module Problem
 
 
-using Geometry
+using Geometry, LinearAlgebra
 
 
 # -------   Type hierarchies   -------

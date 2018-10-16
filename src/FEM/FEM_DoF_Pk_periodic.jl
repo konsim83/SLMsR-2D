@@ -119,9 +119,9 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
         # Edge infos
         n_edge = mesh.n_edge
 
-        ind_edge_boundary  = unique(cat(1, [find(mesh.edge_marker.==label) for label in label_edges_with_no_partner]...))
-        ind_edge_dirichlet  = unique(cat(1, [find(mesh.edge_marker.==label) for label in problem.marker_dirichlet_edge]...))
-        ind_edge_neumann  = unique(cat(1, [find(mesh.edge_marker.==label) for label in problem.marker_neumann_edge]...))
+        ind_edge_boundary  = unique(cat(1, [findall(mesh.edge_marker.==label) for label in label_edges_with_no_partner]...))
+        ind_edge_dirichlet  = unique(cat(1, [findall(mesh.edge_marker.==label) for label in problem.marker_dirichlet_edge]...))
+        ind_edge_neumann  = unique(cat(1, [findall(mesh.edge_marker.==label) for label in problem.marker_neumann_edge]...))
         ind_edge_interior = setdiff(1:mesh.n_edge, ind_edge_boundary)
 
         n_edge_boundary = length(ind_edge_boundary)
@@ -137,7 +137,7 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
         n_elem = mesh.n_cell
         
         # All elements with at least two boundary nodes
-        ind_elem_boundary = find([length(setdiff(mesh.cell[:,i], ind_node_boundary)) for i=1:n_elem].==1)
+        ind_elem_boundary = findall([length(setdiff(mesh.cell[:,i], ind_node_boundary)) for i=1:n_elem].==1)
         ind_elem_interior = setdiff(1:n_elem, ind_elem_boundary)
 
         n_elem_boundary = length(ind_elem_boundary)
@@ -167,7 +167,7 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
             P = Mesh.get_point(mesh, Mesh.get_cell(mesh,[i]))
 
             T_ref2cell[i] = [P[:,2]-P[:,1]  P[:,3]-P[:,1] P[:,1]]
-            T_cell2ref[i] = (eye(2)/T_ref2cell[i][:,1:2]) * [   eye(2)  mesh.point[:,mesh.cell[1,i]]   ]
+            T_cell2ref[i] = (I/T_ref2cell[i][:,1:2]) * [   I  mesh.point[:,mesh.cell[1,i]]   ]
         end
         # ----------------------------------------
         # -------------------------------------------------------------------------------------------------
@@ -239,7 +239,7 @@ end # end constructor
 """
 function map_ind_dof2mesh(dof :: Dof_Pk_periodic{1}, ind_dof :: Array{Int})
 
-    ind_mesh = [find(index_map_dof2mesh.==ind) for ind in ind_dof]
+    ind_mesh = [findall(index_map_dof2mesh.==ind) for ind in ind_dof]
 
     return ind_mesh
 end
@@ -382,10 +382,10 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh, periodicityInfo :: M
         error("Number of Matched edge pairs must coincide with transformations.") :
 
 
-    ind_point_boundary = find(mesh.point_marker.!=0)
-    ind_point_inner = find(mesh.point_marker.==0)
+    ind_point_boundary = findall(vec(mesh.point_marker.!=0))
+    ind_point_inner = findall(vec(mesh.point_marker.==0))
 
-    index_map = Array{Array{Int64,1},1}(0)
+    index_map = Array{Array{Int64,1},1}(undef, 0)
 
     for i in ind_point_boundary
         push!(index_map,[i])
@@ -410,7 +410,7 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh, periodicityInfo :: M
             # This means point_ind_on_edge2[j] -> point_ind_on_edge1[ind_p2_in_p1]
 
             # Index of point_ind_on_edge2[j] must now be found in index_map
-            ind_of_point_found_in_global_vec = find(map(x->x[1]==point_ind_on_edge2[j],index_map))[]
+            ind_of_point_found_in_global_vec = findall(map(x->x[1]==point_ind_on_edge2[j],index_map))[]
             
             # Then we change add to
             # index_map[ind_of_point_found_in_global_vec] the identified

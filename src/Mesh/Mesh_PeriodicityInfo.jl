@@ -20,7 +20,7 @@ function DoublePeriodicUnitSquare()
 
     # Needs information on the mesh
     edge_marker_pair = [1 3 ; 2 4]
-    f_edge_to_edge = Array{Function,1}(2)
+    f_edge_to_edge = Array{Function,1}(undef, 2)
     f_edge_to_edge[1] = function(p :: Array{Float64,2})
         # Periodicity in y-direction, maps upper edge to lower edge
 

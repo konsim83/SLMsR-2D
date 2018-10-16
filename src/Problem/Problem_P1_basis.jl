@@ -25,7 +25,7 @@ struct BasisFun <: AbstractBasisProblem
         T = problem.T
 
         marker_dirichlet_edge = [1 ; 2 ; 3]
-        marker_neumann_edge = Array{Int}(0)
+        marker_neumann_edge = Array{Int}(undef, 0)
 
         coeff = Geometry.compute_P1_basis_coeff(tri)
 
