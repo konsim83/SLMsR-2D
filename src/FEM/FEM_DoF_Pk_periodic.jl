@@ -96,14 +96,14 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
                                                     sort(unique(periodicityInfo.edge_marker_pair[:])))
         label_edges_with_partner = sort(unique(periodicityInfo.edge_marker_pair[:]))
 
-        ind_points_with_no_partner = unique(cat(1, [unique(vec(mesh.edge[:,mesh.edge_marker.==label])) for label in label_edges_with_no_partner]...))
-        ind_points_with_partner = unique(cat(1, [unique(vec(mesh.edge[:,mesh.edge_marker.==label]))  for label in label_edges_with_partner]...))
+        ind_points_with_no_partner = unique(cat(dims=1, [unique(vec(mesh.edge[:,mesh.edge_marker.==label])) for label in label_edges_with_no_partner]...))
+        ind_points_with_partner = unique(cat(dims=1, [unique(vec(mesh.edge[:,mesh.edge_marker.==label]))  for label in label_edges_with_partner]...))
 
         ind_node_boundary = ind_points_with_no_partner
         ind_node_interior = setdiff(1:n_node, ind_points_with_no_partner)
 
-        ind_node_dirichlet = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_dirichlet_edge]...)))
-        ind_node_neumann = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_neumann_edge]...)))
+        ind_node_dirichlet = sort(unique(cat(dims=1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_dirichlet_edge]...)))
+        ind_node_neumann = sort(unique(cat(dims=1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_neumann_edge]...)))
         ind_node_non_dirichlet = setdiff(1:n_node, ind_node_dirichlet)
 
         n_node_dirichlet = length(ind_node_dirichlet)
@@ -119,9 +119,9 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
         # Edge infos
         n_edge = mesh.n_edge
 
-        ind_edge_boundary  = unique(cat(1, [findall(mesh.edge_marker.==label) for label in label_edges_with_no_partner]...))
-        ind_edge_dirichlet  = unique(cat(1, [findall(mesh.edge_marker.==label) for label in problem.marker_dirichlet_edge]...))
-        ind_edge_neumann  = unique(cat(1, [findall(mesh.edge_marker.==label) for label in problem.marker_neumann_edge]...))
+        ind_edge_boundary  = unique(cat(dims=1, [findall(mesh.edge_marker.==label) for label in label_edges_with_no_partner]...))
+        ind_edge_dirichlet  = unique(cat(dims=1, [findall(mesh.edge_marker.==label) for label in problem.marker_dirichlet_edge]...))
+        ind_edge_neumann  = unique(cat(dims=1, [findall(mesh.edge_marker.==label) for label in problem.marker_neumann_edge]...))
         ind_edge_interior = setdiff(1:mesh.n_edge, ind_edge_boundary)
 
         n_edge_boundary = length(ind_edge_boundary)
@@ -415,21 +415,25 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh, periodicityInfo :: M
             # Then we change add to
             # index_map[ind_of_point_found_in_global_vec] the identified
             # corresponding point
-            push!(index_map[ind_of_point_found_in_global_vec],point_ind_on_edge1[ind_p2_in_p1])
+            push!(index_map[ind_of_point_found_in_global_vec],
+                    point_ind_on_edge1[ind_p2_in_p1])
         end
     end
     
     # sort the list of points that are identified with each other
     index_map = map(x->unique(sort(x)), index_map)
 
-    # For each point indentified with a point of a lower index chnage the
+    # For each point indentified with a point of a lower index change the
     # identifier of that point to the lower index
     for k=1:length(index_map)
         while length(index_map[k])>1
             ind_2b_replaced = index_map[k][end]
             ind_new = index_map[k][1]
             
-            map(x-> (x[x.==ind_2b_replaced]=ind_new), index_map);
+            map(x-> (try 
+                        x[x.==ind_2b_replaced]=[ind_new]
+                    catch
+                    end), index_map)
            
             # Keep only unique values
             index_map = map(x->unique(x), index_map)
@@ -447,7 +451,7 @@ function identify_points(mesh :: Mesh.TriangleMesh.TriMesh, periodicityInfo :: M
     # This is the actual reduction.
     d = setdiff(1:maximum(index_map_all), index_map_all)
     while length(d)>0
-        index_map_all[index_map_all.>d[1]] -= 1
+        index_map_all[index_map_all.>d[1]] = index_map_all[index_map_all.>d[1]] .- 1
         d = setdiff(1:maximum(index_map_all), index_map_all)
     end
 
@@ -457,7 +461,7 @@ end
 # find closest point in array
 function closest_index(P :: Array{Float64,2}, p :: Array{Float64,1})
 
-    ibest = start(eachindex(P[1,:]))
+    ibest = first(eachindex(P[1,:]))
     dxbest = sum(abs.(P[:,ibest] - p))
 
     for ind in eachindex(P[1,:])
