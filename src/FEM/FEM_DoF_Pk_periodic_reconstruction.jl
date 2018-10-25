@@ -160,7 +160,8 @@ function Dof_Pk_periodic_reconstrcution(mesh :: Mesh.TriangleMesh.TriMesh,
         ind_cell = index_map_dof2mesh[M]
         ind = vec(ind_cell[[ones(6) ; 2*ones(6) ; 3*ones(6) ; 4*ones(6) ; 5*ones(6) ; 6*ones(6)],:])
         ind_test = vec(ind_cell[[collect(1:6) ; collect(1:6) ; collect(1:6) ; collect(1:6) ; collect(1:6) ; collect(1:6)],:])
-        ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+        # ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+        ind_lin = diag(LinearIndices((n_true_dof,n_true_dof))[ind_test, ind])
         
         T_ref2cell = [zeros(2, 3) for i=1:mesh.n_cell]
         T_cell2ref = [zeros(2, 3) for i=1:mesh.n_cell]
@@ -170,7 +171,7 @@ function Dof_Pk_periodic_reconstrcution(mesh :: Mesh.TriangleMesh.TriMesh,
             P = Mesh.get_point(mesh, Mesh.get_cell(mesh,[i]))
 
             T_ref2cell[i] = [P[:,2]-P[:,1]  P[:,3]-P[:,1] P[:,1]]
-            T_cell2ref[i] = (eye(2)/T_ref2cell[i][:,1:2]) * [   eye(2)  mesh.point[:,mesh.cell[1,i]]   ]
+            T_cell2ref[i] = (I/T_ref2cell[i][:,1:2]) * [   I  mesh.point[:,mesh.cell[1,i]]   ]
         end
         # ----------------------------------------
         # -------------------------------------------------------------------------------------------------

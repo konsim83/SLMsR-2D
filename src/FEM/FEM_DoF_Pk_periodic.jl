@@ -157,7 +157,8 @@ function Dof_Pk_periodic(mesh :: Mesh.TriangleMesh.TriMesh,
         ind_cell = index_map_dof2mesh[Mesh.get_cell(mesh, 1:mesh.n_cell)]
         ind = vec(ind_cell[[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3],:])
         ind_test = vec(ind_cell[[1;2;3;1;2;3;1;2;3],:])
-        ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+        # ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+        ind_lin = diag(LinearIndices((n_true_dof,n_true_dof))[ind_test, ind])
         
         T_ref2cell = [zeros(2, 3) for i=1:mesh.n_cell]
         T_cell2ref = [zeros(2, 3) for i=1:mesh.n_cell]

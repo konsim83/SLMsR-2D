@@ -30,7 +30,7 @@ function Solution_FEM(dof :: AbstractDof,
                           par :: Parameter.Parameter_FEM)
 
     # Reserve memory for the solution
-    u = Array{Float64,2}(dof.n_node, par.n_steps+1)
+    u = Array{Float64,2}(undef, dof.n_node, par.n_steps+1)
     uGrad = [[zeros(2) for i in 1:dof.n_elem] for j in 1:(par.n_steps+1)]
     uGrad = hcat(uGrad...)
     
@@ -50,7 +50,7 @@ function Solution_FEM(u_in :: Array{Array{Array{Float64,1},1},1},
                         m :: Mesh.TriangleMesh.TriMesh)
 
     # Reserve memory for the solution
-    u = Array{Float64,2}(m.n_point, length(u_in[1][1][:]))
+    u = Array{Float64,2}(undef, m.n_point, length(u_in[1][1][:]))
 
     for i in 1:length(u_in)
         u[i,:] = u_in[i][1][:]
@@ -72,7 +72,7 @@ function Solution_FEM(u_in :: Array{Array{Array{Array{Float64,1},1},1},1},
                         m :: Mesh.TriangleMesh.TriMesh)
 
     # Reserve memory for the solution
-    u = Array{Float64,2}(m.n_point, length(u_in[1][1][1][:]))
+    u = Array{Float64,2}(undef, m.n_point, length(u_in[1][1][1][:]))
 
     for i in 1:length(u_in)
         u[i,:] = u_in[i][1][1][:]

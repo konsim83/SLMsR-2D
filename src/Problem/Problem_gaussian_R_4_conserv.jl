@@ -210,8 +210,8 @@ function u_init(problem :: Gaussian_R_4_conserv, x :: Array{Float64})
     x2 = broadcast(+, [1/4 ; 0], x)
     
     out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * (
-                exp.( -1/2 * sum(x1.*(problem.covariance_mat_inv*x1),1) )
-                + exp.( -1/2 * sum(x2.*(problem.covariance_mat_inv*x2),1) )
+                exp.( -1/2 * sum(x1.*(problem.covariance_mat_inv*x1),dims=1) )
+                + exp.( -1/2 * sum(x2.*(problem.covariance_mat_inv*x2),dims=1) )
                 ) / 2
     
     return vec(out)

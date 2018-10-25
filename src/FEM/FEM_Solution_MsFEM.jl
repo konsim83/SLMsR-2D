@@ -27,7 +27,7 @@ struct Solution_MsFEM <: AbstractSolution
                             par :: Parameter.Parameter_MsFEM)
         
         # Reserve memory for the solution
-        u = Array{Float64, 2}(dof.dof.n_node, par.n_steps+1)
+        u = Array{Float64, 2}(undef, dof.dof.n_node, par.n_steps+1)
         
         # Set up an array of arrays for the basis
         phi_1 = Array{Array{Float64,2}}(dof.dof.n_elem)
@@ -45,9 +45,9 @@ struct Solution_MsFEM <: AbstractSolution
         
         # Reserve memory for each element of the uninitialized array
         for i=1:dof.dof.n_elem
-            phi_1[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
-            phi_2[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
-            phi_3[i] = Array{Float64,2}(dof.dof_f[i].n_true_dof, par.n_steps+1)
+            phi_1[i] = Array{Float64,2}(undef, dof.dof_f[i].n_true_dof, par.n_steps+1)
+            phi_2[i] = Array{Float64,2}(undef, dof.dof_f[i].n_true_dof, par.n_steps+1)
+            phi_3[i] = Array{Float64,2}(undef, dof.dof_f[i].n_true_dof, par.n_steps+1)
 
             phi_1_t[i] = zeros(dof.dof_f[i].n_true_dof, par.n_steps+1)
             phi_2_t[i] = zeros(dof.dof_f[i].n_true_dof, par.n_steps+1)

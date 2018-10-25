@@ -183,7 +183,7 @@ function u_init(problem :: Gaussian_2a, x :: Array{Float64})
 
     x = broadcast(+, -problem.expectation, x)
     
-    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * sum(x.*(problem.covariance_mat_inv*x),1) )
+    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * sum(x.*(problem.covariance_mat_inv*x),dims=1) )
     
     return vec(out)
 end

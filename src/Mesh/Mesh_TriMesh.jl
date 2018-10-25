@@ -85,7 +85,7 @@ function get_point(m :: TriangleMesh.TriMesh, ind_p :: Array{Int64,2})
     (n_point_per_cell, 2, n_cell)
     
     """
-    P = Array{Float64,3}(2, 3, size(ind_p,2))
+    P = Array{Float64,3}(undef, 2, 3, size(ind_p,2))
 
     P[:,:,:] = m.point[:,ind_p]
 
