@@ -33,7 +33,7 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     # Set up degrees of freedom handler
     periodicityInfo = Mesh.DoublePeriodicUnitSquare()
     dof = FEM.Dof_Pk_periodic(mesh_collection.mesh, problem, periodicityInfo, 1)
-    problem_f = Array{Problem.AbstractBasisProblem,1}(mesh_collection.mesh.n_cell)
+    problem_f = Array{Problem.AbstractBasisProblem,1}(undef, mesh_collection.mesh.n_cell)
     for i_cell in 1:mesh_collection.mesh.n_cell
         # Set up local problem by geometry
         tri = Geometry.Triangle(FEM.map_ref_point(dof, ref_el.node, i_cell))

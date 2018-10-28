@@ -5,11 +5,11 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 # ---------------------------------------------------------------------------
 
 
-compute_low = true
-compute_ref = true
+compute_low = false
+compute_ref = false
 compute_ms_reconstruction = true
 
-post_process = true
+post_process = false
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------

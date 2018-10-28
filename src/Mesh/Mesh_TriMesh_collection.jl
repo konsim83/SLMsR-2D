@@ -16,10 +16,10 @@ mutable struct TriMesh_collection
         this.mesh = mesh
         this.meshData = MeshData(mesh)
 
-        this.mesh_f = Array{TriangleMesh.TriMesh}(mesh.n_cell)
-        this.meshData_f = Array{MeshData}(mesh.n_cell)
+        this.mesh_f = Array{TriangleMesh.TriMesh}(undef, mesh.n_cell)
+        this.meshData_f = Array{MeshData}(undef, mesh.n_cell)
 
-        this.n_elem_f = Array{Int64}(mesh.n_cell)
+        this.n_elem_f = Array{Int64}(undef, mesh.n_cell)
 
         for i=1:mesh.n_cell
             P = Mesh.get_point(mesh, Mesh.get_cell(mesh,[i]))

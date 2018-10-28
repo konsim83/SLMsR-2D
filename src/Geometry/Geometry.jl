@@ -1,5 +1,7 @@
 module Geometry
 
+using LinearAlgebra
+
 abstract type PolygonDomain end
 
 #------------------------------------------------------------
@@ -75,7 +77,7 @@ function compute_P1_basis_coeff(tri :: Triangle)
     
     # columns are coefficients
     coeff = [ tri.point ; 
-                    ones(1,3) ] \ eye(3)
+                    ones(1,3) ] \ I
     
     return coeff
 end

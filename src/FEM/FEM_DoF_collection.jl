@@ -11,7 +11,7 @@ function Dof_collection(mesh_collection :: Mesh.TriMesh_collection,
                         problem_f :: Array{Problem.AbstractBasisProblem,1},
 		                FEM_order_f :: Int)
 
-    dof_f = Array{Dof_Pk{FEM_order_f},1}(length(mesh_collection.mesh_f))
+    dof_f = Array{Dof_Pk{FEM_order_f},1}(undef, length(mesh_collection.mesh_f))
     for i in 1:length(mesh_collection.mesh_f)
         dof_f[i] = Dof_Pk(mesh_collection.mesh_f[i], problem_f[i], FEM_order_f)
     end

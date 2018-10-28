@@ -118,8 +118,8 @@ function velocity(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Flo
     psi = problem.psi
     T = 1.
 
-    V = psi * hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:]-t/T)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
-                    (psi/T)*4*pi * sin.(2*pi*(x[1,:]-t/T)) .* cos.(2*pi*(x[1,:]-t/T)) .* (cos.(pi*(x[2,:]-1/2)).^2)
+    V = psi * hcat( (psi/T)*2*pi * (sin.(2*pi*(x[1,:].-t/T)).^2) .* cos.(pi*(x[2,:].-1/2)).^2, 
+                    (psi/T)*4*pi * sin.(2*pi*(x[1,:].-t/T)) .* cos.(2*pi*(x[1,:].-t/T)) .* (cos.(pi*(x[2,:].-1/2)).^2)
                    )
 
     out = [V[i,:] for i=1:size(x,2)]
@@ -157,7 +157,7 @@ function reaction(problem :: Gaussian_R_5_conserv,  t :: Float64, x :: Array{Flo
 
     psi = problem.psi
 
-    out = psi*8*pi^2 * sin.(2*pi*(x[1,:]-t)) .* cos.(2*pi*(x[1,:]-t)) .* cos.(pi*(x[2,:]-1/2)) .* (cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2)))
+    out = psi*8*pi^2 * sin.(2*pi*(x[1,:].-t)) .* cos.(2*pi*(x[1,:].-t)) .* cos.(pi*(x[2,:].-1/2)) .* (cos.(pi*(x[2,:].-1/2)) - sin.(pi*(x[2,:].-1/2)))
     
     return out
 end

@@ -8,7 +8,7 @@ function get_domain_points(x :: Array{Float64})
     # map to interval [-0, 1]
     x_unit = x .% 1
     
-    x_unit[x_unit.<0] = 1 + x_unit[x_unit.<0]
+    x_unit[x_unit.<0] = 1 .+ x_unit[x_unit.<0]
     
     return x_unit
 end
@@ -90,8 +90,8 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh,
 	idx, dist = NearestNeighbors.knn(meshData.tree, x, n_knn, true)
 
 
-	x_bary_coord = Array{Array{Array{Float64,1},1},1}(0)
-	x_cell = Array{Array{Int,1},1}(0)
+	x_bary_coord = Array{Array{Array{Float64,1},1},1}(undef, 0)
+	x_cell = Array{Array{Int,1},1}(undef, 0)
 	for i in 1:size(x,2)
 		bary_coord = []
 		cell = []
@@ -136,8 +136,8 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 	# println("...done.")
 
 	# Find fine cell
-	x_cell_f = [Array{Array{Int,1},1}(0) for i in 1:size(x,2)]
-	x_bary_f = [Array{Array{Array{Float64,1},1},1}(0) for i in 1:size(x,2)]
+	x_cell_f = [Array{Array{Int,1},1}(undef, 0) for i in 1:size(x,2)]
+	x_bary_f = [Array{Array{Array{Float64,1},1},1}(undef, 0) for i in 1:size(x,2)]
 	
 	for i in 1:size(x,2)
 		x_cell_loc, x_bary_loc = find_cell(mesh_collection.mesh_f[x_cell[i][1]], 

@@ -25,8 +25,8 @@ function Evaluate_FEM(sol :: FEM.Solution_FEM, mesh :: TriangleMesh.TriMesh)
 
 	n_time_point = size(sol.u,2)
 
-	data = Array{Array{Float64,2},1}(mesh.n_cell)
-	local_function = Array{Function,1}(mesh.n_cell)
+	data = Array{Array{Float64,2},1}(undef, mesh.n_cell)
+	local_function = Array{Function,1}(undef, mesh.n_cell)
 
 	for i in 1:mesh.n_cell
 		data[i] = sol.u[mesh.cell[:,i],:]
