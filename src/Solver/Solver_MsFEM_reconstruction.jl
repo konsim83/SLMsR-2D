@@ -48,7 +48,7 @@ function solve_MsFEM_periodic_square_reconstruction(par :: Parameter.Parameter_M
     # ----------------------------------------------------------------
     # ----------------------------------------------------------------
     # Setup initial data for basis functions
-    timeStepper_local = Array{TimeIntegrator.ImplEuler,1}(mesh_collection.mesh.n_cell)
+    timeStepper_local = Array{TimeIntegrator.ImplEuler,1}(undef, mesh_collection.mesh.n_cell)
     for ind_cell in 1:mesh_collection.mesh.n_cell
         u_init_tmp = Problem.u_init(problem_f[ind_cell], mesh_collection.mesh_f[ind_cell].point)
         solution.phi_1[ind_cell][:,1] = u_init_tmp[:,1]

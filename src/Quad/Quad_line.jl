@@ -36,8 +36,6 @@ struct Quad_line <: AbstractQuad
 
         J = J + J'
 
-        display(J)
-
         x, V = eigen(J)
         w = (V[1,:]').^2 * 2^(alpha + beta + 1)/(alpha + beta + 1) * gamma(alpha + 1)*gamma(beta + 1)/gamma(alpha + beta  + 1)
         order = 2*length(w) - 1

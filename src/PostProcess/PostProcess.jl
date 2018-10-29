@@ -2,9 +2,9 @@ module PostProcess
 
 import Mesh, FEM
 
-using ProgressMeter
-
 import TriangleMesh, NearestNeighbors
+
+using ProgressMeter, LinearAlgebra
 
 
 # --------------------------------------------

@@ -7,7 +7,7 @@ function evolve_edge!(uBasisOpt :: Array{Float64,3},
  						T :: Float64)
 
 	# Connectivity
-	cell_edge = sort(mesh_local.segment[:,mesh_local.segment_marker.==seg],1)
+	cell_edge = sort(mesh_local.segment[:,mesh_local.segment_marker.==seg],dims=1)
 	if seg==3
 		cell_edge[[1;2],end] = cell_edge[[2;1],end]
 	end
@@ -28,7 +28,7 @@ function evolve_edge!(uBasisOpt :: Array{Float64,3},
 	# -----------------------
 
 	ref_el_1d = FEM_1D.RefEl_Lagrange_1()
-	quad_1d = Quad.Quad_line(0, 0, 2)
+	quad_1d = Quad.Quad_line(0., 0., 2)
 
 	for j=2:(n_steps_f+1)
         	p_old = point_orig[end-(j-2)][:,ind_edge]
@@ -64,9 +64,6 @@ function evolve_edge!(uBasisOpt :: Array{Float64,3},
 	                                            problem_local,
 	                                            T - (n_steps_f-(j-1))*dt_f)
 
-            # display((R_next))
-            # display(full(D_next))
-
             # Zero forcing
 	        f_orig = zeros(mesh_old.n_point,2)
 
@@ -74,10 +71,10 @@ function evolve_edge!(uBasisOpt :: Array{Float64,3},
 			# -------   Mu_t + Ru = Du   -------
 			system_matrix = M_orig - dt_f*(D_next-R_next)
 
-			rhs = M_orig*uBasisOpt[ind_edge, ind_basis,j-1] + dt_f*f_orig - system_matrix[:,[1;n]]*eye(2)
+			rhs = M_orig*uBasisOpt[ind_edge, ind_basis,j-1] + dt_f*f_orig - system_matrix[:,[1;n]]*I
 
 	        uBasisOpt[ind_edge[2:end-1], ind_basis, j] = system_matrix[2:end-1,2:end-1] \ rhs[2:end-1,:]
-	        uBasisOpt[ind_edge[[1;n]], ind_basis, j] = eye(2)
+	        uBasisOpt[ind_edge[[1;n]], ind_basis, j] = [1.0 0.0 ; 0.0 1.0]
 			# ----------------------------------
 	    end # end for
 

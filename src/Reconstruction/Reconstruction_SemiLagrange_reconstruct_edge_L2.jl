@@ -6,7 +6,7 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
 								 ind_seg :: Int,
 								 k_edge :: Float64)
 	
-	cell_2d = sort(mesh_local.segment[:,mesh_local.segment_marker.==ind_seg],1)
+	cell_2d = sort(mesh_local.segment[:,mesh_local.segment_marker.==ind_seg],dims=1)
 	if ind_seg==3
 		cell_2d[[1;2],end] = cell_2d[[2;1],end]
 	end

@@ -2,6 +2,8 @@ module Solver
 
 import FEM, Mesh, Parameter, Problem, Quad, TimeIntegrator, Geometry, FiniteDiff, Reconstruction
 
+import Statistics.mean
+
 using ProgressMeter
 
 

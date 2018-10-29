@@ -4,8 +4,13 @@ import Mesh, Parameter, Problem, FEM, FEM_1D, Quad, TimeIntegrator, FiniteDiff, 
 
 import DifferentialEquations
 
-using ProgressMeter
+using ProgressMeter, SparseArrays, LinearAlgebra
 
+
+function speye(n :: Int; typename=Float64 :: Type)
+
+	return sparse(diagm(0=>ones(typename, n)))
+end
 
 # ---------------------
 # Data Types

@@ -5,9 +5,9 @@ import Parameter, Problem, FEM, Solver, PostProcess, Vis, Reconstruction
 # ---------------------------------------------------------------------------
 
 
-compute_low = true
-compute_ref = true
-compute_ms_reconstruction = true
+computeSTD = true
+computeREF = true
+computeMSR = true
 
 post_process = true
 
@@ -38,11 +38,6 @@ problem = Problem.Gaussian_R_3(T_max, 0.2 , 30)
 # Multiscale diffusion, divergent, traveling vortex
 # problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
 # problem = Problem.Gaussian_R_5_conserv(T_max, 0.1 , 30)
-
-
-# problem = Problem.Gaussian_R_6_conserv(T_max, 0.5 , 30)
-
-
 # ---------------------------------------------------------------------------
 
 
@@ -54,13 +49,13 @@ n_refinement = 4
 
 
 n_edge_per_seg_f = 15
-max_are_cell_f = 0.005
+max_area_cell_f = 0.005
 
 n_edge_per_seg_f = 20
-max_are_cell_f = 0.004
+max_area_cell_f = 0.004
 
 # n_edge_per_seg_f = 26
-# max_are_cell_f = 0.001
+# max_area_cell_f = 0.001
 
 
 # -------   FEM parameters   -------
@@ -99,23 +94,23 @@ k = [k_int ; k_edge; k_sum]
 
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
-if compute_low
+if computeSTD
         # -------   Build parameter structure   -------
-        par_FEM_low = Parameter.Parameter_FEM(problem.T,
+        parSTD = Parameter.Parameter_FEM(problem.T,
                                                 dt,
                                                 n_edge_per_seg,
-                                                0,
+                                                0, # no refinements
                                                 n_order_FEM,
                                                 n_order_quad,
                                                 time_step_method)
 
         # -------   Call the solver   -------
-        @time solution_FEM_low, mesh_FEM_low = Solver.solve_FEM_periodic_square(par_FEM_low, problem)
+        @time solSTD, meshSTD = Solver.solve_FEM_periodic_square(parSTD, problem)
 end
 
-if compute_ref
+if computeREF
         # -------   Build parameter structure   -------
-        par_FEM_ref = Parameter.Parameter_FEM(problem.T,
+        parREF = Parameter.Parameter_FEM(problem.T,
                                                 dt,
                                                 n_edge_per_seg,
                                                 n_refinement,
@@ -124,20 +119,20 @@ if compute_ref
                                                 time_step_method)
 
         # -------   Call the solver   -------
-        @time solution_FEM_ref, mesh_FEM_ref = Solver.solve_FEM_periodic_square(par_FEM_ref, problem)
-        PostProcess.evaluateGrad!(solution_FEM_ref, mesh_FEM_ref)
+        @time solREF, meshREF = Solver.solve_FEM_periodic_square(parREF, problem)
+        PostProcess.evaluateGrad!(solREF, meshREF)
 end
 
 
-if compute_ms_reconstruction
+if computeMSReconstruction
         # -------   Build parameter structure   -------
-        par_MsFEM_r = Parameter.Parameter_MsFEM(problem.T,
+        parMSR = Parameter.Parameter_MsFEM(problem.T,
                                                 dt,
                                                 n_steps_f,
                                                 n_edge_per_seg,
                                                 n_refinement,
                                                 n_edge_per_seg_f,
-                                                max_are_cell_f,
+                                                max_area_cell_f,
                                                 n_order_FEM_f,
                                                 n_order_quad_f,
                                                 time_step_method,
@@ -147,7 +142,7 @@ if compute_ms_reconstruction
 
 
         # -------   Call the solver   -------
-        @time solution_ms_r, mesh_collection_r = Solver.solve_MsFEM_periodic_square_reconstruction(par_MsFEM_r, problem)
+        @time solMSR, meshMSR = Solver.solve_MsFEM_periodic_square_reconstruction(parMSR, problem)
 end
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
@@ -156,58 +151,54 @@ end
 # ---------------------------------------------------------------------------
 if post_process
         # ---------------------
-        solution_FEM_low_mapped = PostProcess.map_solution(solution_FEM_low, mesh_FEM_low, mesh_FEM_ref)
-        solution_ms_r_mapped = PostProcess.map_solution(solution_ms_r, mesh_collection_r, mesh_FEM_ref)
+        solSTD_mapped = PostProcess.map_solution(solSTD, meshSTD, meshREF)
+        solMSR_mapped = PostProcess.map_solution(solMSR, meshMSR, meshREF)
         # ---------------------
         
 
         # ---------------------
-        err_low = PostProcess.error_L2(solution_FEM_ref, solution_FEM_low_mapped)[:]
-        err_low_H1 = PostProcess.error_H1(solution_FEM_ref, solution_FEM_low_mapped)[:]
-        Vis.writeError2file(err_low, T_max, "Error-L2-" * problem.file_name * "-FEM-low", "L2")
-        Vis.writeError2file(err_low_H1, T_max, "Error-H1-" * problem.file_name * "-FEM-low", "H1")
+        # Compute and write standard error
+        errSTD = PostProcess.error_L2(solREF, solSTD_mapped)[:]
+        errSTD_H1 = PostProcess.error_H1(solREF, solSTD_mapped)[:]
+        Vis.writeError2file(errSTD, T_max, "Error-L2-" * problem.file_name * "-STD", "L2")
+        Vis.writeError2file(errSTD_H1, T_max, "Error-H1-" * problem.file_name * "-STD", "H1")
         # ---------------------
 
 
         # ---------------------
+        # Write standard solutions
+        Vis.writeSolution_all(solREF, meshREF, problem.file_name * "-REF")        
+        Vis.writeSolution_all(solSTD_mapped, meshREF, problem.file_name * "-STD")
+        # ---------------------
+
+
+        # ---------------------
+        # Compute and write multiscale errors and solutions
         if reconstruct_edge
-            err_ms_r_recon = PostProcess.error_L2(solution_FEM_ref, solution_ms_r_mapped)[:]
-            err_ms_r_recon_H1 = PostProcess.error_H1(solution_FEM_ref, solution_ms_r_mapped)[:]
+            errMSR_recon = PostProcess.error_L2(solREF, solMSR_mapped)[:]
+            errMSR_recon_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
+            Vis.writeError2file(errMSR_recon, T_max, "Error-L2-" * problem.file_name * "-SLMsR-EdgeEvolved", "L2")
+            Vis.writeError2file(errMSR_recon_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR-EdgeEvolved", "H1")
 
-            Vis.writeError2file(err_ms_r_recon, T_max, "Error-L2-" * problem.file_name * "-MsFEM_r-reconstruct-mapped", "L2")
-            Vis.writeError2file(err_ms_r_recon_H1, T_max, "Error-H1-" * problem.file_name * "-MsFEM_r-reconstruct-mapped", "H1")
+            Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-EdgeEvolved")
         else
-            err_ms_r = PostProcess.error_L2(solution_FEM_ref, solution_ms_r_mapped)[:]
-            err_ms_r_H1 = PostProcess.error_H1(solution_FEM_ref, solution_ms_r_mapped)[:]
+            errMSR = PostProcess.error_L2(solREF, solMSR_mapped)[:]
+            errMSR_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
+            Vis.writeError2file(errMSR, T_max, "Error-L2-" * problem.file_name * "-SLMsR", "L2")
+            Vis.writeError2file(errMSR_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR", "H1")
 
-            Vis.writeError2file(err_ms_r, T_max, "Error-L2-" * problem.file_name * "-MsFEM_r-mapped", "L2")
-            Vis.writeError2file(err_ms_r_H1, T_max, "Error-H1-" * problem.file_name * "-MsFEM_r-mapped", "H1")
+            Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-")
         end
         # ---------------------
-
-
-        # ---------------------
-        Vis.writeSolution_all(solution_FEM_low, mesh_FEM_low, problem.file_name * "-FEM-low")
-
-        Vis.writeSolution_all(solution_FEM_ref, mesh_FEM_ref, problem.file_name * "-FEM-ref")
-        
-        Vis.writeSolution_all(solution_FEM_low_mapped, mesh_FEM_ref, problem.file_name * "-FEM-low-mapped")
-        # ---------------------
         
         # ---------------------
-        if reconstruct_edge
-            Vis.writeSolution_all(solution_ms_r_mapped, mesh_FEM_ref, problem.file_name * "-MsFEM_r-reconstruct-mapped")
-            
-            i,j = ind2sub(mesh_collection_r.mesh.cell,find(mesh_collection_r.mesh.cell.==35))
-            for ind in j
-               Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis---recon---" * problem.file_name)
-            end
-        else
-            Vis.writeSolution_all(solution_ms_r_mapped, mesh_FEM_ref, problem.file_name * "-MsFEM_r-mapped")
-            
-            i,j = ind2sub(mesh_collection_r.mesh.cell,find(mesh_collection_r.mesh.cell.==35))
-            for ind in j
-               Vis.writeBasis_all_steps(solution_ms_r, mesh_collection_r, ind, "Basis---" * problem.file_name)
+        # Write a nodal basis function
+        if true
+            ind_basis = 35
+            if reconstruct_edge
+                Vis.writeNodalBasis_all_steps(solMSR, meshMSR, ind_basis, "Basis---node-" * string(ind_basis) * "-EdgeEvolved-" * problem.file_name)
+            else
+                Vis.writeBasis_all_steps(solMSR, meshMSR, ind_basis, "Basis---node-" * string(ind_basis) * "-" * problem.file_name)
             end
         end
         # ---------------------

@@ -30,18 +30,18 @@ struct Solution_MsFEM <: AbstractSolution
         u = Array{Float64, 2}(undef, dof.dof.n_node, par.n_steps+1)
         
         # Set up an array of arrays for the basis
-        phi_1 = Array{Array{Float64,2}}(dof.dof.n_elem)
-        phi_2 = Array{Array{Float64,2}}(dof.dof.n_elem)
-        phi_3 = Array{Array{Float64,2}}(dof.dof.n_elem)
+        phi_1 = Array{Array{Float64,2}}(undef, dof.dof.n_elem)
+        phi_2 = Array{Array{Float64,2}}(undef, dof.dof.n_elem)
+        phi_3 = Array{Array{Float64,2}}(undef, dof.dof.n_elem)
 
         # Set up an array of arrays for the basis
-        phi_1_t = Array{Array{Float64,2}}(dof.dof.n_elem)
-        phi_2_t = Array{Array{Float64,2}}(dof.dof.n_elem)
-        phi_3_t = Array{Array{Float64,2}}(dof.dof.n_elem)
+        phi_1_t = Array{Array{Float64,2}}(undef, dof.dof.n_elem)
+        phi_2_t = Array{Array{Float64,2}}(undef, dof.dof.n_elem)
+        phi_3_t = Array{Array{Float64,2}}(undef, dof.dof.n_elem)
         
-        mass = Array{SparseMatrixCSC{Float64,Int64},1}(dof.dof.n_elem)
-        advection = Array{SparseMatrixCSC{Float64,Int64},2}(dof.dof.n_elem, par.n_steps+1)
-        diffusion = Array{SparseMatrixCSC{Float64,Int64},2}(dof.dof.n_elem, par.n_steps+1)
+        mass = Array{SparseMatrixCSC{Float64,Int64},1}(undef, dof.dof.n_elem)
+        advection = Array{SparseMatrixCSC{Float64,Int64},2}(undef, dof.dof.n_elem, par.n_steps+1)
+        diffusion = Array{SparseMatrixCSC{Float64,Int64},2}(undef, dof.dof.n_elem, par.n_steps+1)
         
         # Reserve memory for each element of the uninitialized array
         for i=1:dof.dof.n_elem

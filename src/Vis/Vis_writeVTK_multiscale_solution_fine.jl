@@ -12,7 +12,7 @@ function writeSolution_at_timestep(solution :: FEM.Solution_MsFEM, mesh_collecti
         cells = push!(cells, temp)
     end
     
-    vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,0)), points, cells)
+    vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,"0")), points, cells)
 
     vtk_point_data(vtkfile, convert(Array{Float32}, D), "point data")
     
@@ -41,7 +41,7 @@ function writeSolution_all(solution :: FEM.Solution_MsFEM, mesh_collection :: Me
     N = size(solution.u,2)
     p = Progress(N, 0.01, "Writing progress ...", 10)
     for k_time in 1:size(solution.u,2)
-        vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,0)), points, cells)
+        vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,"0")), points, cells)
         
         vtk_point_data(vtkfile, convert(Array{Float32}, unify_data(mesh_collection, solution, k_time)), "point data")
     

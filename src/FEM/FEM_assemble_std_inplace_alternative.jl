@@ -22,7 +22,7 @@
 #     weight_elem = FEM.map_ref_point_grad_det(m, q.point, 1:d.n_elem)
 
 #     Phi = FEM.eval(r, q.point)
-#     Phi_test = FEM.eval(r, q.point) * diagm(q.weight)
+#     Phi_test = FEM.eval(r, q.point) * diagm(0=>q.weight)
     
 #     m_loc = Array{Float64,2}(n,n)
 #     for k = 1:m.n_cell
@@ -71,7 +71,7 @@
 #     velocity = Problem.velocity(p, 1.0, x)
 
 #     DPhi = FEM.eval_grad(r, q.point)
-#     Phi_test = FEM.eval(r, q.point) * diagm(q.weight)
+#     Phi_test = FEM.eval(r, q.point) * diagm(0=>q.weight)
 
 #     error("This function has a bug")
     

@@ -8,7 +8,7 @@ function assemble_mass(mesh :: Mesh_1D,
     ind_test = dof.ind_test
     
     weight_elem = map_ref_point_der(mesh, quad.point, collect(1:mesh.n_cell))
-    mat_local = shapeFun(ref_el, quad.point) * diagm(quad.weight) * transpose(shapeFun(ref_el, quad.point))
+    mat_local = shapeFun(ref_el, quad.point) * diagm(0=>quad.weight) * transpose(shapeFun(ref_el, quad.point))
     
     mat_local = hcat([mat_local*w for w in weight_elem]...)
 
@@ -103,7 +103,7 @@ function assemble_elem_d(mesh :: Mesh_1D,
     normal_elem = get_cell_normal(mesh, collect(1:mesh.n_cell))
     weight_elem = map_ref_point_der(mesh, quad.point, collect(1:mesh.n_cell))
     
-    Phi_x = shapeFunDer(ref_el, quad.point) * diagm(quad.weight)
+    Phi_x = shapeFunDer(ref_el, quad.point) * diagm(0=>quad.weight)
 
     for k = 1:mesh.n_cell
         for j=1:quad.n_point
