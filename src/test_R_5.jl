@@ -13,7 +13,7 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 1.0/10
+T_max = 1.0
 
 
 # Multiscale diffusion, constant advection
@@ -36,8 +36,8 @@ T_max = 1.0/10
 
 
 # Multiscale diffusion, divergent, traveling vortex
-problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
-# problem = Problem.Gaussian_R_5_conserv(T_max, 0.1 , 30)
+# problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
+problem = Problem.Gaussian_R_5_conserv(T_max, 0.1 , 30)
 # ---------------------------------------------------------------------------
 
 
@@ -45,7 +45,7 @@ problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
 n_edge_per_seg = 4
-n_refinement = 4
+n_refinement = 5
 
 
 n_edge_per_seg_f = 15
@@ -54,8 +54,8 @@ max_area_cell_f = 0.005
 n_edge_per_seg_f = 20
 max_area_cell_f = 0.004
 
-# n_edge_per_seg_f = 26
-# max_area_cell_f = 0.001
+n_edge_per_seg_f = 26
+max_area_cell_f = 0.001
 
 
 # -------   FEM parameters   -------
@@ -78,7 +78,7 @@ n_steps_f = 5
 # 4: conformal (smooth) H1-reconstruction with soft/hard PoU constraint
 reconstruction_method = 3
 
-reconstruct_edge = false
+reconstruct_edge = true
 # ---------------------------
 
 
@@ -124,7 +124,7 @@ if computeREF
 end
 
 
-if computeMSReconstruction
+if computeMSR
         # -------   Build parameter structure   -------
         parMSR = Parameter.Parameter_MsFEM(problem.T,
                                                 dt,

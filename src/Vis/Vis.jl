@@ -11,4 +11,6 @@ include("Vis_writeVTK_multiscale_basis.jl")
 include("Vis_plotError.jl")
 include("Vis_writeError.jl")
 
+include("Vis_writeData.jl")
+
 end # end module

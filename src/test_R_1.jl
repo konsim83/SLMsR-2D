@@ -45,7 +45,7 @@ problem = Problem.Gaussian_R_1(T_max, 30)
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
 n_edge_per_seg = 4
-n_refinement = 4
+n_refinement = 5
 
 
 n_edge_per_seg_f = 15
@@ -54,8 +54,8 @@ max_area_cell_f = 0.005
 n_edge_per_seg_f = 20
 max_area_cell_f = 0.004
 
-# n_edge_per_seg_f = 26
-# max_area_cell_f = 0.001
+n_edge_per_seg_f = 26
+max_area_cell_f = 0.001
 
 
 # -------   FEM parameters   -------
@@ -124,7 +124,7 @@ if computeREF
 end
 
 
-if computeMSReconstruction
+if computeMSR
         # -------   Build parameter structure   -------
         parMSR = Parameter.Parameter_MsFEM(problem.T,
                                                 dt,

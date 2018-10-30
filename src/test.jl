@@ -78,7 +78,7 @@ n_steps_f = 5
 # 4: conformal (smooth) H1-EdgeEvolvedion with soft/hard PoU constraint
 reconstruction_method = 3
 
-reconstruct_edge = false
+reconstruct_edge = true
 # ---------------------------
 
 
