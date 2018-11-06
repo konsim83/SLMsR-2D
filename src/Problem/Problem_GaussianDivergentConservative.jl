@@ -1,4 +1,4 @@
-struct Gaussian_R_4_conserv <: AbstractPhysicalProblem
+struct GaussianDivergentConserv <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
@@ -22,15 +22,20 @@ struct Gaussian_R_4_conserv <: AbstractPhysicalProblem
     conservative :: Bool
 
     k :: Int
-    
+    k1 :: Int
+    k2 :: Int
+
 end # end type
 
 
-function Gaussian_R_4_conserv(T :: Float64, psi :: Float64, k :: Int)
+function GaussianDivergentConserv(T :: Float64;
+                            k = 30 :: Int,
+                            k1 = 1 :: Int,
+                            k2 = 1 :: Int)
         
-    info_prob = "Evolution of symmetric Gaussian_R_4_conserv (classic velocity)."
+    info_prob = "Evolution of symmetric Gaussian (divergent velocity, conservative)."
     type_info = "ADE"
-    file_name = "Gaussian_R_4_conserv"
+    file_name = "GaussianDivergentConserv"
 
     marker_dirichlet_edge = Array{Int}(undef, 0)
     marker_neumann_edge = Array{Int}(undef, 0)
@@ -51,16 +56,15 @@ function Gaussian_R_4_conserv(T :: Float64, psi :: Float64, k :: Int)
 
     conservative = true
     
-    return Gaussian_R_4_conserv(info_prob, type_info, file_name,
+    return GaussianDivergentConserv(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
                     expectation,
-                    psi, 
                     is_transient_diffusion, 
                     is_transient_velocity,
                     conservative,
-                    k)
+                    k, k1, k2)
 end # end constructor
 
 
@@ -69,28 +73,29 @@ end # end constructor
 # --------------------------------------------------------------
 
 """
-    diffusion(problem :: Gaussian_R_4_conserv, t :: Float64, x :: Array{Float64,2})
+    diffusion(problem :: GaussianDivergentConserv, t :: Float64, x :: Array{Float64,2})
 
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_R_4_conserv, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: GaussianDivergentConserv, t :: Float64, x :: Array{Float64,2})
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    out = [[0.00001 0.0 ; 0.0 0.00001] for i=1:size(x,2)]
+    out = [[0.01*(1-0.9999*sin(2*pi*problem.k*x[1,i])) 0.0 ; 
+            0.0 0.01*(1-0.9999*sin(2*pi*problem.k*x[2,i]))] for i=1:size(x,2)]
     
     return out
 end
 
 
 """
-    diffusion(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    diffusion(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function diffusion(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
         
     out = [diffusion(problem, t, y) for y in x]
     
@@ -101,37 +106,41 @@ end
 
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
+
+
 """
-    velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+    velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    psi = problem.psi
+    k1 = 1
+    k2 = 1
+    V = hcat(-cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k2,
+                -cos.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) .* sin.(2*pi*2*x[1,:])
+            )
 
-    V = hcat( psi*2*pi * (sin.(2*pi*(x[1,:]-t)).^2) .* cos.(pi*(x[2,:]-1/2)).^2, 
-                psi*4*pi * sin.(2*pi*(x[1,:]-t)) .* cos.(2*pi*(x[1,:]-t)) .* cos.(pi*(x[2,:]-1/2)).^2
-               )
-
-    out = [V[i,:] for i=1:size(x,2)]
+    rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
+                -sin(2*pi*t)   cos(2*pi*t)]
+    out = [rotation*V[i,:] for i=1:size(x,2)]
     
     return out
 end
 
 
 """
-    velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
 
@@ -139,58 +148,34 @@ function velocity(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Arr
 end
 
 
-# function velocityGrad(problem :: Gaussian_R_4_conserv, t :: Float64, x :: Array{Float64,2})
-    
-#     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-#     psi = problem.psi
-
-#     out = [2*pi*psi* [  4*pi*sin.(2*pi*(x[1,i]-t)).*cos.(2*pi*(x[1,i]-t)).*cos.(pi*(x[2,i]-1/2))                   -2*pi*sin.(2*pi*(x[1,i]-t)).^2 .* cos.(pi*(x[2,i]-1/2)) .*sin.(pi*(x[2,i]-1/2))                    ; 
-#                         4*pi*cos.(pi*(x[2,:i]-1/2)).^2 .*(cos.(2*pi*(x[1,i]-t)).^2 - sin.(2*pi*(x[1,i]-t)).^2)    -4*pi*cos.(2*pi*(x[1,i]-t)).*sin.(2*pi*(x[1,i]-t)).*cos.(pi*(x[2,i]-1/2)).*sin.(pi*(x[2,i]-1/2))    ]
-#                         for i=1:size(x,2)]
-    
-#     return out
-# end
-
-
-# function velocityGrad(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
-        
-#     out = [velocityGrad(problem, t, y) for y in x]
-    
-#     return out
-    
-# end
-
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
-
-
 """
-    reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+    reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
 
     Divergence of velocity field.
 
 """
-function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Float64,2})
+function reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
     psi = problem.psi
 
-    out = psi*8*pi^2 * sin.(2*pi*(x[1,:]-t)) .* cos.(2*pi*(x[1,:]-t)) .* cos.(pi*(x[2,:]-1/2)) .* (cos.(pi*(x[2,:]-1/2)) - sin.(pi*(x[2,:]-1/2)))
+    out = psi*8*pi^2 * sin.(2*pi*(x[1,:].-t)) .* cos.(2*pi*(x[1,:].-t)) .* cos.(pi*(x[2,:].-1/2)) .* (cos.(pi*(x[2,:].-1/2)) - sin.(pi*(x[2,:].-1/2)))
     
     return out
 end
 
 
 """
-    reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function reaction(problem :: Gaussian_R_4_conserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [reaction(problem, t, y) for y in x]
 
@@ -201,7 +186,8 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 
-function u_init(problem :: Gaussian_R_4_conserv, x :: Array{Float64})
+
+function u_init(problem :: GaussianDivergentConserv, x :: Array{Float64})
                 
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 

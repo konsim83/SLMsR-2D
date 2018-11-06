@@ -16,28 +16,17 @@ post_process = true
 T_max = 1.0
 
 
-# Multiscale diffusion, constant advection
-# problem = Problem.Gaussian_R_1(T_max, 30)
-
-
-# Constant low diffusion, solenoidal, traveling vortex
-# problem = Problem.Gaussian_R_2(T_max, 0.3 , 30)
-# problem = Problem.Gaussian_R_2_conserv(T_max, 0.3 , 30)
-
-
 # Multiscale diffusion, solenoidal, traveling vortex
-# problem = Problem.Gaussian_R_3(T_max, 0.2 , 30)
-# problem = Problem.Gaussian_R_3_conserv(T_max, 0.1 , 30)
-
-
-# Constant low diffusion, divergent, traveling vortex
-# problem = Problem.Gaussian_R_4(T_max, 0.2 , 30)
-# problem = Problem.Gaussian_R_4_conserv(T_max, 0.1 , 30)
-
+# problem = Problem.GaussianSolenoidal(T_max, k=30, k1=1, k2=1)
 
 # Multiscale diffusion, divergent, traveling vortex
-# problem = Problem.Gaussian_R_5(T_max, 0.2 , 30)
-problem = Problem.Gaussian_R_5_conserv(T_max, 0.1 , 30)
+# problem = Problem.GaussianDivergent(T_max, k=30, k1=1, k2=1)
+
+# Multiscale diffusion, divergent, conservative, traveling vortex
+# problem = Problem.GaussianDivergentConserv(T_max, k=30, k1=1, k2=1)
+
+# Randomized coefficients, fixed in time, traveling vortex
+# problem = Problem.GaussianRandomized(T_max)
 # ---------------------------------------------------------------------------
 
 
@@ -45,14 +34,14 @@ problem = Problem.Gaussian_R_5_conserv(T_max, 0.1 , 30)
 # ---------------------------------------------------------------------------
 # -------   Mesh parameters   -------
 n_edge_per_seg = 4
-n_refinement = 4
+n_refinement = 5
 
 
-n_edge_per_seg_f = 15
-max_area_cell_f = 0.005
+# n_edge_per_seg_f = 15
+# max_area_cell_f = 0.005
 
-n_edge_per_seg_f = 20
-max_area_cell_f = 0.004
+# n_edge_per_seg_f = 20
+# max_area_cell_f = 0.004
 
 n_edge_per_seg_f = 26
 max_area_cell_f = 0.001
@@ -69,7 +58,7 @@ n_order_quad_f = n_order_quad
 time_step_method = 1
 
 dt = 1/100
-n_steps_f = 5
+n_steps_f = 4
 
 # ---------------------------
 # 1: non-conformal L2-EdgeEvolvedion
@@ -150,57 +139,70 @@ end
 
 # ---------------------------------------------------------------------------
 if post_process
-        # ---------------------
-        solSTD_mapped = PostProcess.map_solution(solSTD, meshSTD, meshREF)
-        solMSR_mapped = PostProcess.map_solution(solMSR, meshMSR, meshREF)
-        # ---------------------
-        
+    println("\n************ Post Processing *******************")
 
-        # ---------------------
-        # Compute and write standard error
-        errSTD = PostProcess.error_L2(solREF, solSTD_mapped)[:]
-        errSTD_H1 = PostProcess.error_H1(solREF, solSTD_mapped)[:]
-        Vis.writeError2file(errSTD, T_max, "Error-L2-" * problem.file_name * "-STD", "L2")
-        Vis.writeError2file(errSTD_H1, T_max, "Error-H1-" * problem.file_name * "-STD", "H1")
-        # ---------------------
+    # ---------------------
+    println("---> Mapping standard solution to reference mesh...")
+    solSTD_mapped = PostProcess.map_solution(solSTD, meshSTD, meshREF)
+    println("---> Mapping multiscale solution to reference mesh...")
+    solMSR_mapped = PostProcess.map_solution(solMSR, meshMSR, meshREF)
+    # ---------------------
+    
 
-
-        # ---------------------
-        # Write standard solutions
-        Vis.writeSolution_all(solREF, meshREF, problem.file_name * "-REF")        
-        Vis.writeSolution_all(solSTD_mapped, meshREF, problem.file_name * "-STD")
-        # ---------------------
+    # ---------------------
+    # Compute and write standard error
+    println("---> Computing and writing errors ...")
+    errSTD = PostProcess.error_L2(solREF, solSTD_mapped)[:]
+    errSTD_H1 = PostProcess.error_H1(solREF, solSTD_mapped)[:]
+    Vis.writeError2file(errSTD, T_max, "Error-L2-" * problem.file_name * "-STD", "L2")
+    Vis.writeError2file(errSTD_H1, T_max, "Error-H1-" * problem.file_name * "-STD", "H1")
+    # ---------------------
 
 
-        # ---------------------
-        # Compute and write multiscale errors and solutions
+    # ---------------------
+    # Write standard solutions
+    println("---> Writing solutions ...")
+    Vis.writeSolution_all(solREF, meshREF, problem.file_name * "-REF")        
+    Vis.writeSolution_all(solSTD_mapped, meshREF, problem.file_name * "-STD")
+    # ---------------------
+
+
+    # ---------------------
+    # Compute and write multiscale errors and solutions
+    if reconstruct_edge
+        errMSR_recon = PostProcess.error_L2(solREF, solMSR_mapped)[:]
+        errMSR_recon_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
+        Vis.writeError2file(errMSR_recon, T_max, "Error-L2-" * problem.file_name * "-SLMsR-EdgeEvolved", "L2")
+        Vis.writeError2file(errMSR_recon_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR-EdgeEvolved", "H1")
+
+        Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-EdgeEvolved")
+    else
+        errMSR = PostProcess.error_L2(solREF, solMSR_mapped)[:]
+        errMSR_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
+        Vis.writeError2file(errMSR, T_max, "Error-L2-" * problem.file_name * "-SLMsR", "L2")
+        Vis.writeError2file(errMSR_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR", "H1")
+
+        Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-")
+    end
+    # ---------------------
+
+    println("---> Writing velocity field ...")
+    t = collect(range(0, stop=T_max, length=parREF.n_steps+1))
+    Vis.writeVelocityField(problem, meshREF, t, "BackGroundVel")
+
+    
+    # ---------------------
+    # Write a nodal basis function
+    if true
+        ind_basis = 35
+        println("---> Writing basis function $ind_basis ...")
         if reconstruct_edge
-            errMSR_recon = PostProcess.error_L2(solREF, solMSR_mapped)[:]
-            errMSR_recon_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
-            Vis.writeError2file(errMSR_recon, T_max, "Error-L2-" * problem.file_name * "-SLMsR-EdgeEvolved", "L2")
-            Vis.writeError2file(errMSR_recon_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR-EdgeEvolved", "H1")
-
-            Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-EdgeEvolved")
+            Vis.writeNodalBasis_all_steps(solMSR, meshMSR, ind_basis, "Basis---node-" * string(ind_basis) * "-EdgeEvolved-" * problem.file_name)
         else
-            errMSR = PostProcess.error_L2(solREF, solMSR_mapped)[:]
-            errMSR_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
-            Vis.writeError2file(errMSR, T_max, "Error-L2-" * problem.file_name * "-SLMsR", "L2")
-            Vis.writeError2file(errMSR_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR", "H1")
-
-            Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-")
+            Vis.writeBasis_all_steps(solMSR, meshMSR, ind_basis, "Basis---node-" * string(ind_basis) * "-" * problem.file_name)
         end
-        # ---------------------
-        
-        # ---------------------
-        # Write a nodal basis function
-        if true
-            ind_basis = 35
-            if reconstruct_edge
-                Vis.writeNodalBasis_all_steps(solMSR, meshMSR, ind_basis, "Basis---node-" * string(ind_basis) * "-EdgeEvolved-" * problem.file_name)
-            else
-                Vis.writeBasis_all_steps(solMSR, meshMSR, ind_basis, "Basis---node-" * string(ind_basis) * "-" * problem.file_name)
-            end
-        end
-        # ---------------------
+    end
+    # ---------------------
+    println("\n************************************************\n")
 end
 # ---------------------------------------------------------------------------

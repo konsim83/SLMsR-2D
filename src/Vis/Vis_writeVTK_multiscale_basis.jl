@@ -133,11 +133,11 @@ function writeNodalBasis_all_steps(solution :: FEM.Solution_MsFEM,
             vtkfile = vtk_grid(string("./data/", filename, "_cell-", string(ind_cell), "_", lpad(k_time,4,"0")), points, cells)
             
             if ind_basis==1
-                vtk_point_data(vtkfile, convert(Array{Float32}, solution.phi_1[ind_cell][:,k_time]), "basis 1")
+                vtk_point_data(vtkfile, convert(Array{Float32}, solution.phi_1[ind_cell][:,k_time]), "basis")
             elseif ind_basis==2
-                vtk_point_data(vtkfile, convert(Array{Float32}, solution.phi_2[ind_cell][:,k_time]), "basis 2")
+                vtk_point_data(vtkfile, convert(Array{Float32}, solution.phi_2[ind_cell][:,k_time]), "basis")
             elseif ind_basis==3
-                vtk_point_data(vtkfile, convert(Array{Float32}, solution.phi_3[ind_cell][:,k_time]), "basis 3")
+                vtk_point_data(vtkfile, convert(Array{Float32}, solution.phi_3[ind_cell][:,k_time]), "basis")
             end
         
             outfiles = vtk_save(vtkfile)

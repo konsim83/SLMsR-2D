@@ -1,9 +1,12 @@
-# Ignore the following files
+# Ignore the following files and folders
+
+data/
 
 *~
 
 *.vtu
 *.png
+*.mp4
 *.dat
 
 *.pdf

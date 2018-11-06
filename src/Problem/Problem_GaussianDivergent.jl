@@ -1,4 +1,4 @@
-struct Gaussian_2 <: AbstractPhysicalProblem
+struct GaussianDivergent <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
@@ -14,27 +14,34 @@ struct Gaussian_2 <: AbstractPhysicalProblem
     covariance_mat_inv :: Array{Float64,2}
     expectation :: Array{Float64,1}
 
+    psi :: Float64
+
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
     conservative :: Bool
 
     k :: Int
+    k1 :: Int
+    k2 :: Int
     
 end # end type
 
 
-function Gaussian_2(T :: Float64, k :: Int)
+function GaussianDivergent(T :: Float64; 
+                            k = 30 :: Int,
+                            k1 = 1 :: Int,
+                            k2 = 1 :: Int)
         
-    info_prob = "Evolution of symmetric Gaussian_2 (classic velocity)."
+    info_prob = "Evolution of symmetric Gaussian (divergent velocity)."
     type_info = "ADE"
-    file_name = "Gaussian_2"
+    file_name = "GaussianDivergent"
 
     marker_dirichlet_edge = Array{Int}(undef, 0)
     marker_neumann_edge = Array{Int}(undef, 0)
 
-    lambda_1 = 0.05
-    lambda_2 = 0.05
+    lambda_1 = 0.03
+    lambda_2 = 0.03
 
     alpha = 0*pi/8
     rot = [cos(alpha) sin(alpha) ; -sin(alpha) cos(alpha)]
@@ -45,19 +52,19 @@ function Gaussian_2(T :: Float64, k :: Int)
     expectation = [1/2 ; 1/2]
 
     is_transient_diffusion = false
-    is_transient_velocity = false
+    is_transient_velocity = true
 
     conservative = false
     
-    return Gaussian_2(info_prob, type_info, file_name,
+    return GaussianDivergent(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
-                    expectation, 
+                    expectation,
                     is_transient_diffusion, 
                     is_transient_velocity,
                     conservative,
-                    k)
+                    k, k1, k2)
 end # end constructor
 
 
@@ -66,65 +73,29 @@ end # end constructor
 # --------------------------------------------------------------
 
 """
-    streamFun(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
-
-    Stream function for velocity.
-"""
-function streamFun(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    out = 0.1*sin.(2*pi*problem.k*(x[1,:]-x[2,:])) / problem.k
-
-    return out
-end
-
-"""
-    streamFunDer(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
-
-    Stream function skew-derivative.
-"""
-function streamFunDer(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    V = 0.1*[2*pi*cos.(2*pi*problem.k*(x[1,:]-x[2,:])) 2*pi*cos.(2*pi*problem.k*(x[1,:]-x[2,:]))]
-    out = [V[i,:] for i=1:size(x,2)]
-
-    return out
-end
-
-
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
-
-
-"""
-    diffusion(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
+    diffusion(problem :: GaussianDivergent, t :: Float64, x :: Array{Float64,2})
 
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_2, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: GaussianDivergent, t :: Float64, x :: Array{Float64,2})
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    # strFun = streamFun(problem, t, x)
-    # out = [[0.01 strFun[i] ; -strFun[i] 0.01] for i=1:size(x,2)]
+    out = [[0.01*(1-0.9999*sin(2*pi*problem.k*x[1,i])) 0.0 ; 
+            0.0 0.01*(1-0.9999*sin(2*pi*problem.k*x[2,i]))] for i=1:size(x,2)]
     
-    out = [[0.0001 0.0 ; 0.0 0.0001] for i=1:size(x,2)]
-
     return out
 end
 
 
 """
-    diffusion(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+    diffusion(problem :: GaussianDivergent,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+function diffusion(problem :: GaussianDivergent,  t :: Float64, x :: Array{Array{Float64,2},1})
         
     out = [diffusion(problem, t, y) for y in x]
     
@@ -135,35 +106,39 @@ end
 
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
-
-
 """
-    velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Float64,2})
+    velocity(problem :: GaussianDivergent,  t :: Float64, x :: Array{Float64,2})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: GaussianDivergent,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    out = streamFunDer(problem, t, x)
+    k1 = problem.k1
+    k2 = problem.k2
+    V = hcat(-cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k2,
+                -cos.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) .* sin.(2*pi*2*x[1,:])
+            )
 
-    # out = [[0.0 ; 0.0] for i=1:size(x,2)]
+    rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
+                -sin(2*pi*t)   cos(2*pi*t)]
+    out = [rotation*V[i,:] for i=1:size(x,2)]
     
     return out
 end
 
 
 """
-    velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+    velocity(problem :: GaussianDivergent,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: Gaussian_2,  t :: Float64, x :: Array{Array{Float64,2},1})
+function velocity(problem :: GaussianDivergent,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
 
@@ -175,13 +150,18 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 
-function u_init(problem :: Gaussian_2, x :: Array{Float64})
+function u_init(problem :: GaussianDivergent, x :: Array{Float64})
                 
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 
     x = broadcast(+, -problem.expectation, x)
+    x1 = broadcast(+, -[1/4 ; 0], x)
+    x2 = broadcast(+, [1/4 ; 0], x)
     
-    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * exp.( -1/2 * sum(x.*(problem.covariance_mat_inv*x),dims=1) )
+    out  = 1/sqrt((2*pi)^2*problem.covariance_mat_det) * (
+                exp.( -1/2 * sum(x1.*(problem.covariance_mat_inv*x1),dims=1) )
+                + exp.( -1/2 * sum(x2.*(problem.covariance_mat_inv*x2),dims=1) )
+                ) / 2
     
     return vec(out)
 end
