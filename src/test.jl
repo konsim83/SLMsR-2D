@@ -26,7 +26,7 @@ T_max = 1.0
 # problem = Problem.GaussianDivergentConserv(T_max, k=30, k1=1, k2=1)
 
 # Randomized coefficients, fixed in time, traveling vortex
-# problem = Problem.GaussianRandomized(T_max)
+problem = Problem.GaussianRandomized(T_max)
 # ---------------------------------------------------------------------------
 
 
@@ -58,7 +58,6 @@ n_order_quad_f = n_order_quad
 time_step_method = 1
 
 dt = 1/100
-n_steps_f = 4
 
 # ---------------------------
 # 1: non-conformal L2-EdgeEvolvedion
@@ -188,7 +187,11 @@ if post_process
 
     println("---> Writing velocity field ...")
     t = collect(range(0, stop=T_max, length=parREF.n_steps+1))
-    Vis.writeVelocityField(problem, meshREF, t, "BackGroundVel")
+    Vis.writeVelocityField(problem, meshREF, t)
+
+    println("---> Writing diffusion field ...")
+    t = collect(range(0, stop=T_max, length=parREF.n_steps+1))
+    Vis.writeDiffusionField(problem, meshREF, t)
 
     
     # ---------------------

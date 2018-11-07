@@ -1,4 +1,4 @@
-struct GaussianDivergentConserv <: AbstractPhysicalProblem
+struct GaussianDivergentConservative <: AbstractPhysicalProblem
     
     info_prob :: String
     type_info :: String
@@ -28,14 +28,14 @@ struct GaussianDivergentConserv <: AbstractPhysicalProblem
 end # end type
 
 
-function GaussianDivergentConserv(T :: Float64;
+function GaussianDivergentConservative(T :: Float64;
                             k = 30 :: Int,
                             k1 = 1 :: Int,
                             k2 = 1 :: Int)
         
     info_prob = "Evolution of symmetric Gaussian (divergent velocity, conservative)."
     type_info = "ADE"
-    file_name = "GaussianDivergentConserv"
+    file_name = "GaussianDivergentConservative"
 
     marker_dirichlet_edge = Array{Int}(undef, 0)
     marker_neumann_edge = Array{Int}(undef, 0)
@@ -56,7 +56,7 @@ function GaussianDivergentConserv(T :: Float64;
 
     conservative = true
     
-    return GaussianDivergentConserv(info_prob, type_info, file_name,
+    return GaussianDivergentConservative(info_prob, type_info, file_name,
                     T, 
                     marker_dirichlet_edge, marker_neumann_edge,
                     covariance_mat, covariance_mat_det, covariance_mat_inv, 
@@ -73,12 +73,12 @@ end # end constructor
 # --------------------------------------------------------------
 
 """
-    diffusion(problem :: GaussianDivergentConserv, t :: Float64, x :: Array{Float64,2})
+    diffusion(problem :: GaussianDivergentConservative, t :: Float64, x :: Array{Float64,2})
 
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: GaussianDivergentConserv, t :: Float64, x :: Array{Float64,2})
+function diffusion(problem :: GaussianDivergentConservative, t :: Float64, x :: Array{Float64,2})
     
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -90,12 +90,12 @@ end
 
 
 """
-    diffusion(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    diffusion(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
     
     Diffusion is represented by a positive 2-by-2 tensor.
 
 """
-function diffusion(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function diffusion(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
         
     out = [diffusion(problem, t, y) for y in x]
     
@@ -109,13 +109,13 @@ end
 
 
 """
-    velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
+    velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
+function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -134,13 +134,13 @@ end
 
 
 """
-    velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function velocity(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
 
@@ -151,12 +151,12 @@ end
 # --------------------------------------------------------------------
 # --------------------------------------------------------------------
 """
-    reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
+    reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
 
     Divergence of velocity field.
 
 """
-function reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Float64,2})
+function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
@@ -169,13 +169,13 @@ end
 
 
 """
-    reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+    reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     Velocity is represented by a 2-vector. The solenoidal part can be
     represented by a stream function.
 
 """
-function reaction(problem :: GaussianDivergentConserv,  t :: Float64, x :: Array{Array{Float64,2},1})
+function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [reaction(problem, t, y) for y in x]
 
@@ -187,7 +187,7 @@ end
 # --------------------------------------------------------------------
 
 
-function u_init(problem :: GaussianDivergentConserv, x :: Array{Float64})
+function u_init(problem :: GaussianDivergentConservative, x :: Array{Float64})
                 
     size(x,1)!=2 ? error(" List of vectors x must be of size 2-by-n.") :
 

@@ -14,24 +14,19 @@ struct GaussianRandomized <: AbstractPhysicalProblem
     covariance_mat_inv :: Array{Float64,2}
     expectation :: Array{Float64,1}
 
-    psi :: Float64
-
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
     conservative :: Bool
 
-    k :: Int
-    k1 :: Int
-    k2 :: Int
+    mesh_diff :: Mesh.TriangleMesh.TriMesh
+    meshData_diff :: Mesh.MeshData
+    random_coeff_diff :: Array{Float64,1}
     
 end # end type
 
 
-function GaussianRandomized(T :: Float64; 
-                            k = 30 :: Int,
-                            k1 = 1 :: Int,
-                            k2 = 1 :: Int)
+function GaussianRandomized(T :: Float64; n_seg_per_edge = 25 :: Int)
         
     info_prob = "Evolution of symmetric Gaussian (divergent velocity)."
     type_info = "ADE"
@@ -58,24 +53,26 @@ function GaussianRandomized(T :: Float64;
 
     # ------------------------------------
     # Evaluation mesh for diffusion data
-    mesh_diff = Mesh.mesh_unit_square(100)
-    meshData_diff = MeshData(mesh_diff)
-    r = rand(mesh.n_cell) # cell based random data
-    random_coeff_diff = ((r-minimum(r)) / maximum(r-minimum(r)) + 0.00001 )
+    mesh_diff = Mesh.mesh_unit_square(n_seg_per_edge)
+    meshData_diff = Mesh.MeshData(mesh_diff)
+    r = rand(mesh_diff.n_cell) # cell based random data
+    random_coeff_diff = 0.1*((r.-minimum(r)) / maximum(r.-minimum(r)) .+ 0.0001 )
     # ------------------------------------
 
     # Evaluation mesh for velocity data
     # mesh_vel = Mesh.mesh_unit_square(40)
     
     return GaussianRandomized(info_prob, type_info, file_name,
-                    T, 
-                    marker_dirichlet_edge, marker_neumann_edge,
-                    covariance_mat, covariance_mat_det, covariance_mat_inv, 
-                    expectation,
-                    is_transient_diffusion, 
-                    is_transient_velocity,
-                    conservative,
-                    k, k1, k2)
+                                T, 
+                                marker_dirichlet_edge, marker_neumann_edge,
+                                covariance_mat, covariance_mat_det, covariance_mat_inv, 
+                                expectation,
+                                is_transient_diffusion, 
+                                is_transient_velocity,
+                                conservative,
+                                mesh_diff,
+                                meshData_diff,
+                                random_coeff_diff)
 end # end constructor
 
 
@@ -91,10 +88,13 @@ end # end constructor
 """
 function diffusion(problem :: GaussianRandomized, t :: Float64, x :: Array{Float64,2})
     
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+    # size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    out = [[0.01*(1-0.9999*sin(2*pi*problem.k*x[1,i])) 0.0 ; 
-            0.0 0.01*(1-0.9999*sin(2*pi*problem.k*x[2,i]))] for i=1:size(x,2)]
+    x_cell, x_bary_coord = find_cell(problem.mesh_diff, 
+                                        problem.meshData_diff,
+                                        x)
+
+    out = [problem.random_coeff_diff[x_cell[idx][1]]*[1.0 0.0 ; 0.0 1.0] for idx in 1:length(x_cell)]
     
     return out
 end
@@ -128,15 +128,14 @@ function velocity(problem :: GaussianRandomized,  t :: Float64, x :: Array{Float
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    k1 = problem.k1
-    k2 = problem.k2
-    V = hcat(-cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k2,
-                -cos.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) .* sin.(2*pi*2*x[1,:])
+    # out = [zeros(2) for i=1:size(x,2)]
+    k1 = 1
+    k2 = 1
+    V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
+                -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k1
             )
 
-    rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
-                -sin(2*pi*t)   cos(2*pi*t)]
-    out = [rotation*V[i,:] for i=1:size(x,2)]
+    out = [V[i,:] for i=1:size(x,2)]
     
     return out
 end
