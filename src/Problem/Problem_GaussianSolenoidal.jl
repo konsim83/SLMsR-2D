@@ -14,8 +14,6 @@ struct GaussianSolenoidal <: AbstractPhysicalProblem
     covariance_mat_inv :: Array{Float64,2}
     expectation :: Array{Float64,1}
 
-    psi :: Float64
-
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
@@ -119,10 +117,10 @@ function velocity(problem :: GaussianSolenoidal,  t :: Float64, x :: Array{Float
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    k1 = 1
-    k2 = 1
-    V = hcat(-sin.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k2,
-                -cos.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k1
+    k1 = problem.k1
+    k2 = problem.k2
+    V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
+                -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k1
             )
 
     out = [V[i,:] for i=1:size(x,2)]

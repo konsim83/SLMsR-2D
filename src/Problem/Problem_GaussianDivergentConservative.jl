@@ -119,10 +119,10 @@ function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: 
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    k1 = 1
-    k2 = 1
-    V = hcat(-cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k2,
-                -cos.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) .* sin.(2*pi*2*x[1,:])
+    k1 = problem.k1
+    k2 = problem.k2
+    V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
+                -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) .* sin.(2*pi*2*x[1,:])
             )
 
     rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
@@ -143,41 +143,6 @@ end
 function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
-
-    return out
-end
-
-
-# --------------------------------------------------------------------
-# --------------------------------------------------------------------
-"""
-    reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
-
-    Divergence of velocity field.
-
-"""
-function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
-
-    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
-
-    psi = problem.psi
-
-    out = psi*8*pi^2 * sin.(2*pi*(x[1,:].-t)) .* cos.(2*pi*(x[1,:].-t)) .* cos.(pi*(x[2,:].-1/2)) .* (cos.(pi*(x[2,:].-1/2)) - sin.(pi*(x[2,:].-1/2)))
-    
-    return out
-end
-
-
-"""
-    reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
-
-    Velocity is represented by a 2-vector. The solenoidal part can be
-    represented by a stream function.
-
-"""
-function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
-
-    out = [reaction(problem, t, y) for y in x]
 
     return out
 end
