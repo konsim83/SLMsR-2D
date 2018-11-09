@@ -83,9 +83,9 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Node infos
         n_node = mesh.n_point
 
-        ind_node_boundary = find(mesh.point_marker.!=0)
-        ind_node_interior = find(mesh.point_marker.==0)
-        ind_node_dirichlet  = sort(unique(cat(1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_dirichlet_edge]...)))
+        ind_node_boundary = findall(vec(mesh.point_marker).!=0)
+        ind_node_interior = findall(vec(mesh.point_marker).==0)
+        ind_node_dirichlet  = sort(unique(cat(dims=1, [unique(mesh.edge[:,mesh.edge_marker.==marker]) for marker in problem.marker_dirichlet_edge]...)))
         ind_node_non_dirichlet = setdiff(1:n_node, ind_node_dirichlet)
         ind_node_neumann  = setdiff(ind_node_non_dirichlet, ind_node_interior)
 
@@ -102,10 +102,10 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Edge infos
         n_edge = mesh.n_edge
 
-        ind_edge_boundary = find(mesh.edge_marker.!=0)
-        ind_edge_interior = find(mesh.edge_marker.==0)
-        ind_edge_dirichlet = sort(cat(1, [find(mesh.edge_marker.==marker) for marker in problem.marker_dirichlet_edge]...))
-        ind_edge_neumann = sort(cat(1, [find(mesh.edge_marker.==marker) for marker in problem.marker_neumann_edge]...))
+        ind_edge_boundary = findall(mesh.edge_marker.!=0)
+        ind_edge_interior = findall(mesh.edge_marker.==0)
+        ind_edge_dirichlet = sort(cat(dims=1, [findall(mesh.edge_marker.==marker) for marker in problem.marker_dirichlet_edge]...))
+        ind_edge_neumann = sort(cat(dims=1, [findall(mesh.edge_marker.==marker) for marker in problem.marker_neumann_edge]...))
 
         
         n_edge_boundary = length(ind_edge_boundary)
@@ -120,11 +120,11 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         # Element infos
         n_elem = mesh.n_cell
         
-        ind_elem_boundary = find(sum(mesh.cell_neighbor.==0,1).!=0)
-        ind_elem_interior = find(sum(mesh.cell_neighbor.==0,1).==0)
+        ind_elem_boundary = findall(vec(sum(mesh.cell_neighbor.==0,dims=1)).!=0)
+        ind_elem_interior = findall(vec(sum(mesh.cell_neighbor.==0,dims=1)).==0)
 
-        n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,1).!=0)
-        n_elem_interior = sum(sum(mesh.cell_neighbor.==0,1).==0)
+        n_elem_boundary = sum(sum(mesh.cell_neighbor.==0,dims=1).!=0)
+        n_elem_interior = sum(sum(mesh.cell_neighbor.==0,dims=1).==0)
         # ----------------------------------------
 
         
@@ -143,7 +143,12 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
         ind_cell = Mesh.get_cell(mesh, 1:mesh.n_cell)
         ind = vec(ind_cell[[1 ; 1 ; 1 ; 2 ; 2 ; 2 ; 3 ; 3 ; 3],:])
         ind_test = vec(ind_cell[[1;2;3;1;2;3;1;2;3],:])
-        ind_lin = sub2ind((n_true_dof,n_true_dof), ind_test, ind)
+
+        # Convert set of cartesian coordinates to linear indices
+        ic = CartesianIndices((n_true_dof,n_true_dof))
+        il = LinearIndices((n_true_dof,n_true_dof))
+        indCart = [ic[ind_test[k],ind[k]] for k in 1:length(ind_test)]
+        ind_lin = il[indCart]
 
         T_ref2cell = [zeros(2, 3) for i=1:mesh.n_cell]
         T_cell2ref = [zeros(2, 3) for i=1:mesh.n_cell]
@@ -153,7 +158,7 @@ function Dof_Pk(mesh :: Mesh.TriangleMesh.TriMesh,
             P = Mesh.get_point(mesh, Mesh.get_cell(mesh,[i]))
 
             T_ref2cell[i] = [P[:,2]-P[:,1]  P[:,3]-P[:,1] P[:,1]]
-            T_cell2ref[i] = (eye(2)/T_ref2cell[i][:,1:2]) * [   eye(2)  mesh.point[:,mesh.cell[1,i]]   ]
+            T_cell2ref[i] = (I/T_ref2cell[i][:,1:2]) * [   I  mesh.point[:,mesh.cell[1,i]]   ]
         end
         # ----------------------------------------
         # -------------------------------------------------------------------------------------------------

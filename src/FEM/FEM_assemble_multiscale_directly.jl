@@ -12,8 +12,8 @@ function assemble_mass(solution :: Solution_MsFEM,
                         k_time :: Int64) where N
     
 
-    m = Array{Float64,3}(ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
-    mt = Array{Float64,3}(ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
+    m = Array{Float64,3}(undef, ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
+    mt = Array{Float64,3}(undef, ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
     
     for k = 1:mesh_collection.mesh.n_cell
         Phi_t = [solution.phi_1_t[k][:,k_time] solution.phi_2_t[k][:,k_time] solution.phi_3_t[k][:,k_time]]
@@ -62,7 +62,7 @@ function assemble_advection(solution :: Solution_MsFEM,
                                 k_time :: Int64, time_idx :: Float64) where N
     
 
-    adv = Array{Float64,3}(ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
+    adv = Array{Float64,3}(undef, ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
     
     for k = 1:mesh_collection.mesh.n_cell
         Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]
@@ -105,7 +105,7 @@ function assemble_diffusion(solution :: Solution_MsFEM,
                                 k_time :: Int64, time_idx :: Float64) where N
     
 
-    dif = Array{Float64,3}(ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
+    dif = Array{Float64,3}(undef, ref_el.n_basis, ref_el.n_basis, mesh_collection.mesh.n_cell)
     
     for k = 1:mesh_collection.mesh.n_cell
         Phi = [solution.phi_1[k][:,k_time] solution.phi_2[k][:,k_time] solution.phi_3[k][:,k_time]]

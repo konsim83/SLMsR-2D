@@ -26,12 +26,12 @@ function assemble_elem_m(mesh :: Mesh.TriangleMesh.TriMesh,
                          quad :: Quad.AbstractQuad) where N
     
     n = ref_el.n_basis
-    mass = Array{Float64,3}(n, n, mesh.n_cell)
+    mass = Array{Float64,3}(undef, n, n, mesh.n_cell)
     
     weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
     Phi = FEM.shapeFun(ref_el, quad.point)
-    Phi_test = FEM.shapeFun(ref_el, quad.point) * diagm(quad.weight)
+    Phi_test = FEM.shapeFun(ref_el, quad.point) * diagm(0=>quad.weight)
 
     for k = 1:mesh.n_cell
         mass[:,:,k] = Phi_test * weight_elem[k] * Phi'

@@ -3,7 +3,7 @@ function writeError2file(err :: Array{Float64,1},
                             file_name :: String, 
                             errType ::String)
 
-  t = linspace(0, t_max, length(err))
+  t = range(0, stop=t_max, length=length(err))
 
   # Write files into #PWD/meshfiles folder
   if ~ispath(pwd() * "/data/error_files")

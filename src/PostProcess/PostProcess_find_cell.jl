@@ -8,7 +8,7 @@ function get_domain_points(x :: Array{Float64})
     # map to interval [-0, 1]
     x_unit = x .% 1
     
-    x_unit[x_unit.<0] = 1 + x_unit[x_unit.<0]
+    x_unit[x_unit.<0] = 1 .+ x_unit[x_unit.<0]
     
     return x_unit
 end
@@ -48,14 +48,15 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh,
 	end
 
 	for i in 1:size(P,3)
-		bary_coord = round.(inv(P[:,:,i]) * X,9)
+		bary_coord = round.(inv(P[:,:,i]) * X,digits=9)
 
-		in_triangle = (sum((bary_coord.>=0.0) .& (bary_coord.<=1.0),1).==3)[:]
+		in_triangle = (sum((bary_coord.>=0.0) .& (bary_coord.<=1.0),dims=1).==3)[:]
 
 		# x_cell[in_triangle] = i
 		# x_bary_coord[in_triangle,:] = bary_coord[in_triangle,:]
 		map(xin->push!(xin, i), x_cell[in_triangle])
-		ind = find(in_triangle)
+
+		ind = findall(in_triangle)
 		for i in ind
 			push!(x_bary_coord[i], bary_coord[:,i][:])
 		end
@@ -90,8 +91,8 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh,
 	idx, dist = NearestNeighbors.knn(meshData.tree, x, n_knn, true)
 
 
-	x_bary_coord = Array{Array{Array{Float64,1},1},1}(0)
-	x_cell = Array{Array{Int,1},1}(0)
+	x_bary_coord = Array{Array{Array{Float64,1},1},1}(undef, 0)
+	x_cell = Array{Array{Int,1},1}(undef, 0)
 	for i in 1:size(x,2)
 		bary_coord = []
 		cell = []
@@ -100,7 +101,7 @@ function find_cell(mesh :: Mesh.TriangleMesh.TriMesh,
 			oneRing = meshData.oneRingCells[idx[i][counter]...]
 			PInv = meshData.oneRingPointInv[idx[i][counter]...]
 			for j in 1:length(oneRing)
-				b_coord = round.(PInv[j] * [x[:,i];1],9)
+				b_coord = round.(PInv[j] * [x[:,i];1],digits=9)
 
 				condition = all(0.0.<=b_coord.<=1.0)
 				if condition
@@ -136,8 +137,8 @@ function find_cell(mesh_collection :: Mesh.TriMesh_collection, x :: Array{Float6
 	# println("...done.")
 
 	# Find fine cell
-	x_cell_f = [Array{Array{Int,1},1}(0) for i in 1:size(x,2)]
-	x_bary_f = [Array{Array{Array{Float64,1},1},1}(0) for i in 1:size(x,2)]
+	x_cell_f = [Array{Array{Int,1},1}(undef, 0) for i in 1:size(x,2)]
+	x_bary_f = [Array{Array{Array{Float64,1},1},1}(undef, 0) for i in 1:size(x,2)]
 	
 	for i in 1:size(x,2)
 		x_cell_loc, x_bary_loc = find_cell(mesh_collection.mesh_f[x_cell[i][1]], 

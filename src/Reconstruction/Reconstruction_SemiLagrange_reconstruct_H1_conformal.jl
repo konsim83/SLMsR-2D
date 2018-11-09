@@ -54,9 +54,9 @@ function reconstruct_H1_conformal(solution :: FEM.Solution_MsFEM,
     # ind_corner = [sort(circshift(m_f.segment[:,m_f.segment_marker.==1],1)[:])[1] ; 
     #                 sort(circshift(m_f.segment[:,m_f.segment_marker.==1],1)[:])[end] ; 
     #                 sort(circshift(m_f.segment[:,m_f.segment_marker.==2],1)[:])[end] ]
-    ind_corner = [sort(m_f.segment[:,m_f.segment_marker.==1],1)[1] ; 
-                    sort(m_f.segment[:,m_f.segment_marker.==1],1)[end] ; 
-                    sort(m_f.segment[:,m_f.segment_marker.==2],1)[end] ]
+    ind_corner = [sort(m_f.segment[:,m_f.segment_marker.==1],dims=1)[1] ; 
+                    sort(m_f.segment[:,m_f.segment_marker.==1],dims=1)[end] ; 
+                    sort(m_f.segment[:,m_f.segment_marker.==2],dims=1)[end] ]
     # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
     U = u_orig[ind_corner]
 
@@ -76,9 +76,9 @@ function reconstruct_H1_conformal(solution :: FEM.Solution_MsFEM,
 
     # Contraints for nodal values of basis at boundary for ALL THREE BASIS
     # FUNCTIONS!!!
-    ind_con = [find(m_f.point_marker.!=0) ; 
-                find(m_f.point_marker.!=0)+n_dof ; 
-                find(m_f.point_marker.!=0)+2*n_dof]
+    ind_con = [findall(vec(m_f.point_marker).!=0) ; 
+                findall(vec(m_f.point_marker).!=0).+n_dof ; 
+                findall(vec(m_f.point_marker).!=0).+2*n_dof]
 
     constr_val = uOpt[ind_con]
     ind_uncon = setdiff(1:(3*m_f.n_point), ind_con)

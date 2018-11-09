@@ -29,8 +29,8 @@ function Evaluate_MsFEM(sol :: FEM.Solution_MsFEM, mesh_collection :: Mesh.TriMe
 	mesh =  mesh_collection.mesh
 	n_time_point = size(sol.u,2)
 
-	data = Array{Array{Float64,2},1}(mesh.n_cell)
-	local_function = Array{Function,1}(mesh.n_cell)
+	data = Array{Array{Float64,2},1}(undef, mesh.n_cell)
+	local_function = Array{Function,1}(undef, mesh.n_cell)
 
 	for i in 1:mesh.n_cell
 		data[i] = sol.u[mesh.cell[:,i],:]
@@ -43,8 +43,8 @@ function Evaluate_MsFEM(sol :: FEM.Solution_MsFEM, mesh_collection :: Mesh.TriMe
 	end
 
 
-	data_f = [Array{Array{Float64,2},1}(mesh_collection.n_elem_f[i]) for i in 1:mesh.n_cell]
-	local_function_f = [Array{Function,1}(mesh_collection.n_elem_f[i]) for i in 1:mesh.n_cell]
+	data_f = [Array{Array{Float64,2},1}(undef, mesh_collection.n_elem_f[i]) for i in 1:mesh.n_cell]
+	local_function_f = [Array{Function,1}(undef, mesh_collection.n_elem_f[i]) for i in 1:mesh.n_cell]
 
 	for i in 1:mesh.n_cell
 		coarse_weight = sol.u[mesh.cell[:,i],:]

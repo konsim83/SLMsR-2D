@@ -1,5 +1,7 @@
 module FEM
 
+using SparseArrays, LinearAlgebra
+
 import Mesh, Parameter, Problem, Quad
 
 

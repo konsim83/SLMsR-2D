@@ -49,9 +49,9 @@ function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
     dof_local = dof_collection.dof_f[ind_cell]
     k = par.k
 
-    ind_corner = [sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],1)[:])[1] ; 
-                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],1)[:])[end] ; 
-                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==2],1)[:])[end] ]
+    ind_corner = [sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],dims=1)[:])[1] ; 
+                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],dims=1)[:])[end] ; 
+                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==2],dims=1)[:])[end] ]
     # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
     uGlobal = uOrig[ind_corner]
 
@@ -71,9 +71,9 @@ function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
 
     # Contraints for nodal values of basis at boundary for ALL THREE BASIS
     # FuGlobalNCTIONS!!!
-    ind_con = [find(mesh_local.point_marker.!=0) ; 
-                find(mesh_local.point_marker.!=0)+mesh_local.n_point ; 
-                find(mesh_local.point_marker.!=0)+2*mesh_local.n_point]
+    ind_con = [findall(vec(mesh_local.point_marker).!=0) ; 
+                findall(vec(mesh_local.point_marker).!=0).+mesh_local.n_point ; 
+                findall(vec(mesh_local.point_marker).!=0).+2*mesh_local.n_point]
 
     constr_val = uBasisOpt[ind_con]
     ind_uncon = setdiff(1:(3*mesh_local.n_point), ind_con)

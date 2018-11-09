@@ -17,7 +17,7 @@ struct BasisFun <: AbstractBasisProblem
 
     problem_parent :: AbstractProblem
     
-    function BasisFun(problem :: AbstractProblem, tri :: Geometry.Triangle)
+    function BasisFun(problem :: AbstractProblem, tri :: Geometry.TriangleDomain)
         
         info_prob = "Evolution of basis on triangular cell."
         type_info = problem.type_info
@@ -25,7 +25,7 @@ struct BasisFun <: AbstractBasisProblem
         T = problem.T
 
         marker_dirichlet_edge = [1 ; 2 ; 3]
-        marker_neumann_edge = Array{Int}(0)
+        marker_neumann_edge = Array{Int}(undef, 0)
 
         coeff = Geometry.compute_P1_basis_coeff(tri)
 
@@ -131,7 +131,7 @@ function u_init(problem :: BasisFun, x :: Array{Float64,2})
     
     out = problem.coeff * [x ; ones(1,size(x,2))]
     
-    return out'
+    return Array{Float64,2}(out')
 end
 
 function u_init(problem :: BasisFun, x :: Array{Array{Float64},1})

@@ -17,9 +17,9 @@ function assemble_mass!(M  :: SparseMatrixCSC{Float64,Int64},
     weight_elem = FEM.map_ref_point_grad_det(dof, quad.point, 1:dof.n_elem)
 
     Phi = FEM.shapeFun(ref_el, quad.point)
-    Phi_test = FEM.shapeFun(ref_el, quad.point) * diagm(quad.weight)
+    Phi_test = FEM.shapeFun(ref_el, quad.point) * diagm(0=>quad.weight)
     
-    m_loc = Array{Float64,2}(ref_el.n_basis, ref_el.n_basis)
+    m_loc = Array{Float64,2}(undef, ref_el.n_basis, ref_el.n_basis)
 
     Nsquare = ref_el.n_basis^2
     for k = 1:mesh.n_cell

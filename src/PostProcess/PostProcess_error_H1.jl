@@ -5,7 +5,7 @@ function error_H1(s1 :: FEM.Solution_FEM,
 
 	diffGrad = s2.uGrad - s1.uGrad
 
-	err = sqrt.(sum([sum(a.^2) for a in diffGrad],1) ./ sum([sum(a.^2) for a in s1.uGrad],1))
+	err = sqrt.(sum([sum(a.^2) for a in diffGrad],dims=1) ./ sum([sum(a.^2) for a in s1.uGrad],dims=1))
 
 	return err
 end

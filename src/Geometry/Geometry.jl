@@ -1,9 +1,12 @@
 module Geometry
 
+using LinearAlgebra
+
 abstract type PolygonDomain end
+abstract type TriangleDomain <: PolygonDomain end
 
 #------------------------------------------------------------
-struct Triangle <: PolygonDomain
+struct Triangle <: TriangleDomain
     
     point :: Array{Float64, 2}
     segment :: Array{Int64, 2}
@@ -22,7 +25,7 @@ end
 #------------------------------------------------------------
 
 #------------------------------------------------------------
-struct UnitSquare <: PolygonDomain
+struct UnitSquare <: TriangleDomain
     
     point :: Array{Float64, 2}
     segment :: Array{Int64, 2}
@@ -45,7 +48,7 @@ end # end type
 
 
 #------------------------------------------------------------
-struct UnitSimplex <: PolygonDomain
+struct UnitSimplex <: TriangleDomain
 
     point :: Array{Float64, 2}
     segment :: Array{Int64, 2}
@@ -71,11 +74,11 @@ end # end type
 # -------   Functions   ----------------------------------
 # -----------------------------------------------------------
 
-function compute_P1_basis_coeff(tri :: Triangle)
+function compute_P1_basis_coeff(tri :: TriangleDomain)
     
     # columns are coefficients
     coeff = [ tri.point ; 
-                    ones(1,3) ] \ eye(3)
+                    ones(1,3) ] \ I
     
     return coeff
 end
