@@ -14,8 +14,6 @@ struct GaussianDivergent <: AbstractPhysicalProblem
     covariance_mat_inv :: Array{Float64,2}
     expectation :: Array{Float64,1}
 
-    psi :: Float64
-
     is_transient_diffusion :: Bool
     is_transient_velocity :: Bool
 
