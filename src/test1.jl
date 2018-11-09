@@ -176,13 +176,15 @@ if post_process
         Vis.writeError2file(errMSR_recon_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR-EdgeEvolved", "H1")
 
         Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-EdgeEvolved")
+        Vis.writeSolution_all(solMSR, meshREF, problem.file_name * "-SLMsR-EdgeEvolved_ORIG")
     else
         errMSR = PostProcess.error_L2(solREF, solMSR_mapped)[:]
         errMSR_H1 = PostProcess.error_H1(solREF, solMSR_mapped)[:]
         Vis.writeError2file(errMSR, T_max, "Error-L2-" * problem.file_name * "-SLMsR", "L2")
         Vis.writeError2file(errMSR_H1, T_max, "Error-H1-" * problem.file_name * "-SLMsR", "H1")
 
-        Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR-")
+        Vis.writeSolution_all(solMSR_mapped, meshREF, problem.file_name * "-SLMsR")
+        Vis.writeSolution_all(solMSR, meshREF, problem.file_name * "-SLMsR_ORIG")
     end
     # ---------------------
 
