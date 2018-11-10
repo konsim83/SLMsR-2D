@@ -23,10 +23,10 @@ T_max = 1.0
 # problem = Problem.GaussianDivergent(T_max, k=30, k1=1, k2=1)
 
 # Multiscale diffusion, divergent, conservative, traveling vortex
-# problem = Problem.GaussianDivergentConserv(T_max, k=30, k1=1, k2=1)
+problem = Problem.GaussianDivergentConservative(T_max, k=30, k1=1, k2=1, k3=1, scale=0.2)
 
 # Randomized coefficients, fixed in time, traveling vortex
-problem = Problem.GaussianRandomized(T_max)
+# problem = Problem.GaussianRandomized(T_max)
 # ---------------------------------------------------------------------------
 
 

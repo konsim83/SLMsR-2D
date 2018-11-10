@@ -22,6 +22,9 @@ struct GaussianDivergentConservative <: AbstractPhysicalProblem
     k :: Int
     k1 :: Int
     k2 :: Int
+    k3 :: Int
+
+    scale :: Float64
 
 end # end type
 
@@ -29,7 +32,9 @@ end # end type
 function GaussianDivergentConservative(T :: Float64;
                             k = 30 :: Int,
                             k1 = 1 :: Int,
-                            k2 = 1 :: Int)
+                            k2 = 1 :: Int,
+                            k3 = 1 :: Int,
+                            scale = 0.2 :: Float64)
         
     info_prob = "Evolution of symmetric Gaussian (divergent velocity, conservative)."
     type_info = "ADE"
@@ -62,7 +67,7 @@ function GaussianDivergentConservative(T :: Float64;
                     is_transient_diffusion, 
                     is_transient_velocity,
                     conservative,
-                    k, k1, k2)
+                    k, k1, k2, k3, scale)
 end # end constructor
 
 
@@ -119,8 +124,9 @@ function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: 
 
     k1 = problem.k1
     k2 = problem.k2
+    k3 = problem.k3
     V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
-                -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) .* sin.(2*pi*2*x[1,:])
+                -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) .* sin.(2*pi*k3*x[1,:])
             )
 
     rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
@@ -141,6 +147,47 @@ end
 function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
 
     out = [velocity(problem, t, y) for y in x]
+
+    return out
+end
+
+
+# --------------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
+"""
+    reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
+
+    Divergence of velocity field.
+
+"""
+function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Float64,2})
+
+    size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
+
+    k1 = problem.k1
+    k2 = problem.k2
+    k3 = problem.k3
+
+    out = (2*pi*k2) * cos.(2*pi*k1*(x[1,:] .- t)) .* cos.(2*pi*k2*x[2,:]) .* (
+            (2*pi*k1) .- sin.(2*pi*k3*x[1,:]) 
+            )
+    
+    return out
+end
+
+
+"""
+    reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    Velocity is represented by a 2-vector. The solenoidal part can be
+    represented by a stream function.
+
+"""
+function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: Array{Array{Float64,2},1})
+
+    out = [reaction(problem, t, y) for y in x]
 
     return out
 end
