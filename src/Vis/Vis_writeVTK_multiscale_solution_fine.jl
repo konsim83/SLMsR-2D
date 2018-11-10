@@ -14,7 +14,7 @@ function writeSolution_at_timestep(solution :: FEM.Solution_MsFEM, mesh_collecti
     
     vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,"0")), points, cells)
 
-    vtk_point_data(vtkfile, convert(Array{Float32}, D), "point data")
+    vtk_point_data(vtkfile, convert(Array{Float32}, D), "u")
     
     outfiles = vtk_save(vtkfile)
 
@@ -43,7 +43,7 @@ function writeSolution_all(solution :: FEM.Solution_MsFEM, mesh_collection :: Me
     for k_time in 1:size(solution.u,2)
         vtkfile = vtk_grid(string("./data/", filename, "_", lpad(k_time,4,"0")), points, cells)
         
-        vtk_point_data(vtkfile, convert(Array{Float32}, unify_data(mesh_collection, solution, k_time)), "point data")
+        vtk_point_data(vtkfile, convert(Array{Float32}, unify_data(mesh_collection, solution, k_time)), "u")
     
         outfiles = vtk_save(vtkfile)
 
@@ -104,7 +104,7 @@ end
 function add_meshes(p1 :: Array{Float64,2}, c1 :: Array{Int64,2}, mesh2 :: Mesh.TriangleMesh.TriMesh)
     
     P = hcat(p1, mesh2.point)
-    C = hcat(c1, mesh2.cell+size(p1,2))
+    C = hcat(c1, mesh2.cell .+ size(p1,2))
     
     return P, C
 end
