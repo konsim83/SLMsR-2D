@@ -22,11 +22,13 @@ struct GaussianRandomized <: AbstractPhysicalProblem
     mesh_diff :: Mesh.TriangleMesh.TriMesh
     meshData_diff :: Mesh.MeshData
     random_coeff_diff :: Array{Float64,1}
+
+    scale :: Float64
     
 end # end type
 
 
-function GaussianRandomized(T :: Float64; n_seg_per_edge = 25 :: Int)
+function GaussianRandomized(T :: Float64; n_seg_per_edge = 25 :: Int, scale = 0.2 :: Float64)
         
     info_prob = "Evolution of symmetric Gaussian (divergent velocity)."
     type_info = "ADE"
@@ -72,7 +74,8 @@ function GaussianRandomized(T :: Float64; n_seg_per_edge = 25 :: Int)
                                 conservative,
                                 mesh_diff,
                                 meshData_diff,
-                                random_coeff_diff)
+                                random_coeff_diff,
+                                scale)
 end # end constructor
 
 
@@ -133,7 +136,7 @@ function velocity(problem :: GaussianRandomized,  t :: Float64, x :: Array{Float
     k2 = 1
     V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
                 -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) *2*pi*k1
-            )
+            ) * problem.scale
 
     out = [V[i,:] for i=1:size(x,2)]
     

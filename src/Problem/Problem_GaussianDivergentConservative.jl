@@ -34,7 +34,7 @@ function GaussianDivergentConservative(T :: Float64;
                             k1 = 1 :: Int,
                             k2 = 1 :: Int,
                             k3 = 1 :: Int,
-                            scale = 0.2 :: Float64)
+                            scale = 0.05 :: Float64)
         
     info_prob = "Evolution of symmetric Gaussian (divergent velocity, conservative)."
     type_info = "ADE"
@@ -127,7 +127,7 @@ function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: 
     k3 = problem.k3
     V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
                 -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) .* sin.(2*pi*k3*x[1,:])
-            )
+            ) * problem.scale
 
     rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
                 -sin(2*pi*t)   cos(2*pi*t)]
@@ -172,7 +172,7 @@ function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: 
 
     out = (2*pi*k2) * cos.(2*pi*k1*(x[1,:] .- t)) .* cos.(2*pi*k2*x[2,:]) .* (
             (2*pi*k1) .- sin.(2*pi*k3*x[1,:]) 
-            )
+            ) * problem.scale
     
     return out
 end
