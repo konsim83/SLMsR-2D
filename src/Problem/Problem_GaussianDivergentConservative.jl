@@ -34,7 +34,7 @@ function GaussianDivergentConservative(T :: Float64;
                             k1 = 1 :: Int,
                             k2 = 1 :: Int,
                             k3 = 1 :: Int,
-                            scale = 0.05 :: Float64)
+                            scale = 0.2 :: Float64)
         
     info_prob = "Evolution of symmetric Gaussian (divergent velocity, conservative)."
     type_info = "ADE"
@@ -122,16 +122,18 @@ function velocity(problem :: GaussianDivergentConservative,  t :: Float64, x :: 
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    k1 = problem.k1
-    k2 = problem.k2
-    k3 = problem.k3
-    V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
-                -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) .* sin.(2*pi*k3*x[1,:])
-            ) * problem.scale
+    # k1 = problem.k1
+    # k2 = problem.k2
+    # k3 = problem.k3
+    # V = hcat(sin.(2*pi*k1*(x[1,:].-t)) .* cos.(2*pi*k2*(x[2,:])) *2*pi*k2,
+    #             -cos.(2*pi*k1*(x[1,:].-t)) .* sin.(2*pi*k2*(x[2,:])) .* cos.(2*pi*k3*(x[1,:] + x[2,:]))
+    #         ) * problem.scale
 
-    rotation = [cos(2*pi*t)   sin(2*pi*t) ; 
-                -sin(2*pi*t)   cos(2*pi*t)]
-    out = [rotation*V[i,:] for i=1:size(x,2)]
+    V = hcat( problem.scale*2*pi * (sin.(2*pi*(x[1,:].-t)).^2) .* cos.(pi*(x[2,:].-1/2)).^2, 
+                problem.scale*4*pi * sin.(2*pi*(x[1,:].-t)) .* cos.(2*pi*(x[1,:].-t)) .* cos.(pi*(x[2,:].-1/2)).^2
+               )
+
+    out = [V[i,:] for i=1:size(x,2)]
     
     return out
 end
@@ -166,14 +168,18 @@ function reaction(problem :: GaussianDivergentConservative,  t :: Float64, x :: 
 
     size(x,1)!=2 ? error("List of vectors x must be of size 2-by-n.") :
 
-    k1 = problem.k1
-    k2 = problem.k2
-    k3 = problem.k3
+    # k1 = problem.k1
+    # k2 = problem.k2
+    # k3 = problem.k3
 
-    out = (2*pi*k2) * cos.(2*pi*k1*(x[1,:] .- t)) .* cos.(2*pi*k2*x[2,:]) .* (
-            (2*pi*k1) .- sin.(2*pi*k3*x[1,:]) 
-            ) * problem.scale
+    # out = (
+    #         (2*pi*k1) * (2*pi*k2) * cos.(2*pi*k1*(x[1,:] .- t)) .* cos.(2*pi*k2*x[2,:])
+    #         - (2*pi*k1) * (2*pi*k2) * cos.(2*pi*k1*(x[1,:] .- t)) .* cos.(2*pi*k2*x[2,:]) .* cos.(2*pi*k3*(x[1,:]+x[2,:])) 
+    #         + (2*pi*k1) * (2*pi*k3) * cos.(2*pi*k1*(x[1,:] .- t)) .* sin.(2*pi*k2*x[2,:]) .* sin.(2*pi*k3*(x[1,:]+x[2,:]))
+    #         ) * problem.scale
     
+    out = problem.scale*8*pi^2 * sin.(2*pi*(x[1,:].-t)) .* cos.(2*pi*(x[1,:].-t)) .* cos.(pi*(x[2,:].-1/2)) .* (cos.(pi*(x[2,:].-1/2)) - sin.(pi*(x[2,:].-1/2)))
+
     return out
 end
 
