@@ -97,7 +97,8 @@ function diffusion(problem :: GaussianRandomized, t :: Float64, x :: Array{Float
                                         problem.meshData_diff,
                                         x)
 
-    out = [problem.random_coeff_diff[x_cell[idx][1]]*[1.0 0.0 ; 0.0 1.0] for idx in 1:length(x_cell)]
+    A = [1.0 0.0 ; 0.0 1.0]
+    out = [problem.random_coeff_diff[x_cell[idx][1]]*A for idx in 1:length(x_cell)]
     
     return out
 end

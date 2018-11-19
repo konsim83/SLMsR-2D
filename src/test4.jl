@@ -26,7 +26,7 @@ T_max = 1.0
 # problem = Problem.GaussianDivergentConserv(T_max, k=30, k1=1, k2=1)
 
 # Randomized coefficients, fixed in time, traveling vortex
-problem = Problem.GaussianRandomized(T_max)
+problem = Problem.GaussianRandomized(T_max, n_seg_per_edge=30, scale=0.1)
 # ---------------------------------------------------------------------------
 
 
@@ -67,7 +67,7 @@ n_steps_f = 4
 # 4: conformal (smooth) H1-EdgeEvolvedion with soft/hard PoU constraint
 reconstruction_method = 3
 
-reconstruct_edge = false
+reconstruct_edge = true
 # ---------------------------
 
 
