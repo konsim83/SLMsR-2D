@@ -16,17 +16,8 @@ post_process = true
 T_max = 1.0
 
 
-# Multiscale diffusion, solenoidal, traveling vortex
-# problem = Problem.GaussianSolenoidal(T_max, k=30, k1=1, k2=1)
-
 # Multiscale diffusion, divergent, traveling vortex
 problem = Problem.GaussianDivergent(T_max, k=30, k1=1, k2=1)
-
-# Multiscale diffusion, divergent, conservative, traveling vortex
-# problem = Problem.GaussianDivergentConserv(T_max, k=30, k1=1, k2=1)
-
-# Randomized coefficients, fixed in time, traveling vortex
-# problem = Problem.GaussianRandomized(T_max)
 # ---------------------------------------------------------------------------
 
 
@@ -37,6 +28,7 @@ n_edge_per_seg = 4
 n_refinement = 5
 
 
+# -------   Fine (local) mesh parameters   -------
 # n_edge_per_seg_f = 15
 # max_area_cell_f = 0.005
 
@@ -61,17 +53,17 @@ dt = 1/100
 n_steps_f = 4
 
 # ---------------------------
-# 1: non-conformal L2-EdgeEvolvedion
-# 2: conformal L2-EdgeEvolvedion
-# 3: conformal (smooth) H1-EdgeEvolvedion
-# 4: conformal (smooth) H1-EdgeEvolvedion with soft/hard PoU constraint
+# 1: non-conformal L2-EdgeEvolution
+# 2: conformal L2-EdgeEvolution
+# 3: conformal (smooth) H1-EdgeEvolution
+# 4: conformal (smooth) H1-EdgeEvolution with soft/hard PoU constraint
 reconstruction_method = 3
 
 reconstruct_edge = false
 # ---------------------------
 
 
-
+# -------   Reconstruction parameters (inverse problem), do not touch!  -------
 k_edge = 0.01
 k_int = [1.0 ; 1.0 ; 1.0] * 0.01
 k_sum = 0

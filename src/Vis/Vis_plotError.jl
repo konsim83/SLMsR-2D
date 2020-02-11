@@ -1,14 +1,12 @@
 function plotErrorL2(error_std :: Array{Float64}, error_ms :: Array{Float64},
-						t_max :: Float64, test_name = [])
-
-	t = linspace(0, t_max, length(error_std))
+						t :: Array{Float64,1}, error_norm :: String, test_name = [])
 
 	font_1 = Dict("family"=>"serif",
                   "color"=>"black",
                   "weight"=>"normal",
                   "size"=>14)    
     
-    fig = figure("L2 error", figsize = (15,12)) 
+    fig = figure(error_norm, figsize = (15,12)) 
 
     ax_1 = subplot(111)
     ax_1[:spines]["top"][:set_color]("none")
@@ -37,7 +35,7 @@ function plotErrorL2(error_std :: Array{Float64}, error_ms :: Array{Float64},
     
     legend(loc = "upper right", fontsize = 14, fancybox = "true") 
 
-    title("L2-error ")
+    title(string(error_norm, "-error "))
     xlabel("time", fontdict = font_1)
     ylabel("error", fontdict = font_1)
 

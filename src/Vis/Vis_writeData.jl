@@ -16,7 +16,7 @@ function writeVelocityField(problem :: Problem.AbstractProblem,
     end
 
     N = length(T)
-    p = Progress(N, 0.01, "Writing vecolicty field ...", 10)
+    p = Progress(N, 0.01, "Writing velocity field ...", 10)
     
     k_time = 1
     for t in T
@@ -51,7 +51,7 @@ function writeDiffusionField(problem :: Problem.AbstractProblem,
     end
 
     N = length(T)
-    p = Progress(N, 0.01, "Writing vecolicty field ...", 10)
+    p = Progress(N, 0.01, "Writing diffusion field ...", 10)
     
     k_time = 1
     for t in T

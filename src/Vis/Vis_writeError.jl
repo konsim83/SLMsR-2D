@@ -6,7 +6,8 @@ function writeError2file(err :: Array{Float64,1},
   t = range(0, stop=t_max, length=length(err))
 
   # Write files into #PWD/meshfiles folder
-  if ~ispath(pwd() * "/data/error_files")
+  if ~ispath(pwd() * "/data")
+    mkdir("data")
     mkdir("data/error_files")
   end
   path = pwd() * "/data/error_files/"  
