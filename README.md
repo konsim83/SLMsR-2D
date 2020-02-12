@@ -46,7 +46,21 @@ The program will compute a low resolution solution, a high resolution reference 
 and a multiscale solution.
 
 After the computations finished there will be a <code>data/</code> folder containing 
-vtk files and other error files. You can inspect the files using paraview. 
+vtk files and other error files. You can inspect the files using Paraview.
+
+You can inspect the relative (mean square) error of the solutions 
+(or of the derivative) with respect to the reference solution using 
+
+```@julia
+Vis.plotErrorL2(errSTD, errMSR, t, "L2")
+```
+
+or 
+
+```@julia
+Vis.plotErrorL2(errSTD_H1, errMSR_H1, t, "H1")
+```
+
 
 ---
 **NOTE**
