@@ -13,7 +13,7 @@ post_process = true
 
 # ---------------------------------------------------------------------------
 # -------   Problem Parameters   -------
-T_max = 1.0
+T_max = 1.0/10
 
 
 # Multiscale diffusion, solenoidal, traveling vortex
@@ -29,12 +29,12 @@ n_refinement = 5
 
 
 # -------   Fine (local) mesh parameters   -------
-n_edge_per_seg_f = 15
-max_area_cell_f = 0.005
+# n_edge_per_seg_f = 15
+# max_area_cell_f = 0.005
 
 # n_edge_per_seg_f = 20
 # max_area_cell_f = 0.004
-
+ 
 n_edge_per_seg_f = 26
 max_area_cell_f = 0.001
 
@@ -66,7 +66,7 @@ reconstruct_edge = false
 # -------   Reconstruction parameters (inverse problem), do not touch!  -------
 k_edge = 0.01
 k_int = [1.0 ; 1.0 ; 1.0] * 0.01
-k_sum = 0
+k_sum = 0.01
 k = [k_int ; k_edge; k_sum]
 # ---------------------------------------------------------------------------
 

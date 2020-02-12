@@ -23,7 +23,6 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
 	    basis_left = uBasis0[ind_edge,1]
 	    basis_right = uBasis0[ind_edge,2]
 
-	    # ind_con = [1 ; 2 ; 1+n ; 2+n]
 	    ind_con = [1 ; n ; 1+n ; 2*n]
 	    val_con = [1. ; 0. ; 0. ; 1.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
@@ -48,8 +47,6 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
 
 	    ind_con = [1 ; n ; 1+n ; 2*n]
 	    val_con = [1. ; 0. ; 0. ; 1.]
-	    # ind_con = [1 ; 2 ; 1+n ; 2+n]
-	    # val_con = [0. ; 1. ; 1. ; 0.]
 	    ind_uncon = setdiff(1:(2*n), ind_con)
 
 	    a_1 = uGlobal[3] # weight of left basis
@@ -78,20 +75,6 @@ function reconstruct_edge_L2!(uOpt :: Array{Float64,2},
     	uOpt[ind_edge,3] = basis_lr[1:n]
 	    uOpt[ind_edge,1] = basis_lr[(n+1):end]
     end
-
-
-
-    # if ind_seg==1
-	   #  uOpt[ind_edge,1] = basis_left
-	   #  uOpt[ind_edge,2] = basis_right
-    # elseif ind_seg==2
-    # 	uOpt[ind_edge,2] = basis_left
-	   #  uOpt[ind_edge,3] = basis_right
-    # elseif ind_seg==3
-    # 	# Note that here left and right basis are switched
-    # 	uOpt[ind_edge,3] = basis_left
-	   #  uOpt[ind_edge,1] = basis_right
-    # end
-
+    
     return nothing
 end

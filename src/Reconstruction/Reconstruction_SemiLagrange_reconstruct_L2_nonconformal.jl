@@ -37,9 +37,12 @@ function reconstruct_L2_nonconformal(solution :: FEM.Solution_MsFEM,
 
     m_f = mesh_collection.mesh_f[ind_cell]
     
-    ind_corner = [sort(circshift(m_f.segment[:,m_f.segment_marker.==1],dims=1)[:])[1] ; 
-                    sort(circshift(m_f.segment[:,m_f.segment_marker.==1],dims=1)[:])[end] ; 
-                    sort(circshift(m_f.segment[:,m_f.segment_marker.==2],dims=1)[:])[end] ]
+    #ind_corner = [sort(circshift(m_f.segment[:,m_f.segment_marker.==1],dims=1)[:])[1] ; 
+    #                sort(circshift(m_f.segment[:,m_f.segment_marker.==1],dims=1)[:])[end] ; 
+    #                sort(circshift(m_f.segment[:,m_f.segment_marker.==2],dims=1)[:])[end] ]
+	ind_corner = [sort(m_f.segment[:,m_f.segment_marker.==1],dims=1)[1] ; 
+                    sort(m_f.segment[:,m_f.segment_marker.==1],dims=1)[end] ; 
+                    sort(m_f.segment[:,m_f.segment_marker.==2],dims=1)[end] ]
     # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
     U = u_orig[ind_corner]
     

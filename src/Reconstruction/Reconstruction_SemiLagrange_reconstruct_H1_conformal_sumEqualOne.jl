@@ -49,9 +49,9 @@ function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
     dof_local = dof_collection.dof_f[ind_cell]
     k = par.k
 
-    ind_corner = [sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],dims=1)[:])[1] ; 
-                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==1],dims=1)[:])[end] ; 
-                    sort(circshift(mesh_local.segment[:,mesh_local.segment_marker.==2],dims=1)[:])[end] ]
+	ind_corner = [sort(mesh_local.segment[:,mesh_local.segment_marker.==1],dims=1)[1] ; 
+                    sort(mesh_local.segment[:,mesh_local.segment_marker.==1],dims=1)[end] ; 
+                    sort(mesh_local.segment[:,mesh_local.segment_marker.==2],dims=1)[end] ]
     # U = solution.u[mesh_collection.mesh.cell[:,ind_cell],k_time-1]
     uGlobal = uOrig[ind_corner]
 
@@ -86,14 +86,6 @@ function reconstruct_H1_conformal_sumEqualOne(solution :: FEM.Solution_MsFEM,
                                             quad_local)
     # A = laplace_matrix' * laplace_matrix
     A = laplace_matrix
-
-    # system_matrix = [   (uGlobal[1]^2 + k[5])*speye(n)+k[1]*A    (uGlobal[1]*uGlobal[2] + k[5])*speye(n)      (uGlobal[1]*uGlobal[3] + k[5])*speye(n) ; 
-    #                     (uGlobal[2]*uGlobal[1] + k[5])*speye(n)  (uGlobal[2]^2 + k[5])*speye(n)+k[2]*A        (uGlobal[2]*uGlobal[3] + k[5])*speye(n) ; 
-    #                     (uGlobal[3]*uGlobal[1] + k[5])*speye(n)  (uGlobal[3]*uGlobal[2] + k[5])*speye(n)      (uGlobal[3]^2 + k[5])*speye(n)+k[3]*A   ]
-
-    # rhs = [ uGlobal[1]*uOrig + k[5]*ones(n) ;
-    #         uGlobal[2]*uOrig + k[5]*ones(n) ;
-    #         uGlobal[3]*uOrig + k[5]*ones(n) ] - system_matrix[:,ind_con]*constr_val
 
     system_matrix = [   (uGlobal[1]^2)*speye(n)+k[1]*A    (uGlobal[1]*uGlobal[2])*speye(n)      (uGlobal[1]*uGlobal[3])*speye(n) ; 
                         (uGlobal[2]*uGlobal[1])*speye(n)  (uGlobal[2]^2)*speye(n)+k[2]*A        (uGlobal[2]*uGlobal[3])*speye(n) ; 
