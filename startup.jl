@@ -14,8 +14,8 @@ let
 			"WriteVTK",
 			"ProgressMeter",
 			"NearestNeighbors",
-			"NearestNeighbors",
 			"BinDeps",
+			"DifferentialEquations",
 			"TriangleMesh"]
 	for pkg in pkgs
 		if Base.find_package(pkg) === nothing
